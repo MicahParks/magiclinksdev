@@ -1,7 +1,5 @@
 # magiclinksdev
 
-**This project has not been released yet.**
-
 You can find the documentation for this project on the [docs site](https://docs.magiclinks.dev). This site contains
 resources for implementing a client and self-hosting the project.
 
