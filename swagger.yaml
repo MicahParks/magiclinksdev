@@ -1,0 +1,507 @@
+swagger: "2.0" # https://stackoverflow.com/a/59749691/14797322
+
+info:
+  title: "magiclinks.dev"
+  description: "The API specification for the magiclinksdev project.
+  \n\n
+  The default JWK Set relative URL path is `/api/v1/jwks.json`.
+  \n\n
+  The documentation site is at https://docs.magiclinks.dev
+  \n
+  This is an ELv2 licensed project: https://github.com/MicahParks/magiclinksdev
+  \n
+  The optional SaaS platform's landing page is: https://magiclinks.dev
+  "
+  version: "1.0.0"
+
+host: "magiclinks.dev"
+basePath: "/api/v1"
+
+schemes:
+  - "https"
+
+consumes:
+  - "application/json"
+produces:
+  - "application/json"
+
+paths:
+  /ready:
+    get:
+      summary: "Check if the service is running and ready to accept requests."
+      description: "Check if the service is running and ready to accept requests."
+      operationId: "ready"
+      responses:
+        200:
+          description: "The service is running and ready to accept requests."
+        default:
+          description: "The service is not ready to accept requests."
+
+  /admin/service-account/create:
+    post:
+      tags:
+        - "admin"
+      summary: "Create a new service account"
+      description: "Create a new service account with the parameters."
+      operationId: "serviceAccountCreate"
+      parameters:
+        - in: "body"
+          name: "body"
+          description: "Service account object that needs to be added."
+          required: true
+          schema:
+            $ref: "#/definitions/ServiceAccountCreateRequest"
+      responses:
+        201:
+          description: "successful operation"
+          schema:
+            $ref: "#/definitions/ServiceAccountCreateResponse"
+        default:
+          description: "An error occurred."
+          schema:
+            $ref: "#/definitions/Error"
+
+  /jwt/create:
+    post:
+      summary: "Create a JWT, typically for a JWT refresh."
+      description: "Create a JWT with the parameters. The intended use case is to refresh an authentic and valid JWT."
+      operationId: "jwtCreate"
+      parameters:
+        - name: "body"
+          in: "body"
+          description: "The JWT payload."
+          required: true
+          schema:
+            $ref: "#/definitions/JWTCreateRequest"
+      responses:
+        201:
+          description: "The JWT was created successfully."
+          schema:
+            $ref: "#/definitions/JWTCreateResponse"
+        default:
+          description: "An error occurred."
+          schema:
+            $ref: "#/definitions/Error"
+
+  /jwt/validate:
+    post:
+      summary: "Validate a JWT."
+      description: "Validate a JWT and return the payload. Ideally the client would cache a copy of the JWK Set and
+      validate JWTs locally. This endpoint is for use cases where the native language does not have an adequate JWK Set
+      client. Consider deploying an instance of the JWK Set Client Proxy (JCP) if you need this in production:
+      https://github.com/MicahParks/jcp"
+      operationId: "jwtValidate"
+      parameters:
+        - in: "body"
+          name: "body"
+          description: "The JWT to validate."
+          required: true
+          schema:
+            $ref: "#/definitions/JWTValidateRequest"
+      responses:
+        200:
+          description: "The JWT was signed by an active key in the JWK Set."
+          schema:
+            $ref: "#/definitions/JWTValidateResponse"
+        422:
+          description: "The given JWT was invalid."
+          schema:
+            $ref: "#/definitions/Error"
+        default:
+          description: "An error occurred."
+          schema:
+            $ref: "#/definitions/Error"
+
+  /link/create:
+    post:
+      summary: "Create a magic link."
+      description: "Create a magic link that, when clicked, will create a JWT with the given claims and include that JWT
+      in the URL query key of a redirect."
+      operationId: "linkCreate"
+      parameters:
+        - in: "body"
+          name: "body"
+          required: true
+          schema:
+            $ref: "#/definitions/LinkCreateRequest"
+      responses:
+        201:
+          description: "The magic link was created successfully."
+          schema:
+            $ref: "#/definitions/LinkCreateResponse"
+        default:
+          description: "An unexpected error occurred."
+          schema:
+            $ref: "#/definitions/Error"
+
+  /email-link/create:
+    post:
+      summary: "Send a magic link via email."
+      description: "Create and send a magic link via email."
+      operationId: "emailLinkCreate"
+      parameters:
+        - in: "body"
+          name: "body"
+          required: true
+          schema:
+            $ref: "#/definitions/EmailLinkCreateRequest"
+      responses:
+        201:
+          description: "The request has been accepted by the email provider."
+          schema:
+            $ref: "#/definitions/EmailLinkCreateResponse"
+        default:
+          description: "An unexpected error occurred."
+          schema:
+            $ref: "#/definitions/Error"
+
+definitions:
+  Error:
+    type: "object"
+    properties:
+      code:
+        type: "integer"
+        description: "A copy of the HTTP response status code."
+        format: "int32"
+      message:
+        type: "string"
+        description: "A human-readable error message."
+      requestMetadata:
+        $ref: "#/definitions/RequestMetadata"
+
+  RequestMetadata:
+    type: "object"
+    properties:
+      uuid:
+        type: "string"
+        description: "A UUID that uniquely identifies the request."
+        format: "uuid"
+
+  APIKey:
+    type: "object"
+    properties:
+      apiKey:
+        type: "string"
+        description: "The API key."
+
+  Audience:
+    type: "object"
+    properties:
+      apiKeys:
+        type: "array"
+        description: "API keys for this audience."
+        items:
+          $ref: "#/definitions/APIKey"
+      aud:
+        type: "string"
+        description: "The audience of JWTs created for this service account context."
+      serviceLogo:
+        type: "string"
+        description: "The URL of the service account's service logo."
+      serviceName:
+        type: "string"
+        description: "The name of the service account's service."
+      serviceURL:
+        type: "string"
+        description: "The URL of the landing page for the service account's service."
+
+  ServiceAccountMeta:
+    type: "object"
+    properties:
+      admin:
+        type: "boolean"
+        description: "Whether the service account is an admin."
+      uuid:
+        type: "string"
+        description: "The UUID of the service account."
+        format: "uuid"
+
+  ServiceAccount:
+    type: "object"
+    properties:
+      audiences:
+        type: "array"
+        description: "The audiences for this service account."
+        items:
+          $ref: "#/definitions/Audience"
+      meta:
+        $ref: "#/definitions/ServiceAccountMeta"
+
+  JWTClaims:
+    description: "Any valid JSON object."
+    type: "object"
+    properties:
+      claims:
+        description: 'Any valid JSON object. Do not provide any JSON attributes mentioned in RFC 7519 section 4.1 as
+        this will cause an error. These are JWT "Registered Claim Names".'
+        type: "object"
+        externalDocs:
+          description: "RFC 7519 section 4.1"
+          url: "https://tools.ietf.org/html/rfc7519#section-4.1"
+
+  JWTCreateRequest:
+    description: "The request body for the /jwt/create endpoint."
+    type: "object"
+    properties:
+      jwtCreateArgs:
+        $ref: "#/definitions/JWTCreateArgs"
+    required:
+      - "jwtCreateArgs"
+
+  JWTCreateArgs:
+    description: "Parameters used to create a JWT."
+    type: "object"
+    properties:
+      jwtClaims:
+        description: "The JWT claims used to create the signed JWT."
+        $ref: "#/definitions/JWTClaims"
+      jwtLifespanSeconds:
+        description: "The lifespan of the JWT in seconds. The JWT's lifespan starts after the magic link has been
+        visited and the JWT is signed. It defaults to 5 minutes. The minimum value is 5 and the maximum value is
+        2,592,000."
+        default: 300
+        type: "integer"
+
+  JWTCreateResults:
+    description: "The results for creating a JWT."
+    type: "object"
+    properties:
+      jwt:
+        description: "The signed JWT."
+        type: "string"
+
+  JWTCreateResponse:
+    description: "The response body for the /jwt/create endpoint."
+    type: "object"
+    properties:
+      jwtCreateResults:
+        $ref: "#/definitions/JWTCreateResults"
+      requestMetadata:
+        $ref: "#/definitions/RequestMetadata"
+
+  JWTValidateRequest:
+    description: "The request body for the /jwt/validate endpoint."
+    type: "object"
+    properties:
+      jwtValidateArgs:
+        $ref: "#/definitions/JWTValidateArgs"
+    required:
+      - "jwtValidateArgs"
+
+  JWTValidateArgs:
+    description: "Parameters used to validate a JWT."
+    type: "object"
+    properties:
+      jwt:
+        description: "The JWT to validate."
+        type: "string"
+
+  JWTValidateResults:
+    description: "The results for validateing a JWT."
+    type: "object"
+    properties:
+      claims:
+        description: 'Any valid JSON object. Do not provide any JSON attributes mentioned in RFC 7519 section 4.1 as
+        this will cause an error. These are JWT "Registered Claim Names".'
+        type: "object"
+        externalDocs:
+          description: "RFC 7519 section 4.1"
+          url: "https://tools.ietf.org/html/rfc7519#section-4.1"
+
+  JWTValidateResponse:
+    description: "The response body for the /jwt/validate endpoint."
+    type: "object"
+    properties:
+      jwtValidateResults:
+        $ref: "#/definitions/JWTValidateResults"
+      requestMetadata:
+        $ref: "#/definitions/RequestMetadata"
+
+  LinkCreateArgs:
+    description: "Parameters to create any magic link."
+    type: "object"
+    properties:
+      jwtCreateArgs:
+        description: "The parameters used to create the JWT to pass upon redirection."
+        $ref: "#/definitions/JWTCreateArgs"
+      linkExpires:
+        description: "The number of seconds the link should be active for after the request has been processed. It
+        defaults to 1 hour. The minimum value is 5 and the maximum value is 2,592,000."
+        type: "integer"
+        default: 3600
+      redirectQueryKey:
+        description: 'The URL query key in the redirectURL to contain the signed JWT when the magic link is used. By
+        default, "jwt" is used.'
+        type: "string"
+      redirectURL:
+        description: "The URL to redirect to with the signed JWT when the link is used."
+        type: "string"
+    required:
+      - "redirectURL"
+
+  LinkCreateRequest:
+    description: "The request body for the /link/create endpoint."
+    type: "object"
+    properties:
+      linkArgs:
+        $ref: "#/definitions/LinkCreateArgs"
+    required:
+      - "linkArgs"
+
+  LinkCreateResults:
+    description: "The results for creating a magic link."
+    type: "object"
+    properties:
+      magicLink:
+        description: "The magic link that, when visited, will sign a JWT with the given information and pass it along in
+         a redirect to the given URL. The link can only be used once. This link should as if it were the signed JWT."
+        type: "string"
+      secret:
+        description: "The secret embedded in the magic link. It can only be used once, so using it will automatically
+        expire the link."
+        type: "string"
+
+  LinkCreateResponse:
+    description: "The response body for the /link/create endpoint."
+    type: "object"
+    properties:
+      linkCreateResults:
+        $ref: "#/definitions/LinkCreateResults"
+      requestMetadata:
+        $ref: "#/definitions/RequestMetadata"
+
+  EmailLinkCreateArgs:
+    description: "Parameters to create an email magic link."
+    type: "object"
+    properties:
+      buttonText:
+        description: 'The text to display on the button in the email. It defaults to "Magic link".'
+        type: "string"
+        default: "Magic link"
+        example: "Login"
+      greeting:
+        description: 'The smaller text above the title.'
+        type: "string"
+        example: "Hello Jane Doe,"
+      logoClickURL:
+        description: "The URL to redirect to when the logo is clicked."
+        type: "string"
+        example: "https://example.com"
+      logoImageURL:
+        description: "The URL to the logo image to display in the email."
+        type: "string"
+        example: "https://example.com/logo.png"
+      serviceName:
+        description: "The name of your service. This is used in invisible email metadata."
+        type: "string"
+        example: "example.com"
+      subject:
+        description: 'The subject of the email. It must be between 5 and 100 characters inclusive. Make sure to include
+        the name of your application.'
+        type: "string"
+        example: "Login to example.com"
+      subTitle:
+        description: "The smaller text, right above the magic link button."
+        type: "string"
+        example: "Login using the button below."
+      title:
+        description: 'The larger text, right above the subtitle. It must be between 5 and 256 characters inclusive.
+        Make sure to include the name of your application.'
+        type: "string"
+        example: "Login to example.com with a magic link"
+      toEmail:
+        description: "The email address to send the magic link to."
+        type: "string"
+        format: "email"
+        example: "jane.doe@example.com"
+      toName:
+        description: "The name of the recipient."
+        type: "string"
+        example: "Jane Doe"
+    required:
+      - "subject"
+      - "title"
+      - "toEmail"
+      - "serviceName"
+
+  EmailLinkCreateRequest:
+    description: "The request body for the /email-link/create endpoint."
+    type: "object"
+    properties:
+      emailArgs:
+        $ref: "#/definitions/EmailLinkCreateArgs"
+      linkArgs:
+        $ref: "#/definitions/LinkCreateArgs"
+    required:
+      - "emailArgs"
+      - "linkArgs"
+
+  EmailLinkCreateResults:
+    description: "The results for creating an email magic link."
+    type: "object"
+    properties:
+      linkCreateResults:
+        $ref: "#/definitions/LinkCreateResults"
+
+  EmailLinkCreateResponse:
+    description: "The response body from the /email-link/create endpoint."
+    type: "object"
+    properties:
+      emailLinkCreateResults:
+        $ref: "#/definitions/EmailLinkCreateResults"
+      requestMetadata:
+        $ref: "#/definitions/RequestMetadata"
+
+  ServiceAccountCreateArgs:
+    description: "Parameters to create a service account."
+    type: "object"
+    properties:
+      serviceLogo:
+        description: "The URL of the service account's service's logo."
+        type: "string"
+        format: "uri"
+      serviceName:
+        description: "The name of the service account's service."
+        type: "string"
+      serviceURL:
+        description: "The landing page URL for the service account's service."
+        type: "string"
+        format: "uri"
+
+  ServiceAccountCreateRequest:
+    description: "The request body for the /admin/service-account/create endpoint."
+    type: "object"
+    properties:
+      createServiceAccountArgs:
+        $ref: "#/definitions/ServiceAccountCreateArgs"
+    required:
+      - "createServiceAccountArgs"
+
+  ServiceAccountCreateResults:
+    description: "The results for creating a service account."
+    type: "object"
+    properties:
+      serviceAccount:
+        description: "The service account that was created."
+        $ref: "#/definitions/ServiceAccount"
+
+  ServiceAccountCreateResponse:
+    description: "The response body for the /admin/service-account/create endpoint."
+    type: "object"
+    properties:
+      serviceAccountCreateResults:
+        $ref: "#/definitions/ServiceAccountCreateResults"
+      requestMetadata:
+        $ref: "#/definitions/RequestMetadata"
+
+securityDefinitions:
+  apiKey:
+    type: "apiKey"
+    in: "header"
+    name: "X-API-KEY"
+security:
+  - apiKey: [ ]
+
+tags:
+  - name: "admin"
+    description: "Endpoints for service accounts authorized with an admin API key."

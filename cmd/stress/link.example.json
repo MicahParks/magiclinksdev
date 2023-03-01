@@ -1,0 +1,13 @@
+{
+  "linkArgs": {
+    "jwtCreateArgs": {
+      "jwtClaims": {
+        "foo": "bar"
+      },
+      "jwtLifespanSeconds": 0
+    },
+    "linkLifespan": 0,
+    "redirectQueryKey": "",
+    "redirectUrl": "https://jwtdebug.micahparks.com"
+  }
+}

@@ -1,0 +1,6 @@
+version: "3"
+# This file is meant for local development with the Postgres service. See the docker-compose.override.yml file.
+services:
+  mldpostgres:
+    ports:
+      - "5432:5432"

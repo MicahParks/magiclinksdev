@@ -1,0 +1,7 @@
+.env
+.idea
+config.local.json
+delme.*
+*.prod.yml
+*.prod.yaml
+*.prod.json

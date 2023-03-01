@@ -1,0 +1,50 @@
+{
+  "email": {
+    "apiKey": "placeholder",
+    "fromEmail": "example@example.com",
+    "fromName": "tester"
+  },
+  "rateLimiter": {
+    "burst": 0,
+    "refillRate": 0
+  },
+  "server": {
+    "adminConfig": [
+      {
+        "apiKey": "40084740-0bc3-455d-b298-e23a31561580",
+        "aud": "ad9e9d84-92ea-4f07-bac9-5d898d59c83b",
+        "uuid": "1e079d6d-a8b9-4065-aa8d-86906accd211",
+        "serviceAccountCreateArgs": {}
+      }
+    ],
+    "baseURL": "http://localtest/api/v1/",
+    "iss": "testIssuer",
+    "jwks": {
+      "ignoreDefault": false
+    },
+    "relativeRedirectURL": "redirect",
+    "requestTimeout": "5s",
+    "requestMaxBodyBytes": 1048576,
+    "shutdownTimeout": "1s",
+    "validation": {
+      "linkLifespanDefault": "1h",
+      "maxLinkLifespan": "720h",
+      "maxJWTClaimsBytes": 4096,
+      "jwtLifespanDefault": "5m",
+      "maxJWTLifespan": "720h",
+      "serviceNameMinUTF8": 5,
+      "serviceNameMaxUTF8": 256
+    }
+  },
+  "storage": {
+    "aes256KeyBase64": "Teb2VZp1dKXJeaXgMCRyWniBFMF2/9WNBlNWSY15NdA=",
+    "dsn": "postgres://postgres:password@localhost:5432/magiclinksdev",
+    "health": "5s",
+    "initialTimeout": "10s",
+    "maxIdle": "4m",
+    "minConns": 2,
+    "plaintextClaims": false,
+    "plaintextJWK": false,
+    "semver": "v0.0.1"
+  }
+}

@@ -1,0 +1,13 @@
+version: "3"
+services:
+  magiclinksdev:
+    container_name: "magiclinksdev"
+    image: "micahparks/magiclinksdevnop"
+    environment:
+      DEV_MODE: "true"
+    ports:
+      - "8080:8080"
+    volumes:
+      - "./config.quickstart.json:/config.json"
+    depends_on:
+      - "mldpostgres"

@@ -1,0 +1,487 @@
+openapi: 3.0.1
+info:
+  title: magiclinks.dev
+  description: "The API specification for the magiclinksdev project. \n\n The default\
+    \ JWK Set relative URL path is `/api/v1/jwks.json`. \n\n The documentation site\
+    \ is at https://docs.magiclinks.dev \n This is an ELv2 licensed project: https://github.com/MicahParks/magiclinksdev\
+    \ \n The optional SaaS platform's landing page is: https://magiclinks.dev "
+  version: 1.0.0
+servers:
+- url: https://magiclinks.dev/api/v1
+security:
+- apiKey: []
+tags:
+- name: admin
+  description: Endpoints for service accounts authorized with an admin API key.
+paths:
+  /ready:
+    get:
+      summary: Check if the service is running and ready to accept requests.
+      description: Check if the service is running and ready to accept requests.
+      operationId: ready
+      responses:
+        200:
+          description: The service is running and ready to accept requests.
+          content: {}
+        default:
+          description: The service is not ready to accept requests.
+          content: {}
+  /admin/service-account/create:
+    post:
+      tags:
+      - admin
+      summary: Create a new service account
+      description: Create a new service account with the parameters.
+      operationId: serviceAccountCreate
+      requestBody:
+        description: Service account object that needs to be added.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ServiceAccountCreateRequest'
+        required: true
+      responses:
+        201:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServiceAccountCreateResponse'
+        default:
+          description: An error occurred.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      x-codegen-request-body-name: body
+  /jwt/create:
+    post:
+      summary: Create a JWT, typically for a JWT refresh.
+      description: Create a JWT with the parameters. The intended use case is to refresh
+        an authentic and valid JWT.
+      operationId: jwtCreate
+      requestBody:
+        description: The JWT payload.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JWTCreateRequest'
+        required: true
+      responses:
+        201:
+          description: The JWT was created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JWTCreateResponse'
+        default:
+          description: An error occurred.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      x-codegen-request-body-name: body
+  /jwt/validate:
+    post:
+      summary: Validate a JWT.
+      description: 'Validate a JWT and return the payload. Ideally the client would
+        cache a copy of the JWK Set and validate JWTs locally. This endpoint is for
+        use cases where the native language does not have an adequate JWK Set client.
+        Consider deploying an instance of the JWK Set Client Proxy (JCP) if you need
+        this in production: https://github.com/MicahParks/jcp'
+      operationId: jwtValidate
+      requestBody:
+        description: The JWT to validate.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JWTValidateRequest'
+        required: true
+      responses:
+        200:
+          description: The JWT was signed by an active key in the JWK Set.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JWTValidateResponse'
+        422:
+          description: The given JWT was invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: An error occurred.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      x-codegen-request-body-name: body
+  /link/create:
+    post:
+      summary: Create a magic link.
+      description: Create a magic link that, when clicked, will create a JWT with
+        the given claims and include that JWT in the URL query key of a redirect.
+      operationId: linkCreate
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LinkCreateRequest'
+        required: true
+      responses:
+        201:
+          description: The magic link was created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LinkCreateResponse'
+        default:
+          description: An unexpected error occurred.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      x-codegen-request-body-name: body
+  /email-link/create:
+    post:
+      summary: Send a magic link via email.
+      description: Create and send a magic link via email.
+      operationId: emailLinkCreate
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmailLinkCreateRequest'
+        required: true
+      responses:
+        201:
+          description: The request has been accepted by the email provider.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmailLinkCreateResponse'
+        default:
+          description: An unexpected error occurred.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      x-codegen-request-body-name: body
+components:
+  schemas:
+    Error:
+      type: object
+      properties:
+        code:
+          type: integer
+          description: A copy of the HTTP response status code.
+          format: int32
+        message:
+          type: string
+          description: A human-readable error message.
+        requestMetadata:
+          $ref: '#/components/schemas/RequestMetadata'
+    RequestMetadata:
+      type: object
+      properties:
+        uuid:
+          type: string
+          description: A UUID that uniquely identifies the request.
+          format: uuid
+    APIKey:
+      type: object
+      properties:
+        apiKey:
+          type: string
+          description: The API key.
+    Audience:
+      type: object
+      properties:
+        apiKeys:
+          type: array
+          description: API keys for this audience.
+          items:
+            $ref: '#/components/schemas/APIKey'
+        aud:
+          type: string
+          description: The audience of JWTs created for this service account context.
+        serviceLogo:
+          type: string
+          description: The URL of the service account's service logo.
+        serviceName:
+          type: string
+          description: The name of the service account's service.
+        serviceURL:
+          type: string
+          description: The URL of the landing page for the service account's service.
+    ServiceAccountMeta:
+      type: object
+      properties:
+        admin:
+          type: boolean
+          description: Whether the service account is an admin.
+        uuid:
+          type: string
+          description: The UUID of the service account.
+          format: uuid
+    ServiceAccount:
+      type: object
+      properties:
+        audiences:
+          type: array
+          description: The audiences for this service account.
+          items:
+            $ref: '#/components/schemas/Audience'
+        meta:
+          $ref: '#/components/schemas/ServiceAccountMeta'
+    JWTClaims:
+      type: object
+      properties:
+        claims:
+          type: object
+          properties: {}
+          description: Any valid JSON object. Do not provide any JSON attributes mentioned
+            in RFC 7519 section 4.1 as this will cause an error. These are JWT "Registered
+            Claim Names".
+      description: Any valid JSON object.
+    JWTCreateRequest:
+      required:
+      - jwtCreateArgs
+      type: object
+      properties:
+        jwtCreateArgs:
+          $ref: '#/components/schemas/JWTCreateArgs'
+      description: The request body for the /jwt/create endpoint.
+    JWTCreateArgs:
+      type: object
+      properties:
+        jwtClaims:
+          $ref: '#/components/schemas/JWTClaims'
+        jwtLifespanSeconds:
+          type: integer
+          description: The lifespan of the JWT in seconds. The JWT's lifespan starts
+            after the magic link has been visited and the JWT is signed. It defaults
+            to 5 minutes. The minimum value is 5 and the maximum value is 2,592,000.
+      description: Parameters used to create a JWT.
+    JWTCreateResults:
+      type: object
+      properties:
+        jwt:
+          type: string
+          description: The signed JWT.
+      description: The results for creating a JWT.
+    JWTCreateResponse:
+      type: object
+      properties:
+        jwtCreateResults:
+          $ref: '#/components/schemas/JWTCreateResults'
+        requestMetadata:
+          $ref: '#/components/schemas/RequestMetadata'
+      description: The response body for the /jwt/create endpoint.
+    JWTValidateRequest:
+      required:
+      - jwtValidateArgs
+      type: object
+      properties:
+        jwtValidateArgs:
+          $ref: '#/components/schemas/JWTValidateArgs'
+      description: The request body for the /jwt/validate endpoint.
+    JWTValidateArgs:
+      type: object
+      properties:
+        jwt:
+          type: string
+          description: The JWT to validate.
+      description: Parameters used to validate a JWT.
+    JWTValidateResults:
+      type: object
+      properties:
+        claims:
+          type: object
+          properties: {}
+          description: Any valid JSON object. Do not provide any JSON attributes mentioned
+            in RFC 7519 section 4.1 as this will cause an error. These are JWT "Registered
+            Claim Names".
+      description: The results for validateing a JWT.
+    JWTValidateResponse:
+      type: object
+      properties:
+        jwtValidateResults:
+          $ref: '#/components/schemas/JWTValidateResults'
+        requestMetadata:
+          $ref: '#/components/schemas/RequestMetadata'
+      description: The response body for the /jwt/validate endpoint.
+    LinkCreateArgs:
+      required:
+      - redirectURL
+      type: object
+      properties:
+        jwtCreateArgs:
+          $ref: '#/components/schemas/JWTCreateArgs'
+        linkExpires:
+          type: integer
+          description: The number of seconds the link should be active for after the
+            request has been processed. It defaults to 1 hour. The minimum value is
+            5 and the maximum value is 2,592,000.
+        redirectQueryKey:
+          type: string
+          description: The URL query key in the redirectURL to contain the signed
+            JWT when the magic link is used. By default, "jwt" is used.
+        redirectURL:
+          type: string
+          description: The URL to redirect to with the signed JWT when the link is
+            used.
+      description: Parameters to create any magic link.
+    LinkCreateRequest:
+      required:
+      - linkArgs
+      type: object
+      properties:
+        linkArgs:
+          $ref: '#/components/schemas/LinkCreateArgs'
+      description: The request body for the /link/create endpoint.
+    LinkCreateResults:
+      type: object
+      properties:
+        magicLink:
+          type: string
+          description: The magic link that, when visited, will sign a JWT with the
+            given information and pass it along in a redirect to the given URL. The
+            link can only be used once. This link should as if it were the signed
+            JWT.
+        secret:
+          type: string
+          description: The secret embedded in the magic link. It can only be used
+            once, so using it will automatically expire the link.
+      description: The results for creating a magic link.
+    LinkCreateResponse:
+      type: object
+      properties:
+        linkCreateResults:
+          $ref: '#/components/schemas/LinkCreateResults'
+        requestMetadata:
+          $ref: '#/components/schemas/RequestMetadata'
+      description: The response body for the /link/create endpoint.
+    EmailLinkCreateArgs:
+      required:
+      - serviceName
+      - subject
+      - title
+      - toEmail
+      type: object
+      properties:
+        buttonText:
+          type: string
+          description: The text to display on the button in the email. It defaults
+            to "Magic link".
+          example: Login
+          default: Magic link
+        greeting:
+          type: string
+          description: The smaller text above the title.
+          example: Hello Jane Doe,
+        logoClickURL:
+          type: string
+          description: The URL to redirect to when the logo is clicked.
+          example: https://example.com
+        logoImageURL:
+          type: string
+          description: The URL to the logo image to display in the email.
+          example: https://example.com/logo.png
+        serviceName:
+          type: string
+          description: The name of your service. This is used in invisible email metadata.
+          example: example.com
+        subject:
+          type: string
+          description: The subject of the email. It must be between 5 and 100 characters
+            inclusive. Make sure to include the name of your application.
+          example: Login to example.com
+        subTitle:
+          type: string
+          description: The smaller text, right above the magic link button.
+          example: Login using the button below.
+        title:
+          type: string
+          description: The larger text, right above the subtitle. It must be between
+            5 and 256 characters inclusive. Make sure to include the name of your
+            application.
+          example: Login to example.com with a magic link
+        toEmail:
+          type: string
+          description: The email address to send the magic link to.
+          format: email
+          example: jane.doe@example.com
+        toName:
+          type: string
+          description: The name of the recipient.
+          example: Jane Doe
+      description: Parameters to create an email magic link.
+    EmailLinkCreateRequest:
+      required:
+      - emailArgs
+      - linkArgs
+      type: object
+      properties:
+        emailArgs:
+          $ref: '#/components/schemas/EmailLinkCreateArgs'
+        linkArgs:
+          $ref: '#/components/schemas/LinkCreateArgs'
+      description: The request body for the /email-link/create endpoint.
+    EmailLinkCreateResults:
+      type: object
+      properties:
+        linkCreateResults:
+          $ref: '#/components/schemas/LinkCreateResults'
+      description: The results for creating an email magic link.
+    EmailLinkCreateResponse:
+      type: object
+      properties:
+        emailLinkCreateResults:
+          $ref: '#/components/schemas/EmailLinkCreateResults'
+        requestMetadata:
+          $ref: '#/components/schemas/RequestMetadata'
+      description: The response body from the /email-link/create endpoint.
+    ServiceAccountCreateArgs:
+      type: object
+      properties:
+        serviceLogo:
+          type: string
+          description: The URL of the service account's service's logo.
+          format: uri
+        serviceName:
+          type: string
+          description: The name of the service account's service.
+        serviceURL:
+          type: string
+          description: The landing page URL for the service account's service.
+          format: uri
+      description: Parameters to create a service account.
+    ServiceAccountCreateRequest:
+      required:
+      - createServiceAccountArgs
+      type: object
+      properties:
+        createServiceAccountArgs:
+          $ref: '#/components/schemas/ServiceAccountCreateArgs'
+      description: The request body for the /admin/service-account/create endpoint.
+    ServiceAccountCreateResults:
+      type: object
+      properties:
+        serviceAccount:
+          $ref: '#/components/schemas/ServiceAccount'
+      description: The results for creating a service account.
+    ServiceAccountCreateResponse:
+      type: object
+      properties:
+        serviceAccountCreateResults:
+          $ref: '#/components/schemas/ServiceAccountCreateResults'
+        requestMetadata:
+          $ref: '#/components/schemas/RequestMetadata'
+      description: The response body for the /admin/service-account/create endpoint.
+  securitySchemes:
+    apiKey:
+      type: apiKey
+      name: X-API-KEY
+      in: header
