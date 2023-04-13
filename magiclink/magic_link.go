@@ -8,9 +8,11 @@ import (
 	"crypto/rsa"
 	"errors"
 	"fmt"
+	"html/template"
 	"net/http"
 	"net/url"
 
+	jt "github.com/MicahParks/jsontype"
 	"github.com/MicahParks/jwkset"
 	"github.com/golang-jwt/jwt/v4"
 
@@ -25,13 +27,53 @@ const (
 	DefaultSecretQueryKey = "secret"
 )
 
+type ReCAPTCHAV3TemplateConfig struct {
+	CSS              template.CSS  `json:"css"`
+	Code             string        `json:"code"`
+	HTMLTitle        string        `json:"htmlTitle"`
+	Instruction      string        `json:"instruction"`
+	ReCAPTCHASiteKey template.HTML `json:"reCAPTCHASiteKey"`
+	Title            string        `json:"title"`
+}
+
+type recaptchav3TemplateData struct {
+	ButtonSkipsVerification bool
+	Config                  ReCAPTCHAV3TemplateConfig
+	Redirect                string
+}
+
+func (f ReCAPTCHAV3TemplateConfig) DefaultsAndValidate() (ReCAPTCHAV3TemplateConfig, error) {
+	if f.CSS == "" {
+		f.CSS = template.CSS(defaultCSS)
+	}
+	if f.Instruction == "" {
+		f.Instruction = "Click the below button if this page does not automatically redirect. This page is meant to stop robots from using magic links."
+	}
+	if f.HTMLTitle == "" {
+		f.HTMLTitle = "Magic Link - Browser Check"
+	}
+	if f.ReCAPTCHASiteKey == "" {
+		return f, fmt.Errorf("%w: ReCAPTCHASiteKey is required", jt.ErrDefaultsAndValidate)
+	}
+	if f.Code == "" {
+		f.Code = "BROWSER CHECK"
+	}
+	if f.Title == "" {
+		f.Title = "Checking your browser..."
+	}
+	return f, nil
+}
+
 // MagicLink holds the necessary assets for the magic link service.
 type MagicLink[CustomCreateArgs, CustomReadResults, CustomKeyMeta any] struct {
-	Store          Storage[CustomCreateArgs, CustomReadResults, CustomKeyMeta]
-	errorHandler   ErrorHandler
-	jwks           *jwksCache[CustomKeyMeta]
-	secretQueryKey string
-	serviceURL     *url.URL
+	Store             Storage[CustomCreateArgs, CustomReadResults, CustomKeyMeta]
+	errorHandler      ErrorHandler
+	tmpl              *template.Template
+	jwks              *jwksCache[CustomKeyMeta]
+	preventRobotsEnum PreventRobotsEnum
+	reCAPTCHAV3Config ReCAPTCHAV3Config
+	secretQueryKey    string
+	serviceURL        *url.URL
 }
 
 // NewMagicLink creates a new MagicLink. The given setupCtx is only used during the creation of the MagicLink.
@@ -41,6 +83,15 @@ func NewMagicLink[CustomCreateArgs, CustomReadResults, CustomKeyMeta any](setupC
 	err := config.Valid()
 	if err != nil {
 		return m, fmt.Errorf("failed to validate config: %w", err)
+	}
+
+	htmlTemplate := config.HTMLTemplate
+	if htmlTemplate == "" {
+		htmlTemplate = recaptchav3Template
+	}
+	tmpl, err := template.New("").Parse(htmlTemplate)
+	if err != nil {
+		return m, fmt.Errorf("failed to parse HTML template: %w", err)
 	}
 
 	jCache, err := newJWKSCache(setupCtx, config.JWKS)
@@ -60,11 +111,14 @@ func NewMagicLink[CustomCreateArgs, CustomReadResults, CustomKeyMeta any](setupC
 	}
 
 	m = MagicLink[CustomCreateArgs, CustomReadResults, CustomKeyMeta]{
-		errorHandler:   config.ErrorHandler,
-		jwks:           jCache,
-		secretQueryKey: secretQueryKey,
-		serviceURL:     config.ServiceURL,
-		Store:          store,
+		Store:             store,
+		errorHandler:      config.ErrorHandler,
+		tmpl:              tmpl,
+		jwks:              jCache,
+		preventRobotsEnum: config.PreventRobotsDefault,
+		reCAPTCHAV3Config: ReCAPTCHAV3Config{},
+		secretQueryKey:    secretQueryKey,
+		serviceURL:        config.ServiceURL,
 	}
 
 	return m, nil
@@ -145,7 +199,32 @@ func (m MagicLink[CustomCreateArgs, CustomReadResults, CustomKeyMeta]) MagicLink
 		query.Add(queryKey, jwtB64)
 		u.RawQuery = query.Encode()
 
-		http.Redirect(writer, request, u.String(), http.StatusSeeOther)
+		preventRobotsEnum := PreventRobotsEnum("") // TODO Determine if request specified no robot prevention.
+		if preventRobotsEnum == PreventRobotsDefault {
+			preventRobotsEnum = m.preventRobotsEnum
+		}
+		switch preventRobotsEnum {
+		case PreventRobotsReCAPTCHAV3:
+			// Proceed.
+		default:
+			// TODO Make and handle custom error. Use http.StatusSeeOther as recommended response code? See what other cases do.
+			fallthrough
+		case PreventRobotsNone:
+			http.Redirect(writer, request, u.String(), http.StatusSeeOther)
+			return
+		}
+
+		tData := recaptchav3TemplateData{
+			ButtonSkipsVerification: false, // TODO Get from request.
+			Config:                  m.reCAPTCHAV3Config.TemplateConfig,
+			Redirect:                u.String(),
+		}
+
+		err = m.tmpl.Execute(writer, tData)
+		if err != nil {
+			m.handleError(fmt.Errorf("failed to execute HTML template: %w", err), http.StatusInternalServerError, request, writer)
+			return
+		}
 	})
 }
 
