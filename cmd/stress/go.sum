@@ -6,8 +6,8 @@ github.com/MicahParks/jwkset v0.3.1 h1:DIVazR/elD8CLWPblrVo610TzovIDYMcvlM4X0UT0
 github.com/MicahParks/jwkset v0.3.1/go.mod h1:Ob0sxSgMmQZFg4GO59PVBnfm+jtdQ1MJbfZDU90tEwM=
 github.com/MicahParks/keyfunc v1.9.0 h1:lhKd5xrFHLNOWrDc4Tyb/Q1AJ4LCzQ48GVJyVIID3+o=
 github.com/MicahParks/keyfunc v1.9.0/go.mod h1:IdnCilugA0O/99dW+/MkvlyrsX8+L8+x95xuVNtM5jw=
-github.com/MicahParks/magiclinksdev v0.0.1 h1:gKFZoR+zzuEOIvqMle/7WDVMlAKJajLz0WxQax3vDsw=
-github.com/MicahParks/magiclinksdev v0.0.1/go.mod h1:TyNKaq+nO1Fj4vYyWQ87zE5YwW8urLre1MxkDZxglRI=
+github.com/MicahParks/magiclinksdev v0.1.1 h1:80EeA2bqcr1tTH3zypxyyIIoJOXcvGRoYn4ObAkxtwo=
+github.com/MicahParks/magiclinksdev v0.1.1/go.mod h1:TyNKaq+nO1Fj4vYyWQ87zE5YwW8urLre1MxkDZxglRI=
 github.com/aws/aws-sdk-go v1.44.194 h1:1ZDK+QDcc5oRbZGgRZSz561eR8XVizXCeGpoZKo33NU=
 github.com/benbjohnson/clock v1.1.0 h1:Q92kusRqC1XV2MjkWETPvjJVqKetz1OzxZB7mHJLju8=
 github.com/cockroachdb/apd v1.1.0 h1:3LFP3629v+1aKXU5Q37mxmRxX/pIu1nijXydLShEq5I=
