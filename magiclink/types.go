@@ -7,7 +7,6 @@ import (
 	"net/url"
 	"time"
 
-	jt "github.com/MicahParks/jsontype"
 	"github.com/MicahParks/jwkset"
 	"github.com/golang-jwt/jwt/v4"
 )
@@ -125,31 +124,6 @@ const (
 
 // PreventRobotsEnum is an enum that determines how robots will be prevented from following magic links.
 type PreventRobotsEnum string
-
-// ReCAPTCHAV3Config is the configuration for Google's reCAPTCHA v3.
-type ReCAPTCHAV3Config struct {
-	APKPackageName []string `json:"apkPackageName"`
-	Action         []string `json:"action"`
-	Hostname       []string `json:"hostname"`
-	MinScore       float64  `json:"minScore"`
-	SecretKey      string   `json:"secretKey"`
-	TemplateConfig ReCAPTCHAV3TemplateConfig
-}
-
-func (r ReCAPTCHAV3Config) DefaultsAndValidate() (ReCAPTCHAV3Config, error) {
-	if r.MinScore == 0 {
-		r.MinScore = 0.5
-	}
-	if r.SecretKey == "" {
-		return r, fmt.Errorf("%w: ReCAPTCHA v3 secret key is required", jt.ErrDefaultsAndValidate)
-	}
-	var err error
-	r.TemplateConfig, err = r.TemplateConfig.DefaultsAndValidate()
-	if err != nil {
-		return r, fmt.Errorf("failed to validate ReCAPTCHA v3 template data: %w", err)
-	}
-	return r, nil
-}
 
 // Config contains the required assets to create a MagicLink service.
 type Config[CustomCreateArgs, CustomReadResults, CustomKeyMeta any] struct {

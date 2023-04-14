@@ -12,7 +12,6 @@ import (
 	"net/http"
 	"net/url"
 
-	jt "github.com/MicahParks/jsontype"
 	"github.com/MicahParks/jwkset"
 	"github.com/golang-jwt/jwt/v4"
 
@@ -26,43 +25,6 @@ const (
 	// DefaultSecretQueryKey is the default URL query parameter to contain the secret for a magic link.
 	DefaultSecretQueryKey = "secret"
 )
-
-type ReCAPTCHAV3TemplateConfig struct {
-	CSS              template.CSS  `json:"css"`
-	Code             string        `json:"code"`
-	HTMLTitle        string        `json:"htmlTitle"`
-	Instruction      string        `json:"instruction"`
-	ReCAPTCHASiteKey template.HTML `json:"reCAPTCHASiteKey"`
-	Title            string        `json:"title"`
-}
-
-type recaptchav3TemplateData struct {
-	ButtonSkipsVerification bool
-	Config                  ReCAPTCHAV3TemplateConfig
-	Redirect                string
-}
-
-func (f ReCAPTCHAV3TemplateConfig) DefaultsAndValidate() (ReCAPTCHAV3TemplateConfig, error) {
-	if f.CSS == "" {
-		f.CSS = template.CSS(defaultCSS)
-	}
-	if f.Instruction == "" {
-		f.Instruction = "Click the below button if this page does not automatically redirect. This page is meant to stop robots from using magic links."
-	}
-	if f.HTMLTitle == "" {
-		f.HTMLTitle = "Magic Link - Browser Check"
-	}
-	if f.ReCAPTCHASiteKey == "" {
-		return f, fmt.Errorf("%w: ReCAPTCHASiteKey is required", jt.ErrDefaultsAndValidate)
-	}
-	if f.Code == "" {
-		f.Code = "BROWSER CHECK"
-	}
-	if f.Title == "" {
-		f.Title = "Checking your browser..."
-	}
-	return f, nil
-}
 
 // MagicLink holds the necessary assets for the magic link service.
 type MagicLink[CustomCreateArgs, CustomReadResults, CustomKeyMeta any] struct {
