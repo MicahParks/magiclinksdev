@@ -59,7 +59,6 @@ func (p CreateArgs[CustomCreateArgs]) Valid() error {
 type ReadResponse[CustomCreateArgs, CustomReadResponse any] struct {
 	// Custom is additional data or metadata for your use case.
 	Custom CustomReadResponse
-
 	// CreateArgs are the parameters used to create the magic link.
 	CreateArgs CreateArgs[CustomCreateArgs]
 }
@@ -113,39 +112,19 @@ func (f ErrorHandlerFunc) Handle(args ErrorHandlerArgs) {
 	f(args)
 }
 
-const (
-	// PreventRobotsDefault indicates that the default robot prevention should be used.
-	PreventRobotsDefault PreventRobotsEnum = ""
-	// PreventRobotsNone indicates that no robot prevention should be used.
-	PreventRobotsNone PreventRobotsEnum = "none"
-	// PreventRobotsReCAPTCHAV3 indicates that Google's reCAPTCHA v3 should be used to prevent robots.
-	PreventRobotsReCAPTCHAV3 PreventRobotsEnum = "recaptchav3"
-)
-
-// PreventRobotsEnum is an enum that determines how robots will be prevented from following magic links.
-type PreventRobotsEnum string
-
 // Config contains the required assets to create a MagicLink service.
-type Config[CustomCreateArgs, CustomReadResults, CustomKeyMeta any] struct {
-	ErrorHandler         ErrorHandler
-	HTMLTemplate         string
-	JWKS                 JWKSArgs[CustomKeyMeta]
-	PreventRobotsDefault PreventRobotsEnum
-	ReCAPTCHAV3Config    ReCAPTCHAV3Config
-	ServiceURL           *url.URL
-	SecretQueryKey       string
-	Store                Storage[CustomCreateArgs, CustomReadResults, CustomKeyMeta]
+type Config[CustomCreateArgs, CustomReadResponse, CustomKeyMeta any] struct {
+	ErrorHandler     ErrorHandler
+	HTMLTemplate     string
+	JWKS             JWKSArgs[CustomKeyMeta]
+	CustomRedirector Redirector[CustomCreateArgs, CustomReadResponse]
+	ServiceURL       *url.URL
+	SecretQueryKey   string
+	Store            Storage[CustomCreateArgs, CustomReadResponse, CustomKeyMeta]
 }
 
 // Valid confirms the Config is valid.
-func (c Config[CustomCreateArgs, CustomReadResults, CustomKeyMeta]) Valid() error {
-	// TODO If c.PreventRobotsDefault is an empty string, default to PreventRobotsNone. Do this in the mld code.
-	switch c.PreventRobotsDefault {
-	case PreventRobotsNone, PreventRobotsReCAPTCHAV3:
-		// Proceed.
-	default:
-		return fmt.Errorf("%w: unknown PreventRobotsDefault value: %q", ErrArgs, c.PreventRobotsDefault)
-	}
+func (c Config[CustomCreateArgs, CustomReadResponse, CustomKeyMeta]) Valid() error {
 	if c.ServiceURL == nil {
 		return fmt.Errorf("%w: include a service URL, this is used to build magic links", ErrArgs)
 	}
