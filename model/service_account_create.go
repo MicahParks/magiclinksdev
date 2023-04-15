@@ -8,7 +8,7 @@ import (
 type ServiceAccountCreateArgs struct{}
 
 // Validate implements the Validatable interface.
-func (n ServiceAccountCreateArgs) Validate(config Validation) (ValidServiceAccountCreateArgs, error) {
+func (n ServiceAccountCreateArgs) Validate(_ Validation) (ValidServiceAccountCreateArgs, error) {
 	return ValidServiceAccountCreateArgs(n), nil
 }
 

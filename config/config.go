@@ -111,6 +111,7 @@ type PreventRobots struct {
 	ReCAPTCHAV3 magiclink.ReCAPTCHAV3Config `json:"recaptchav3"`
 }
 
+// DefaultsAndValidate implements the jsontype.Config interface.
 func (p PreventRobots) DefaultsAndValidate() (PreventRobots, error) {
 	var err error
 	switch p.Method {
