@@ -168,18 +168,6 @@ func (m MagicLink[CustomCreateArgs, CustomReadResponse, CustomKeyMeta]) MagicLin
 	})
 }
 
-func redirectURLFromResponse[CustomCreateArgs, CustomReadResponse any](response ReadResponse[CustomCreateArgs, CustomReadResponse], jwtB64 string) *url.URL {
-	u := copyURL(response.CreateArgs.RedirectURL)
-	query := u.Query()
-	queryKey := response.CreateArgs.RedirectQueryKey
-	if queryKey == "" {
-		queryKey = DefaultRedirectQueryKey
-	}
-	query.Add(queryKey, jwtB64)
-	u.RawQuery = query.Encode()
-	return u
-}
-
 // HandleMagicLink is a method that accepts a magic link secret, then returns the signed JWT.
 func (m MagicLink[CustomCreateArgs, CustomReadResponse, CustomKeyMeta]) HandleMagicLink(ctx context.Context, secret string) (jwtB64 string, response ReadResponse[CustomCreateArgs, CustomReadResponse], err error) {
 	response, err = m.Store.ReadLink(ctx, secret)
@@ -258,6 +246,18 @@ func BestSigningMethod(key interface{}) jwt.SigningMethod {
 		signingMethod = jwt.SigningMethodHS512
 	}
 	return signingMethod
+}
+
+func redirectURLFromResponse[CustomCreateArgs, CustomReadResponse any](response ReadResponse[CustomCreateArgs, CustomReadResponse], jwtB64 string) *url.URL {
+	u := copyURL(response.CreateArgs.RedirectURL)
+	query := u.Query()
+	queryKey := response.CreateArgs.RedirectQueryKey
+	if queryKey == "" {
+		queryKey = DefaultRedirectQueryKey
+	}
+	query.Add(queryKey, jwtB64)
+	u.RawQuery = query.Encode()
+	return u
 }
 
 func signingMethodECDSACurve(curve elliptic.Curve, signingMethod jwt.SigningMethod) jwt.SigningMethod {
