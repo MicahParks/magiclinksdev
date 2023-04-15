@@ -142,8 +142,7 @@ func (m MagicLink[CustomCreateArgs, CustomReadResponse, CustomKeyMeta]) MagicLin
 			return
 		}
 
-		customRedirect := true // TODO Determine if the request wants a custom redirect or not.
-		if customRedirect {
+		if m.customRedirector != nil {
 			args := RedirectorArgs[CustomCreateArgs, CustomReadResponse, CustomKeyMeta]{
 				ReadAndExpireLink: m.HandleMagicLink,
 				Request:           r,
