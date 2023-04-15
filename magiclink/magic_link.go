@@ -29,7 +29,7 @@ const (
 // MagicLink holds the necessary assets for the magic link service.
 type MagicLink[CustomCreateArgs, CustomReadResponse, CustomKeyMeta any] struct {
 	Store             Storage[CustomCreateArgs, CustomReadResponse, CustomKeyMeta]
-	customRedirector  Redirector[CustomCreateArgs, CustomReadResponse]
+	customRedirector  Redirector[CustomCreateArgs, CustomReadResponse, CustomKeyMeta]
 	errorHandler      ErrorHandler
 	tmpl              *template.Template
 	jwks              *jwksCache[CustomKeyMeta]
@@ -142,6 +142,18 @@ func (m MagicLink[CustomCreateArgs, CustomReadResponse, CustomKeyMeta]) MagicLin
 			return
 		}
 
+		customRedirect := true // TODO Determine if the request wants a custom redirect or not.
+		if customRedirect {
+			args := RedirectorArgs[CustomCreateArgs, CustomReadResponse, CustomKeyMeta]{
+				ReadAndExpireLink: m.HandleMagicLink,
+				Request:           r,
+				Secret:            secret,
+				Writer:            w,
+			}
+			m.customRedirector.Redirect(args)
+			return
+		}
+
 		jwtB64, response, err := m.HandleMagicLink(ctx, secret)
 		if err != nil {
 			if errors.Is(err, ErrLinkNotFound) {
@@ -151,31 +163,21 @@ func (m MagicLink[CustomCreateArgs, CustomReadResponse, CustomKeyMeta]) MagicLin
 			m.handleError(err, http.StatusInternalServerError, r, w)
 			return
 		}
-
-		u := copyURL(response.CreateArgs.RedirectURL)
-		query := u.Query()
-		queryKey := response.CreateArgs.RedirectQueryKey
-		if queryKey == "" {
-			queryKey = DefaultRedirectQueryKey
-		}
-		query.Add(queryKey, jwtB64)
-		u.RawQuery = query.Encode()
-
-		customRedirect := true // TODO Determine if the request wants a custom redirect or not.
-		if customRedirect {
-			// TODO
-			args := RedirectArgs[CustomCreateArgs, CustomReadResponse]{
-				ReadResponse: response,
-				RedirectURL:  u,
-				Request:      r,
-				Writer:       w,
-			}
-			m.customRedirector.Redirect(args)
-			return
-		}
-
+		u := redirectURLFromResponse(response, jwtB64)
 		http.Redirect(w, r, u.String(), http.StatusSeeOther)
 	})
+}
+
+func redirectURLFromResponse[CustomCreateArgs, CustomReadResponse any](response ReadResponse[CustomCreateArgs, CustomReadResponse], jwtB64 string) *url.URL {
+	u := copyURL(response.CreateArgs.RedirectURL)
+	query := u.Query()
+	queryKey := response.CreateArgs.RedirectQueryKey
+	if queryKey == "" {
+		queryKey = DefaultRedirectQueryKey
+	}
+	query.Add(queryKey, jwtB64)
+	u.RawQuery = query.Encode()
+	return u
 }
 
 // HandleMagicLink is a method that accepts a magic link secret, then returns the signed JWT.

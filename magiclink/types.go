@@ -117,7 +117,7 @@ type Config[CustomCreateArgs, CustomReadResponse, CustomKeyMeta any] struct {
 	ErrorHandler     ErrorHandler
 	HTMLTemplate     string
 	JWKS             JWKSArgs[CustomKeyMeta]
-	CustomRedirector Redirector[CustomCreateArgs, CustomReadResponse]
+	CustomRedirector Redirector[CustomCreateArgs, CustomReadResponse, CustomKeyMeta]
 	ServiceURL       *url.URL
 	SecretQueryKey   string
 	Store            Storage[CustomCreateArgs, CustomReadResponse, CustomKeyMeta]

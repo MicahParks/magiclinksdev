@@ -1,17 +1,17 @@
 package magiclink
 
 import (
+	"context"
 	"net/http"
-	"net/url"
 )
 
-type RedirectArgs[CustomCreateArgs, CustomReadResponse any] struct {
-	ReadResponse ReadResponse[CustomCreateArgs, CustomReadResponse]
-	RedirectURL  *url.URL // TODO Change type to a type that marks magic link as used when read.
-	Request      *http.Request
-	Writer       http.ResponseWriter
+type RedirectorArgs[CustomCreateArgs, CustomReadResponse, CustomKeyMeta any] struct {
+	ReadAndExpireLink func(ctx context.Context, secret string) (jwtB64 string, response ReadResponse[CustomCreateArgs, CustomReadResponse], err error)
+	Request           *http.Request
+	Secret            string
+	Writer            http.ResponseWriter
 }
 
-type Redirector[CustomCreateArgs, CustomReadResponse any] interface {
-	Redirect(args RedirectArgs[CustomCreateArgs, CustomReadResponse])
+type Redirector[CustomCreateArgs, CustomReadResponse, CustomKeyMeta any] interface {
+	Redirect(args RedirectorArgs[CustomCreateArgs, CustomReadResponse, CustomKeyMeta])
 }

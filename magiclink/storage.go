@@ -13,7 +13,7 @@ type Storage[CustomCreateArgs, CustomReadResponse, CustomKeyMeta any] interface 
 	// CreateLink creates a secret for the given parameters and stores the pair. The secret is returned to the caller.
 	CreateLink(ctx context.Context, args CreateArgs[CustomCreateArgs]) (secret string, err error)
 	// ReadLink finds the creation parameters for the given secret. ErrLinkNotFound is returned if the secret is not
-	// found or was deleted/expired. Depending on the implementation, this may or may not delete/expire the pair.
+	// found or was deleted/expired. This will automatically expire the link.
 	ReadLink(ctx context.Context, secret string) (ReadResponse[CustomCreateArgs, CustomReadResponse], error)
 }
 
@@ -30,7 +30,6 @@ func NewMemoryStorage[CustomCreateArgs, CustomReadResponse, CustomKeyMeta any]()
 		links: map[string]ReadResponse[CustomCreateArgs, CustomReadResponse]{},
 	}
 }
-
 func (m *memoryMagicLink[CustomCreateArgs, CustomReadResponse, CustomKeyMeta]) CreateLink(_ context.Context, args CreateArgs[CustomCreateArgs]) (secret string, err error) {
 	m.mux.Lock()
 	defer m.mux.Unlock()
@@ -47,7 +46,6 @@ func (m *memoryMagicLink[CustomCreateArgs, CustomReadResponse, CustomKeyMeta]) C
 	m.links[secret] = response
 	return secret, nil
 }
-
 func (m *memoryMagicLink[CustomCreateArgs, CustomReadResponse, CustomKeyMeta]) ReadLink(_ context.Context, secret string) (ReadResponse[CustomCreateArgs, CustomReadResponse], error) {
 	m.mux.Lock()
 	defer m.mux.Unlock()

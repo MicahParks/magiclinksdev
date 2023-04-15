@@ -35,14 +35,14 @@ func (r ReCAPTCHAV3Config) DefaultsAndValidate() (ReCAPTCHAV3Config, error) {
 	return r, nil
 }
 
-type ReCAPTCHAV3Redirector[CustomCreateArgs, CustomReadResponse any] struct {
+type ReCAPTCHAV3Redirector[CustomCreateArgs, CustomReadResponse, CustomKeyMeta any] struct {
 	checkOpts  recaptcha.V3ResponseCheckOptions
 	tmpl       *template.Template
 	tmplConfig ReCAPTCHAV3TemplateConfig
 	verifier   recaptcha.VerifierV3
 }
 
-func NewReCAPTCHAV3Redirector[CustomCreateArgs, CustomReadResponse any](config ReCAPTCHAV3Config) Redirector[CustomCreateArgs, CustomReadResponse] {
+func NewReCAPTCHAV3Redirector[CustomCreateArgs, CustomReadResponse, CustomKeyMeta any](config ReCAPTCHAV3Config) Redirector[CustomCreateArgs, CustomReadResponse, CustomKeyMeta] {
 	tmpl := template.Must(template.New("").Parse(recaptchav3Template))
 	checkOpts := recaptcha.V3ResponseCheckOptions{
 		APKPackageName: config.APKPackageName,
@@ -50,7 +50,7 @@ func NewReCAPTCHAV3Redirector[CustomCreateArgs, CustomReadResponse any](config R
 		Hostname:       config.Hostname,
 		Score:          config.MinScore,
 	}
-	r := ReCAPTCHAV3Redirector[CustomCreateArgs, CustomReadResponse]{
+	r := ReCAPTCHAV3Redirector[CustomCreateArgs, CustomReadResponse, CustomKeyMeta]{
 		checkOpts:  checkOpts,
 		tmpl:       tmpl,
 		tmplConfig: config.TemplateConfig,
@@ -59,7 +59,9 @@ func NewReCAPTCHAV3Redirector[CustomCreateArgs, CustomReadResponse any](config R
 	return r
 }
 
-func (r ReCAPTCHAV3Redirector[CustomCreateArgs, CustomReadResponse]) Redirect(args RedirectArgs[CustomCreateArgs, CustomReadResponse]) {
+func (r ReCAPTCHAV3Redirector[CustomCreateArgs, CustomReadResponse, CustomKeyMeta]) Redirect(args RedirectorArgs[CustomCreateArgs, CustomReadResponse, CustomKeyMeta]) {
+	ctx := args.Request.Context()
+
 	token := args.Request.URL.Query().Get("token") // TODO Make this a constant.
 	if token != "" && args.Request.Method == http.MethodPost {
 		resp, err := r.verifier.Verify(args.Request.Context(), token, "") // remoteIP left blank because reverse-proxies are a common use case. Could be configurable.
@@ -72,8 +74,15 @@ func (r ReCAPTCHAV3Redirector[CustomCreateArgs, CustomReadResponse]) Redirect(ar
 			args.Writer.WriteHeader(http.StatusBadRequest)
 			return
 		}
+		jwtB64, response, err := args.ReadAndExpireLink(ctx, args.Secret)
+		if err != nil {
+			args.Writer.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		u := redirectURLFromResponse(response, jwtB64)
 		args.Writer.WriteHeader(http.StatusOK)
-		// TODO Write actual magic link to response.
+		_, _ = args.Writer.Write([]byte(u.String()))
+		return
 	}
 
 	tData := recaptchav3TemplateData{
