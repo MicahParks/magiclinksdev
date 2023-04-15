@@ -93,6 +93,7 @@ func (r ReCAPTCHAV3Redirector[CustomCreateArgs, CustomReadResponse, CustomKeyMet
 
 // ReCAPTCHAV3TemplateData is the configuration for the HTML template for Google's reCAPTCHA v3.
 type ReCAPTCHAV3TemplateData struct {
+	ButtonText  string        `json:"buttonText"`
 	CSS         template.CSS  `json:"css"`
 	Code        string        `json:"code"`
 	HTMLTitle   string        `json:"htmlTitle"`
@@ -103,6 +104,9 @@ type ReCAPTCHAV3TemplateData struct {
 
 // DefaultsAndValidate implements the jsontype.Config interface.
 func (r ReCAPTCHAV3TemplateData) DefaultsAndValidate() (ReCAPTCHAV3TemplateData, error) {
+	if r.ButtonText == "" {
+		r.ButtonText = "Continue"
+	}
 	if r.CSS == "" {
 		r.CSS = template.CSS(defaultCSS)
 	}
