@@ -8,7 +8,6 @@ import (
 	"crypto/rsa"
 	"errors"
 	"fmt"
-	"html/template"
 	"net/http"
 	"net/url"
 
@@ -31,7 +30,6 @@ type MagicLink[CustomCreateArgs, CustomReadResponse, CustomKeyMeta any] struct {
 	Store             Storage[CustomCreateArgs, CustomReadResponse, CustomKeyMeta]
 	customRedirector  Redirector[CustomCreateArgs, CustomReadResponse, CustomKeyMeta]
 	errorHandler      ErrorHandler
-	tmpl              *template.Template
 	jwks              *jwksCache[CustomKeyMeta]
 	reCAPTCHAV3Config ReCAPTCHAV3Config
 	secretQueryKey    string

@@ -230,6 +230,7 @@ func wrap(handler http.Handler, middleware ...Middleware) http.Handler {
 	return handler
 }
 
+// WriteErrorBody writes the given error message to the given ResponseWriter in the appropriate format.
 func WriteErrorBody(ctx context.Context, code int, message string, writer http.ResponseWriter) {
 	data, err := json.Marshal(model.NewError(ctx, code, message))
 	if err != nil {

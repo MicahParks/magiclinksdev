@@ -47,6 +47,7 @@ type ReCAPTCHAV3Redirector[CustomCreateArgs, CustomReadResponse, CustomKeyMeta a
 	verifier  recaptcha.VerifierV3
 }
 
+// NewReCAPTCHAV3Redirector creates a new ReCAPTCHAV3Redirector with the given config.
 func NewReCAPTCHAV3Redirector[CustomCreateArgs, CustomReadResponse, CustomKeyMeta any](config ReCAPTCHAV3Config) Redirector[CustomCreateArgs, CustomReadResponse, CustomKeyMeta] {
 	tmpl := template.Must(template.New("").Parse(recaptchav3Template))
 	checkOpts := recaptcha.V3ResponseCheckOptions{
@@ -64,6 +65,7 @@ func NewReCAPTCHAV3Redirector[CustomCreateArgs, CustomReadResponse, CustomKeyMet
 	return r
 }
 
+// Redirect implements the Redirector interface.
 func (r ReCAPTCHAV3Redirector[CustomCreateArgs, CustomReadResponse, CustomKeyMeta]) Redirect(args RedirectorArgs[CustomCreateArgs, CustomReadResponse, CustomKeyMeta]) {
 	ctx := args.Request.Context()
 

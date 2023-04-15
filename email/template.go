@@ -54,6 +54,7 @@ type TemplateData struct {
 	ReCATPTCHA   bool
 }
 
+// TemplateMetadata contains non-configurable metadata for the email templates.
 type TemplateMetadata struct {
 	HTMLInstruction string
 	HTMLTitle       string
