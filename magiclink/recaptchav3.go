@@ -10,7 +10,9 @@ import (
 )
 
 const (
-	ReCAPTCHAV3QueryButtonBypassKey   = "button-bypass"
+	// ReCAPTCHAV3QueryButtonBypassKey is the URL query parameter key for bypassing the reCAPTCHA v3 test.
+	ReCAPTCHAV3QueryButtonBypassKey = "button-bypass"
+	// ReCAPTCHAV3QueryButtonBypassValue is the URL query parameter value for bypassing the reCAPTCHA v3 test.
 	ReCAPTCHAV3QueryButtonBypassValue = "true"
 )
 
