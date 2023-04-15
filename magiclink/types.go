@@ -115,7 +115,6 @@ func (f ErrorHandlerFunc) Handle(args ErrorHandlerArgs) {
 // Config contains the required assets to create a MagicLink service.
 type Config[CustomCreateArgs, CustomReadResponse, CustomKeyMeta any] struct {
 	ErrorHandler     ErrorHandler
-	HTMLTemplate     string
 	JWKS             JWKSArgs[CustomKeyMeta]
 	CustomRedirector Redirector[CustomCreateArgs, CustomReadResponse, CustomKeyMeta]
 	ServiceURL       *url.URL

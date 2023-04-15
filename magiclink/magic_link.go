@@ -47,15 +47,6 @@ func NewMagicLink[CustomCreateArgs, CustomReadResponse, CustomKeyMeta any](setup
 		return m, fmt.Errorf("failed to validate config: %w", err)
 	}
 
-	htmlTemplate := config.HTMLTemplate
-	if htmlTemplate == "" {
-		htmlTemplate = recaptchav3Template
-	}
-	tmpl, err := template.New("").Parse(htmlTemplate)
-	if err != nil {
-		return m, fmt.Errorf("failed to parse HTML template: %w", err)
-	}
-
 	jCache, err := newJWKSCache(setupCtx, config.JWKS)
 	if err != nil {
 		return m, fmt.Errorf("failed to create JWK Set cache: %w", err)
@@ -76,7 +67,6 @@ func NewMagicLink[CustomCreateArgs, CustomReadResponse, CustomKeyMeta any](setup
 		Store:             store,
 		customRedirector:  config.CustomRedirector,
 		errorHandler:      config.ErrorHandler,
-		tmpl:              tmpl,
 		jwks:              jCache,
 		reCAPTCHAV3Config: ReCAPTCHAV3Config{},
 		secretQueryKey:    secretQueryKey,

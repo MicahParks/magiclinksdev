@@ -18,6 +18,7 @@ type Config struct {
 	BaseURL             *jt.JSONType[*url.URL]      `json:"baseURL"`
 	Iss                 string                      `json:"iss"`
 	JWKS                JWKS                        `json:"jwks"`
+	PreventRobots       PreventRobots               `json:"preventRobots"`
 	RelativeRedirectURL *jt.JSONType[*url.URL]      `json:"relativeRedirectURL"`
 	RequestTimeout      *jt.JSONType[time.Duration] `json:"requestTimeout"`
 	RequestMaxBodyBytes int64                       `json:"requestMaxBodyBytes"`
@@ -62,6 +63,14 @@ func (c Config) DefaultsAndValidate() (Config, error) {
 	if c.RequestTimeout.Get() == 0 {
 		c.RequestTimeout = jt.New(5 * time.Second)
 	}
+	c.JWKS, err = c.JWKS.DefaultsAndValidate()
+	if err != nil {
+		return Config{}, fmt.Errorf("failed to validate and apply defaults for JWKS: %w", err)
+	}
+	c.PreventRobots, err = c.PreventRobots.DefaultsAndValidate()
+	if err != nil {
+		return Config{}, fmt.Errorf("failed to validate and apply defaults for preventing robots: %w", err)
+	}
 	if c.RequestMaxBodyBytes == 0 {
 		c.RequestMaxBodyBytes = 1 << 20 // 1 MB.
 	}
@@ -86,4 +95,30 @@ type JWKS struct {
 // DefaultsAndValidate implements the jsontype.Config interface.
 func (j JWKS) DefaultsAndValidate() (JWKS, error) {
 	return j, nil
+}
+
+const (
+	// PreventRobotsReCAPTCHAV3 indicates that ReCAPTCHA V3 should be used to prevent robots from following magic links.
+	PreventRobotsReCAPTCHAV3 PreventRobotsMethod = "recaptchav3"
+)
+
+// PreventRobotsMethod is a set of string constants that indicate how to prevent robots from following magic links.
+type PreventRobotsMethod string
+
+// PreventRobots is the configuration for preventing robots from following magic links.
+type PreventRobots struct {
+	Method      PreventRobotsMethod         `json:"method"`
+	ReCAPTCHAV3 magiclink.ReCAPTCHAV3Config `json:"recaptchav3"`
+}
+
+func (p PreventRobots) DefaultsAndValidate() (PreventRobots, error) {
+	var err error
+	switch p.Method {
+	case PreventRobotsReCAPTCHAV3:
+		p.ReCAPTCHAV3, err = p.ReCAPTCHAV3.DefaultsAndValidate()
+		if err != nil {
+			return PreventRobots{}, fmt.Errorf("failed to validate and apply defaults for ReCAPTCHA V3 configuration: %w", err)
+		}
+	}
+	return p, nil
 }

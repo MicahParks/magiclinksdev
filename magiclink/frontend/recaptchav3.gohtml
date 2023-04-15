@@ -1,28 +1,44 @@
-{{- /*gotype: github.com/MicahParks/magiclinksdev/magiclink.recaptchav3TemplateData*/ -}}
+{{- /*gotype: github.com/MicahParks/magiclinksdev/magiclink.ReCAPTCHAV3TemplateData*/ -}}
 <html class="h-full" lang="en">
 <head>
+  <script src="https://www.recaptcha.net/recaptcha/api.js?render={{.SiteKey}}"></script>
+  <script>
+    grecaptcha.ready(function () {
+      grecaptcha.execute('{{.SiteKey}}', {action: 'submit'}).then(function (token) {
+        console.log('Ready in HTML head.');
+        let xmlHttp = new XMLHttpRequest();
+        xmlHttp.onreadystatechange = function () {
+          if (xmlHttp.readyState === 4 && xmlHttp.status === 200) {
+            console.log(xmlHttp);
+            window.location.href = xmlHttp.responseText;
+          }
+        }
+        let u = new URL(window.location.href);
+        u.searchParams.append('token', token);
+        xmlHttp.open("POST", u.toString(), true);
+        xmlHttp.send(null);
+      });
+    });
+  </script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <script src="https://www.recaptcha.net/recaptcha/api.js?render={{.Config.ReCAPTCHASiteKey}}"></script>
-  <title>{{.Config.Title}}</title>
-  <style>
-    {{.Config.CSS}}
-  </style>
+  <title>{{.Title}}</title>
+  <style>{{.CSS}}</style>
 </head>
 <body class="h-full">
 <main class="grid min-h-full place-items-center bg-white px-6 py-24 sm:py-32 lg:px-8">
   <div class="text-center">
     <p class="text-base font-semibold text-indigo-600">
-        {{.Config.Code}}
+        {{.Code}}
     </p>
     <h1 class="mt-4 text-3xl font-bold tracking-tight text-gray-900 sm:text-5xl">
-        {{.Config.Title}}
+        {{.Title}}
     </h1>
     <p class="mt-6 text-base leading-7 text-gray-600">
-        {{.Config.Instruction}}
+        {{.Instruction}}
     </p>
     <div class="mt-10 flex items-center justify-center gap-x-6">
-      <a href="{{if .ButtonSkipsVerification}}TODO{{else}}TODO{{end}}" {{/*TODO Handle manual verifcation case.*/}}
+      <a href="https://go.dev"
          class="rounded-md bg-indigo-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
         Redirect
       </a>

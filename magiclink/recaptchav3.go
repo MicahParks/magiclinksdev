@@ -11,12 +11,12 @@ import (
 
 // ReCAPTCHAV3Config is the configuration for Google's reCAPTCHA v3.
 type ReCAPTCHAV3Config struct {
-	APKPackageName []string `json:"apkPackageName"`
-	Action         []string `json:"action"`
-	Hostname       []string `json:"hostname"`
-	MinScore       float64  `json:"minScore"`
-	SecretKey      string   `json:"secretKey"`
-	TemplateConfig ReCAPTCHAV3TemplateConfig
+	APKPackageName []string                `json:"apkPackageName"`
+	Action         []string                `json:"action"`
+	Hostname       []string                `json:"hostname"`
+	MinScore       float64                 `json:"minScore"`
+	SecretKey      string                  `json:"secretKey"`
+	TemplateData   ReCAPTCHAV3TemplateData `json:"templateData"`
 }
 
 // DefaultsAndValidate implements the jsontype.Config interface.
@@ -28,7 +28,7 @@ func (r ReCAPTCHAV3Config) DefaultsAndValidate() (ReCAPTCHAV3Config, error) {
 		return r, fmt.Errorf("%w: ReCAPTCHA v3 secret key is required", jt.ErrDefaultsAndValidate)
 	}
 	var err error
-	r.TemplateConfig, err = r.TemplateConfig.DefaultsAndValidate()
+	r.TemplateData, err = r.TemplateData.DefaultsAndValidate()
 	if err != nil {
 		return r, fmt.Errorf("failed to validate ReCAPTCHA v3 template data: %w", err)
 	}
@@ -36,10 +36,10 @@ func (r ReCAPTCHAV3Config) DefaultsAndValidate() (ReCAPTCHAV3Config, error) {
 }
 
 type ReCAPTCHAV3Redirector[CustomCreateArgs, CustomReadResponse, CustomKeyMeta any] struct {
-	checkOpts  recaptcha.V3ResponseCheckOptions
-	tmpl       *template.Template
-	tmplConfig ReCAPTCHAV3TemplateConfig
-	verifier   recaptcha.VerifierV3
+	checkOpts recaptcha.V3ResponseCheckOptions
+	tmpl      *template.Template
+	tmplData  ReCAPTCHAV3TemplateData
+	verifier  recaptcha.VerifierV3
 }
 
 func NewReCAPTCHAV3Redirector[CustomCreateArgs, CustomReadResponse, CustomKeyMeta any](config ReCAPTCHAV3Config) Redirector[CustomCreateArgs, CustomReadResponse, CustomKeyMeta] {
@@ -51,10 +51,10 @@ func NewReCAPTCHAV3Redirector[CustomCreateArgs, CustomReadResponse, CustomKeyMet
 		Score:          config.MinScore,
 	}
 	r := ReCAPTCHAV3Redirector[CustomCreateArgs, CustomReadResponse, CustomKeyMeta]{
-		checkOpts:  checkOpts,
-		tmpl:       tmpl,
-		tmplConfig: config.TemplateConfig,
-		verifier:   recaptcha.NewVerifierV3(config.SecretKey, recaptcha.VerifierV3Options{}),
+		checkOpts: checkOpts,
+		tmpl:      tmpl,
+		tmplData:  config.TemplateData,
+		verifier:  recaptcha.NewVerifierV3(config.SecretKey, recaptcha.VerifierV3Options{}),
 	}
 	return r
 }
@@ -85,51 +85,41 @@ func (r ReCAPTCHAV3Redirector[CustomCreateArgs, CustomReadResponse, CustomKeyMet
 		return
 	}
 
-	tData := recaptchav3TemplateData{
-		ButtonSkipsVerification: false, // TODO Get from create args.
-		Config:                  r.tmplConfig,
-	}
-
-	err := r.tmpl.Execute(args.Writer, tData)
+	err := r.tmpl.Execute(args.Writer, r.tmplData)
 	if err != nil {
 		args.Writer.WriteHeader(http.StatusInternalServerError)
 	}
 }
 
-type recaptchav3TemplateData struct {
-	ButtonSkipsVerification bool
-	Config                  ReCAPTCHAV3TemplateConfig
-}
-
-// ReCAPTCHAV3TemplateConfig is the configuration for the HTML template for Google's reCAPTCHA v3.
-type ReCAPTCHAV3TemplateConfig struct {
-	CSS              template.CSS  `json:"css"`
-	Code             string        `json:"code"`
-	HTMLTitle        string        `json:"htmlTitle"`
-	Instruction      string        `json:"instruction"`
-	ReCAPTCHASiteKey template.HTML `json:"reCAPTCHASiteKey"`
-	Title            string        `json:"title"`
+// ReCAPTCHAV3TemplateData is the configuration for the HTML template for Google's reCAPTCHA v3.
+type ReCAPTCHAV3TemplateData struct {
+	CSS         template.CSS  `json:"css"`
+	Code        string        `json:"code"`
+	HTMLTitle   string        `json:"htmlTitle"`
+	Instruction string        `json:"instruction"`
+	SiteKey     template.HTML `json:"siteKey"`
+	Title       string        `json:"title"`
 }
 
 // DefaultsAndValidate implements the jsontype.Config interface.
-func (f ReCAPTCHAV3TemplateConfig) DefaultsAndValidate() (ReCAPTCHAV3TemplateConfig, error) {
-	if f.CSS == "" {
-		f.CSS = template.CSS(defaultCSS)
+func (r ReCAPTCHAV3TemplateData) DefaultsAndValidate() (ReCAPTCHAV3TemplateData, error) {
+	if r.CSS == "" {
+		r.CSS = template.CSS(defaultCSS)
 	}
-	if f.Instruction == "" {
-		f.Instruction = "Click the below button if this page does not automatically redirect. This page is meant to stop robots from using magic links."
+	if r.Instruction == "" {
+		r.Instruction = "Click the below button if this page does not automatically redirect. This page is meant to prevent robots from using magic links."
 	}
-	if f.HTMLTitle == "" {
-		f.HTMLTitle = "Magic Link - Browser Check"
+	if r.HTMLTitle == "" {
+		r.HTMLTitle = "Magic Link - Browser Check"
 	}
-	if f.ReCAPTCHASiteKey == "" {
-		return f, fmt.Errorf("%w: ReCAPTCHASiteKey is required", jt.ErrDefaultsAndValidate)
+	if r.SiteKey == "" {
+		return r, fmt.Errorf("%w: SiteKey is required", jt.ErrDefaultsAndValidate)
 	}
-	if f.Code == "" {
-		f.Code = "BROWSER CHECK"
+	if r.Code == "" {
+		r.Code = "BROWSER CHECK"
 	}
-	if f.Title == "" {
-		f.Title = "Checking your browser..."
+	if r.Title == "" {
+		r.Title = "Checking your browser..."
 	}
-	return f, nil
+	return r, nil
 }
