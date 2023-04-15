@@ -10,8 +10,8 @@ import (
 )
 
 const (
-	recaptchav3QueryButtonBypassKey   = "button-bypass"
-	recaptchav3QueryButtonBypassValue = "true"
+	ReCAPTCHAV3QueryButtonBypassKey   = "button-bypass"
+	ReCAPTCHAV3QueryButtonBypassValue = "true"
 )
 
 // ReCAPTCHAV3Config is the configuration for Google's reCAPTCHA v3.
@@ -22,6 +22,8 @@ type ReCAPTCHAV3Config struct {
 	MinScore       float64                 `json:"minScore"`
 	SecretKey      string                  `json:"secretKey"`
 	TemplateData   ReCAPTCHAV3TemplateData `json:"templateData"`
+
+	Verifier recaptcha.VerifierV3 `json:"-"`
 }
 
 // DefaultsAndValidate implements the jsontype.Config interface.
@@ -56,11 +58,15 @@ func NewReCAPTCHAV3Redirector[CustomCreateArgs, CustomReadResponse, CustomKeyMet
 		Hostname:       config.Hostname,
 		Score:          config.MinScore,
 	}
+	verifier := config.Verifier
+	if verifier == nil {
+		verifier = recaptcha.NewVerifierV3(config.SecretKey, recaptcha.VerifierV3Options{})
+	}
 	r := ReCAPTCHAV3Redirector[CustomCreateArgs, CustomReadResponse, CustomKeyMeta]{
 		checkOpts: checkOpts,
 		tmpl:      tmpl,
 		tmplData:  config.TemplateData,
-		verifier:  recaptcha.NewVerifierV3(config.SecretKey, recaptcha.VerifierV3Options{}),
+		verifier:  verifier,
 	}
 	return r
 }
@@ -92,7 +98,7 @@ func (r ReCAPTCHAV3Redirector[CustomCreateArgs, CustomReadResponse, CustomKeyMet
 			_, _ = args.Writer.Write([]byte(u.String()))
 			return
 		}
-		if r.tmplData.ButtonBypass && args.Request.URL.Query().Get(recaptchav3QueryButtonBypassKey) == recaptchav3QueryButtonBypassValue {
+		if r.tmplData.ButtonBypass && args.Request.URL.Query().Get(ReCAPTCHAV3QueryButtonBypassKey) == ReCAPTCHAV3QueryButtonBypassValue {
 			jwtB64, response, err := args.ReadAndExpireLink(ctx, args.Secret)
 			if err != nil {
 				args.Writer.WriteHeader(http.StatusNotFound)
@@ -108,14 +114,11 @@ func (r ReCAPTCHAV3Redirector[CustomCreateArgs, CustomReadResponse, CustomKeyMet
 	if tData.ButtonBypass {
 		u := copyURL(args.Request.URL)
 		query := u.Query()
-		query.Set(recaptchav3QueryButtonBypassKey, recaptchav3QueryButtonBypassValue)
+		query.Set(ReCAPTCHAV3QueryButtonBypassKey, ReCAPTCHAV3QueryButtonBypassValue)
 		u.RawQuery = query.Encode()
 		tData.FormAction = u.String()
 	}
-	err := r.tmpl.Execute(args.Writer, tData)
-	if err != nil {
-		args.Writer.WriteHeader(http.StatusInternalServerError)
-	}
+	_ = r.tmpl.Execute(args.Writer, tData)
 }
 
 // ReCAPTCHAV3TemplateData is the configuration for the HTML template for Google's reCAPTCHA v3.
