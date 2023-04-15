@@ -62,7 +62,7 @@ func NewReCAPTCHAV3Redirector[CustomCreateArgs, CustomReadResponse, CustomKeyMet
 func (r ReCAPTCHAV3Redirector[CustomCreateArgs, CustomReadResponse, CustomKeyMeta]) Redirect(args RedirectorArgs[CustomCreateArgs, CustomReadResponse, CustomKeyMeta]) {
 	ctx := args.Request.Context()
 
-	token := args.Request.URL.Query().Get("token") // TODO Make this a constant.
+	token := args.Request.URL.Query().Get("token")
 	if token != "" && args.Request.Method == http.MethodPost {
 		resp, err := r.verifier.Verify(args.Request.Context(), token, "") // remoteIP left blank because reverse-proxies are a common use case. Could be configurable.
 		if err != nil {
