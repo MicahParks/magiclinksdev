@@ -132,7 +132,6 @@ type ReCAPTCHAV3TemplateData struct {
 
 // DefaultsAndValidate implements the jsontype.Config interface.
 func (r ReCAPTCHAV3TemplateData) DefaultsAndValidate() (ReCAPTCHAV3TemplateData, error) {
-	r.ButtonBypass = true
 	if r.ButtonText == "" {
 		r.ButtonText = "Continue"
 	}

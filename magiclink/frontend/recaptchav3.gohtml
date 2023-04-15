@@ -19,6 +19,9 @@
     <p class="mt-6 text-base leading-7 text-gray-600">
         {{.Instruction}}
     </p>
+    <p class="mt-2 text-xs leading-7 text-gray-600">
+      If the page will not redirect, the magic link may have expired.
+    </p>
       {{- if .ButtonBypass -}}
         <form class="mt-10 flex items-center justify-center gap-x-6" action="{{.FormAction}}" method="post">
           <button type="submit"
@@ -37,23 +40,22 @@
   </footer>
 </main>
 <script>
-    {{/*TODO Uncomment*/}}
-    {{/*grecaptcha.ready(function () {*/}}
-    {{/*  grecaptcha.execute('{{.SiteKey}}', {action: 'submit'}).then(function (token) {*/}}
-    {{/*    console.log('Ready in HTML head.');*/}}
-    {{/*    let xmlHttp = new XMLHttpRequest();*/}}
-    {{/*    xmlHttp.onreadystatechange = function () {*/}}
-    {{/*      if (xmlHttp.readyState === 4 && xmlHttp.status === 200) {*/}}
-    {{/*        console.log(xmlHttp);*/}}
-    {{/*        window.location.href = xmlHttp.responseText;*/}}
-    {{/*      }*/}}
-    {{/*    }*/}}
-    {{/*    let u = new URL(window.location.href);*/}}
-    {{/*    u.searchParams.append('token', token);*/}}
-    {{/*    xmlHttp.open("POST", u.toString(), true);*/}}
-    {{/*    xmlHttp.send(null);*/}}
-    {{/*  });*/}}
-    {{/*});*/}}
+  grecaptcha.ready(function () {
+    grecaptcha.execute('{{.SiteKey}}', {action: 'submit'}).then(function (token) {
+      console.log('Ready in HTML head.');
+      let xmlHttp = new XMLHttpRequest();
+      xmlHttp.onreadystatechange = function () {
+        if (xmlHttp.readyState === 4 && xmlHttp.status === 200) {
+          console.log(xmlHttp);
+          window.location.href = xmlHttp.responseText;
+        }
+      }
+      let u = new URL(window.location.href);
+      u.searchParams.append('token', token);
+      xmlHttp.open("POST", u.toString(), true);
+      xmlHttp.send(null);
+    });
+  });
 </script>
 </body>
 </html>
