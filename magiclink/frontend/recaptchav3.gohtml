@@ -42,11 +42,9 @@
 <script>
   grecaptcha.ready(function () {
     grecaptcha.execute('{{.SiteKey}}', {action: 'submit'}).then(function (token) {
-      console.log('Ready in HTML head.');
       let xmlHttp = new XMLHttpRequest();
       xmlHttp.onreadystatechange = function () {
         if (xmlHttp.readyState === 4 && xmlHttp.status === 200) {
-          console.log(xmlHttp);
           window.location.href = xmlHttp.responseText;
         }
       }
