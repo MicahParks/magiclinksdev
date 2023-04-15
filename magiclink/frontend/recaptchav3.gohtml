@@ -20,7 +20,7 @@
         {{.Instruction}}
     </p>
     <p class="mt-2 text-xs leading-7 text-gray-600">
-      If the page will not redirect, the magic link may have expired.
+      If the page does not redirect, the magic link may have expired.
     </p>
       {{- if .ButtonBypass -}}
         <form class="mt-10 flex items-center justify-center gap-x-6" action="{{.FormAction}}" method="post">
@@ -40,20 +40,20 @@
   </footer>
 </main>
 <script>
-  grecaptcha.ready(function () {
-    grecaptcha.execute('{{.SiteKey}}', {action: 'submit'}).then(function (token) {
-      let xmlHttp = new XMLHttpRequest();
-      xmlHttp.onreadystatechange = function () {
-        if (xmlHttp.readyState === 4 && xmlHttp.status === 200) {
-          window.location.replace(xmlHttp.responseText);
-        }
-      }
-      let u = new URL(window.location.href);
-      u.searchParams.append('token', token);
-      xmlHttp.open("POST", u.toString(), true);
-      xmlHttp.send(null);
-    });
-  });
+  {{/*grecaptcha.ready(function () {*/}}
+  {{/*  grecaptcha.execute('{{.SiteKey}}', {action: 'submit'}).then(function (token) {*/}}
+  {{/*    let xmlHttp = new XMLHttpRequest();*/}}
+  {{/*    xmlHttp.onreadystatechange = function () {*/}}
+  {{/*      if (xmlHttp.readyState === 4 && xmlHttp.status === 200) {*/}}
+  {{/*        window.location.replace(xmlHttp.responseText);*/}}
+  {{/*      }*/}}
+  {{/*    }*/}}
+  {{/*    let u = new URL(window.location.href);*/}}
+  {{/*    u.searchParams.append('token', token);*/}}
+  {{/*    xmlHttp.open("POST", u.toString(), true);*/}}
+  {{/*    xmlHttp.send(null);*/}}
+  {{/*  });*/}}
+  {{/*});*/}}
 </script>
 </body>
 </html>
