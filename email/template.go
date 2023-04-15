@@ -51,6 +51,7 @@ type TemplateData struct {
 	LogoImageURL string
 	LogoClickURL string
 	LogoAltText  string
+	ReCATPTCHA   bool
 }
 
 type TemplateMetadata struct {

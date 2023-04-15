@@ -9,3 +9,8 @@ Never forward this email or share its contents with anyone.
 This link expires in {{.Expiration}}.
 
 Powered by magiclinks.dev
+{{if .ReCATPTCHA}}
+This service is protected by reCAPTCHA and the Google Privacy Policy and Terms of Service apply.
+https://policies.google.com/privacy
+https://policies.google.com/terms
+{{end -}}

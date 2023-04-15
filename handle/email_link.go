@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/uuid"
 
+	"github.com/MicahParks/magiclinksdev/config"
 	"github.com/MicahParks/magiclinksdev/email"
 	"github.com/MicahParks/magiclinksdev/model"
 	"github.com/MicahParks/magiclinksdev/network/middleware/ctxkey"
@@ -39,6 +40,7 @@ func (s *Server) HandleEmailLinkCreate(ctx context.Context, req model.ValidEmail
 		Meta:         meta,
 		Subtitle:     emailArgs.SubTitle,
 		Title:        emailArgs.Title,
+		ReCATPTCHA:   s.Config.PreventRobots.Method == config.PreventRobotsReCAPTCHAV3,
 	}
 	e := email.Email{
 		Subject:      emailArgs.Subject,
