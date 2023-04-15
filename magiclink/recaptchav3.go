@@ -9,6 +9,11 @@ import (
 	"github.com/MicahParks/recaptcha"
 )
 
+const (
+	recaptchav3QueryButtonBypassKey   = "button-bypass"
+	recaptchav3QueryButtonBypassValue = "true"
+)
+
 // ReCAPTCHAV3Config is the configuration for Google's reCAPTCHA v3.
 type ReCAPTCHAV3Config struct {
 	APKPackageName []string                `json:"apkPackageName"`
@@ -63,29 +68,49 @@ func (r ReCAPTCHAV3Redirector[CustomCreateArgs, CustomReadResponse, CustomKeyMet
 	ctx := args.Request.Context()
 
 	token := args.Request.URL.Query().Get("token")
-	if token != "" && args.Request.Method == http.MethodPost {
-		resp, err := r.verifier.Verify(args.Request.Context(), token, "") // remoteIP left blank because reverse-proxies are a common use case. Could be configurable.
-		if err != nil {
-			args.Writer.WriteHeader(http.StatusInternalServerError)
+	if args.Request.Method == http.MethodPost {
+		if token != "" {
+			resp, err := r.verifier.Verify(args.Request.Context(), token, "") // remoteIP left blank because reverse-proxies are a common use case. Could be configurable.
+			if err != nil {
+				args.Writer.WriteHeader(http.StatusBadRequest)
+				return
+			}
+			err = resp.Check(r.checkOpts)
+			if err != nil {
+				args.Writer.WriteHeader(http.StatusBadRequest)
+				return
+			}
+			jwtB64, response, err := args.ReadAndExpireLink(ctx, args.Secret)
+			if err != nil {
+				args.Writer.WriteHeader(http.StatusNotFound)
+				return
+			}
+			u := redirectURLFromResponse(response, jwtB64)
+			args.Writer.WriteHeader(http.StatusOK)
+			_, _ = args.Writer.Write([]byte(u.String()))
 			return
 		}
-		err = resp.Check(r.checkOpts)
-		if err != nil {
-			args.Writer.WriteHeader(http.StatusBadRequest)
+		if r.tmplData.ButtonBypass && args.Request.URL.Query().Get(recaptchav3QueryButtonBypassKey) == recaptchav3QueryButtonBypassValue {
+			jwtB64, response, err := args.ReadAndExpireLink(ctx, args.Secret)
+			if err != nil {
+				args.Writer.WriteHeader(http.StatusNotFound)
+				return
+			}
+			u := redirectURLFromResponse(response, jwtB64)
+			http.Redirect(args.Writer, args.Request, u.String(), http.StatusSeeOther)
 			return
 		}
-		jwtB64, response, err := args.ReadAndExpireLink(ctx, args.Secret)
-		if err != nil {
-			args.Writer.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-		u := redirectURLFromResponse(response, jwtB64)
-		args.Writer.WriteHeader(http.StatusOK)
-		_, _ = args.Writer.Write([]byte(u.String()))
-		return
 	}
 
-	err := r.tmpl.Execute(args.Writer, r.tmplData)
+	tData := r.tmplData
+	if tData.ButtonBypass {
+		u := copyURL(args.Request.URL)
+		query := u.Query()
+		query.Set(recaptchav3QueryButtonBypassKey, recaptchav3QueryButtonBypassValue)
+		u.RawQuery = query.Encode()
+		tData.FormAction = u.String()
+	}
+	err := r.tmpl.Execute(args.Writer, tData)
 	if err != nil {
 		args.Writer.WriteHeader(http.StatusInternalServerError)
 	}
@@ -93,17 +118,21 @@ func (r ReCAPTCHAV3Redirector[CustomCreateArgs, CustomReadResponse, CustomKeyMet
 
 // ReCAPTCHAV3TemplateData is the configuration for the HTML template for Google's reCAPTCHA v3.
 type ReCAPTCHAV3TemplateData struct {
-	ButtonText  string        `json:"buttonText"`
-	CSS         template.CSS  `json:"css"`
-	Code        string        `json:"code"`
-	HTMLTitle   string        `json:"htmlTitle"`
-	Instruction string        `json:"instruction"`
-	SiteKey     template.HTML `json:"siteKey"`
-	Title       string        `json:"title"`
+	ButtonBypass bool          `json:"buttonBypass"`
+	ButtonText   string        `json:"buttonText"`
+	CSS          template.CSS  `json:"css"`
+	Code         string        `json:"code"`
+	HTMLTitle    string        `json:"htmlTitle"`
+	Instruction  string        `json:"instruction"`
+	SiteKey      template.HTML `json:"siteKey"`
+	Title        string        `json:"title"`
+
+	FormAction string `json:"-"`
 }
 
 // DefaultsAndValidate implements the jsontype.Config interface.
 func (r ReCAPTCHAV3TemplateData) DefaultsAndValidate() (ReCAPTCHAV3TemplateData, error) {
+	r.ButtonBypass = true
 	if r.ButtonText == "" {
 		r.ButtonText = "Continue"
 	}
@@ -111,7 +140,10 @@ func (r ReCAPTCHAV3TemplateData) DefaultsAndValidate() (ReCAPTCHAV3TemplateData,
 		r.CSS = template.CSS(defaultCSS)
 	}
 	if r.Instruction == "" {
-		r.Instruction = "Click the below button if this page does not automatically redirect. This page is meant to prevent robots from using magic links."
+		if r.ButtonBypass {
+			r.Instruction = "Please click the button below to continue."
+		}
+		r.Instruction += " This page helps prevent robots from using magic links."
 	}
 	if r.HTMLTitle == "" {
 		r.HTMLTitle = "Magic Link - Browser Check"

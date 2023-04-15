@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{{.Title}}</title>
+  <title>{{.HTMLTitle}}</title>
   <style>{{.CSS}}</style>
   <script src="https://www.recaptcha.net/recaptcha/api.js?render={{.SiteKey}}"></script>
 </head>
@@ -19,13 +19,14 @@
     <p class="mt-6 text-base leading-7 text-gray-600">
         {{.Instruction}}
     </p>
-      {{/*TODO Update page when reCAPTCHA fails. Use free fontawesome icons?*/}}
-    <div class="mt-10 flex items-center justify-center gap-x-6">
-      <a href="https://go.dev" {{/*TODO Make this a <form> element that will submit when clicked and bypass reCAPTCHA, if configured.*/}}
-         class="rounded-md bg-indigo-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
-          {{.ButtonText}}
-      </a>
-    </div>
+      {{- if .ButtonBypass -}}
+        <form class="mt-10 flex items-center justify-center gap-x-6" action="{{.FormAction}}" method="post">
+          <button type="submit"
+                  class="rounded-md bg-indigo-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+              {{.ButtonText}}
+          </button>
+        </form>
+      {{- end -}}
   </div>
   <footer class="mt-auto">
     <div class="mx-auto max-w-7xl px-6 py-12 lg:px-8">
@@ -35,24 +36,24 @@
     </div>
   </footer>
 </main>
- <script>
-      {{/*TODO Uncomment*/}}
-      {{/*grecaptcha.ready(function () {*/}}
-      {{/*  grecaptcha.execute('{{.SiteKey}}', {action: 'submit'}).then(function (token) {*/}}
-      {{/*    console.log('Ready in HTML head.');*/}}
-      {{/*    let xmlHttp = new XMLHttpRequest();*/}}
-      {{/*    xmlHttp.onreadystatechange = function () {*/}}
-      {{/*      if (xmlHttp.readyState === 4 && xmlHttp.status === 200) {*/}}
-      {{/*        console.log(xmlHttp);*/}}
-      {{/*        window.location.href = xmlHttp.responseText;*/}}
-      {{/*      }*/}}
-      {{/*    }*/}}
-      {{/*    let u = new URL(window.location.href);*/}}
-      {{/*    u.searchParams.append('token', token);*/}}
-      {{/*    xmlHttp.open("POST", u.toString(), true);*/}}
-      {{/*    xmlHttp.send(null);*/}}
-      {{/*  });*/}}
-      {{/*});*/}}
-  </script>
+<script>
+    {{/*TODO Uncomment*/}}
+    {{/*grecaptcha.ready(function () {*/}}
+    {{/*  grecaptcha.execute('{{.SiteKey}}', {action: 'submit'}).then(function (token) {*/}}
+    {{/*    console.log('Ready in HTML head.');*/}}
+    {{/*    let xmlHttp = new XMLHttpRequest();*/}}
+    {{/*    xmlHttp.onreadystatechange = function () {*/}}
+    {{/*      if (xmlHttp.readyState === 4 && xmlHttp.status === 200) {*/}}
+    {{/*        console.log(xmlHttp);*/}}
+    {{/*        window.location.href = xmlHttp.responseText;*/}}
+    {{/*      }*/}}
+    {{/*    }*/}}
+    {{/*    let u = new URL(window.location.href);*/}}
+    {{/*    u.searchParams.append('token', token);*/}}
+    {{/*    xmlHttp.open("POST", u.toString(), true);*/}}
+    {{/*    xmlHttp.send(null);*/}}
+    {{/*  });*/}}
+    {{/*});*/}}
+</script>
 </body>
 </html>
