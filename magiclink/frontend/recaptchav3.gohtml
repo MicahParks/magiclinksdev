@@ -45,7 +45,7 @@
       let xmlHttp = new XMLHttpRequest();
       xmlHttp.onreadystatechange = function () {
         if (xmlHttp.readyState === 4 && xmlHttp.status === 200) {
-          window.location.href = xmlHttp.responseText;
+          window.location.replace(xmlHttp.responseText);
         }
       }
       let u = new URL(window.location.href);
