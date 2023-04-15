@@ -128,7 +128,16 @@
                     <p style="margin: 0; font-size: 12px">
                       Never forward this email or share its contents with anyone.
                     </p>
-                    <p style="margin: 0; margin-bottom: 16px; font-size: 12px">This link expires in {{.Expiration}}.</p>
+                    <p style="margin: 0; font-size: 12px">This link expires in {{.Expiration}}.</p>
+                    {{- if .ReCATPTCHA}}{{/*TODO Untested*/}}
+                    <p style="margin: 0; margin-bottom: 16px; font-size: 12px">
+                      This service is protected by reCAPTCHA and the Google
+                      <a href="https://magiclinks.dev" class="hover-text-decoration-underline"
+                         style="text-decoration: none; color: #4338ca">Privacy Policy</a> and
+                      <a href="https://magiclinks.dev" class="hover-text-decoration-underline"
+                         style="text-decoration: none; color: #4338ca">Terms of Service</a> apply.
+                    </p>
+                    {{- end}}
                   </td>
                 </tr>
                 <tr>
