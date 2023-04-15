@@ -153,7 +153,7 @@ func testCreateCases[CustomKeyMeta any](ctx context.Context, t *testing.T, appSe
 	}
 }
 
-func magiclinkSetup[CustomCreateArgs, CustomReadResults, CustomKeyMeta any](ctx context.Context, t *testing.T, args setupArgs[CustomKeyMeta]) (magiclink.MagicLink[CustomCreateArgs, CustomReadResults, CustomKeyMeta], *httptest.Server) {
+func magiclinkSetup[CustomCreateArgs, CustomReadResponse, CustomKeyMeta any](ctx context.Context, t *testing.T, args setupArgs[CustomKeyMeta]) (magiclink.MagicLink[CustomCreateArgs, CustomReadResponse, CustomKeyMeta], *httptest.Server) {
 	dH := &dynamicHandler{}
 	server := httptest.NewServer(dH)
 	serviceURL, err := url.Parse(server.URL)
@@ -165,7 +165,7 @@ func magiclinkSetup[CustomCreateArgs, CustomReadResults, CustomKeyMeta any](ctx 
 		t.Fatalf("Failed to parse magic link path: %s", err)
 	}
 
-	config := magiclink.Config[CustomCreateArgs, CustomReadResults, CustomKeyMeta]{
+	config := magiclink.Config[CustomCreateArgs, CustomReadResponse, CustomKeyMeta]{
 		ErrorHandler:   args.errorHandler,
 		ServiceURL:     serviceURL,
 		SecretQueryKey: args.secretQueryKey,

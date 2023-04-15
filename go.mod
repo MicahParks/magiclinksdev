@@ -6,6 +6,7 @@ require (
 	github.com/MicahParks/jsontype v0.5.0
 	github.com/MicahParks/jwkset v0.3.1
 	github.com/MicahParks/keyfunc v1.9.0
+	github.com/MicahParks/recaptcha v0.0.5
 	github.com/aws/aws-sdk-go v1.44.194
 	github.com/golang-jwt/jwt/v4 v4.4.3
 	github.com/google/uuid v1.3.0

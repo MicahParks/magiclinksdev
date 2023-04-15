@@ -3,7 +3,7 @@ module stress
 go 1.19
 
 require (
-	github.com/MicahParks/magiclinksdev v0.0.1
+	github.com/MicahParks/magiclinksdev v0.1.1
 	go.uber.org/zap v1.24.0
 	golang.org/x/sync v0.1.0
 )
