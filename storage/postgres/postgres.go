@@ -438,10 +438,10 @@ func (p postgres) WriteKey(ctx context.Context, meta jwkset.KeyWithMeta[storage.
 
 	//language=sql
 	const query = `
-INSERT INTO mld.jwk (assets, key_id)
-VALUES ($1, $2)
+INSERT INTO mld.jwk (assets, key_id, alg)
+VALUES ($1, $2, $3)
 `
-	_, err = tx.Exec(ctx, query, assets, meta.KeyID)
+	_, err = tx.Exec(ctx, query, assets, meta.KeyID, meta.ALG)
 	if err != nil {
 		return fmt.Errorf("failed to write JWK to Postgres: %w", err)
 	}
