@@ -18,7 +18,8 @@ var (
 	ErrPostgresSetupCheck = errors.New("failed to perform Postgres setup check")
 )
 
-type setup struct {
+// Setup is the JSON data that sits in the setup table.
+type Setup struct {
 	PlaintextClaims bool   `json:"plaintextClaims,omitempty"`
 	PlaintextJWK    bool   `json:"plaintextJWK,omitempty"`
 	SemVer          string `json:"semver,omitempty"` // https://pkg.go.dev/golang.org/x/mod/semver

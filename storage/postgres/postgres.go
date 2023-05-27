@@ -452,15 +452,9 @@ VALUES ($1, $2)
 func (p postgres) setupCheck(ctx context.Context, config Config) error {
 	tx := ctx.Value(ctxkey.Tx).(*Transaction).Tx
 
-	//language=sql
-	const query = `
-SELECT setup
-FROM mld.setup
-`
-	var s setup
-	err := tx.QueryRow(ctx, query).Scan(&s)
+	s, err := ReadSetup(ctx, tx)
 	if err != nil {
-		return fmt.Errorf("failed to read setup from Postgres: %w", err)
+		return err
 	}
 
 	err = compareSemVer(config.SemVer, s.SemVer)
@@ -475,6 +469,22 @@ FROM mld.setup
 	}
 
 	return nil
+}
+
+// ReadSetup reads the setup information in the database.
+func ReadSetup(ctx context.Context, tx pgx.Tx) (Setup, error) {
+	//language=sql
+	const query = `
+SELECT setup
+FROM mld.setup
+`
+	var s Setup
+	err := tx.QueryRow(ctx, query).Scan(&s)
+	if err != nil {
+		return Setup{}, fmt.Errorf("failed to read setup from Postgres: %w", err)
+	}
+
+	return s, nil
 }
 
 func (p postgres) claimsMarshal(claims jwt.Claims) ([]byte, error) {
