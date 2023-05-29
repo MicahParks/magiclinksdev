@@ -5,7 +5,9 @@ import (
 	"crypto/cipher"
 	"encoding/json"
 	"fmt"
+
 	"github.com/MicahParks/jwkset"
+
 	"github.com/MicahParks/magiclinksdev/storage"
 )
 

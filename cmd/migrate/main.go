@@ -10,8 +10,8 @@ import (
 
 	mld "github.com/MicahParks/magiclinksdev"
 	"github.com/MicahParks/magiclinksdev/setup"
+	"github.com/MicahParks/magiclinksdev/storage/migrate"
 	"github.com/MicahParks/magiclinksdev/storage/postgres"
-	"github.com/MicahParks/magiclinksdev/storage/postgres/migrate"
 )
 
 func main() {
