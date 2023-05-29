@@ -91,6 +91,7 @@ func (p postgresMigrator) Migrate(ctx context.Context) error {
 		Sugared:       p.sugared,
 	}
 
+	migrationsApplied := 0
 	for _, migration := range p.migrations {
 		meta := migration.Metadata()
 		options.Sugared = options.Sugared.With(
@@ -128,6 +129,7 @@ WHERE id
 			if err != nil {
 				return fmt.Errorf("failed to update setup after successful migration: %w", err)
 			}
+			migrationsApplied++
 		}
 		options.Sugared.Infow(msg,
 			logDescription, meta.Description,
@@ -140,6 +142,10 @@ WHERE id
 	if err != nil {
 		return fmt.Errorf("failed to commit migrations transaction: %w", err)
 	}
+
+	p.sugared.Infow("Migrations complete.",
+		"migrationsApplied", migrationsApplied,
+	)
 
 	return nil
 }
