@@ -58,12 +58,9 @@ func (c Config) DefaultsAndValidate() (Config, error) {
 		if c.AES256KeyBase64 == "" {
 			return Config{}, fmt.Errorf("AES256 key must be set when plaintext JWK and claims are disabled: %w", jt.ErrDefaultsAndValidate)
 		}
-		key, err := base64.StdEncoding.DecodeString(c.AES256KeyBase64)
+		_, err := DecodeAES256Base64(c.AES256KeyBase64)
 		if err != nil {
-			return Config{}, fmt.Errorf("failed to Base64 decode AES256 key: %s: %w", err, jt.ErrDefaultsAndValidate)
-		}
-		if len(key) != 32 {
-			return Config{}, fmt.Errorf("AES256 key must be 32 bytes, but is %d bytes: %w", len(key), jt.ErrDefaultsAndValidate)
+			return Config{}, err
 		}
 	} else {
 		if c.AES256KeyBase64 != "" {
@@ -88,6 +85,19 @@ func (c Config) DefaultsAndValidate() (Config, error) {
 	return c, nil
 }
 
+func DecodeAES256Base64(aes256KeyBase64 string) ([32]byte, error) {
+	var k [32]byte
+	key, err := base64.StdEncoding.DecodeString(aes256KeyBase64)
+	if err != nil {
+		return k, fmt.Errorf("failed to Base64 decode AES256 key: %s: %w", err, jt.ErrDefaultsAndValidate)
+	}
+	if len(key) != 32 {
+		return k, fmt.Errorf("AES256 key must be 32 bytes, but is %d bytes: %w", len(key), jt.ErrDefaultsAndValidate)
+	}
+	copy(k[:], key)
+	return k, nil
+}
+
 type postgres struct {
 	aes256Key       [32]byte
 	plaintextClaims bool
@@ -102,14 +112,11 @@ func newPostgres(pool *pgxpool.Pool, config Config) (postgres, error) {
 		pool:            pool,
 	}
 	if !config.PlaintextJWK || !config.PlaintextClaims {
-		key, err := base64.StdEncoding.DecodeString(config.AES256KeyBase64)
+		var err error
+		store.aes256Key, err = DecodeAES256Base64(config.AES256KeyBase64)
 		if err != nil {
-			return postgres{}, fmt.Errorf("failed to Base64 decode AES256 key: %w", err)
+			return postgres{}, fmt.Errorf("failed to decode AES256 key: %w", err)
 		}
-		if len(key) != 32 {
-			return postgres{}, fmt.Errorf("AES256 key must be 32 bytes, but is %d bytes: %w", len(key), storage.ErrKeySize)
-		}
-		copy(store.aes256Key[:], key)
 	} else {
 		if config.AES256KeyBase64 != "" {
 			return postgres{}, fmt.Errorf("AES256 key must not be set when plaintext JWK and claims are enabled: %w", storage.ErrKeySize)

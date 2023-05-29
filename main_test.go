@@ -119,7 +119,7 @@ func createKeyIfNotExists(ctx context.Context, store storage.Storage, logger *lo
 }
 
 func truncateDatabase(ctx context.Context, config postgres.Config, logger *log.Logger) {
-	store, _, err := postgres.New(ctx, config)
+	store, _, err := postgres.NewWithSetup(ctx, config)
 	if err != nil {
 		logger.Fatalf(mld.LogFmt, "Failed to create storage.", err)
 	}

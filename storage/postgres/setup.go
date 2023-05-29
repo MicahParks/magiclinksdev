@@ -25,6 +25,30 @@ type Setup struct {
 	SemVer          string `json:"semver,omitempty"` // https://pkg.go.dev/golang.org/x/mod/semver
 }
 
+// NewWithSetup creates a new Postgres storage and returns its connection pool. It also performs a setup check.
+func NewWithSetup(ctx context.Context, config Config) (storage.Storage, *pgxpool.Pool, error) {
+	post, p, err := New(ctx, config)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to create Postgres storage: %w", err)
+	}
+	tx, err := post.Begin(ctx)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to begin Postgres setup transaction: %w", err)
+	}
+	//goland:noinspection GoUnhandledErrorResult
+	defer tx.Rollback(ctx)
+	ctx = context.WithValue(ctx, ctxkey.Tx, tx)
+	err = post.(postgres).setupCheck(ctx, config)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to Postgres setup check: %w", err)
+	}
+	err = tx.Commit(ctx)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to commit Postgres setup transaction: %w", err)
+	}
+	return post, p, nil
+}
+
 // New creates a new Postgres storage and returns its connection pool.
 func New(ctx context.Context, config Config) (storage.Storage, *pgxpool.Pool, error) {
 	ctx, cancel := context.WithTimeout(ctx, config.InitialTimeout.Get())
@@ -36,21 +60,6 @@ func New(ctx context.Context, config Config) (storage.Storage, *pgxpool.Pool, er
 	post, err := newPostgres(p, config)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to create Postgres storage: %w", err)
-	}
-	tx, err := post.Begin(ctx)
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to begin Postgres setup transaction: %w", err)
-	}
-	//goland:noinspection GoUnhandledErrorResult
-	defer tx.Rollback(ctx)
-	ctx = context.WithValue(ctx, ctxkey.Tx, tx)
-	err = post.setupCheck(ctx, config)
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to Postgres setup check: %w", err)
-	}
-	err = tx.Commit(ctx)
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to commit Postgres setup transaction: %w", err)
 	}
 	return post, p, nil
 }

@@ -30,7 +30,7 @@ func main() {
 		)
 	}
 
-	store, _, err := postgres.New(ctx, config.Storage)
+	store, _, err := postgres.NewWithSetup(ctx, config.Storage)
 	if err != nil {
 		sugared.Fatalw("Failed to create storage.",
 			mld.LogErr, err,

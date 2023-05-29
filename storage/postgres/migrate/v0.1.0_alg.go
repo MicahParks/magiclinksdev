@@ -3,10 +3,12 @@ package migrate
 import (
 	"context"
 	"fmt"
+
 	"github.com/MicahParks/jwkset"
+	"github.com/jackc/pgx/v4"
+
 	"github.com/MicahParks/magiclinksdev/storage"
 	"github.com/MicahParks/magiclinksdev/storage/postgres"
-	"github.com/jackc/pgx/v4"
 )
 
 const (
@@ -24,7 +26,7 @@ func (a Alg) Metadata() Metadata {
 	}
 }
 
-func (a Alg) Migrate(ctx context.Context, setup postgres.Setup, tx pgx.Tx, options Options) (applied bool, err error) {
+func (a Alg) Migrate(ctx context.Context, setup postgres.Setup, tx pgx.Tx, options MigrationOptions) (applied bool, err error) {
 	needed, err := migrationNeeded(a.Metadata().SemVer, setup.SemVer)
 	if err != nil {
 		return false, fmt.Errorf("failed to determine if migration is needed: %w", err)
