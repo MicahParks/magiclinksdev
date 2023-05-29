@@ -14,7 +14,7 @@ INSERT INTO mld.setup (setup)
 VALUES ('{
   "plaintextClaims": false,
   "plaintextJWK": false,
-  "semver": "v0.0.1"
+  "semver": "v0.1.0"
 }');
 
 CREATE TABLE mld.service_account
@@ -37,10 +37,12 @@ CREATE TABLE mld.jwk
     assets          BYTEA                    NOT NULL,
     key_id          TEXT                     NOT NULL,
     signing_default BOOLEAN                  NOT NULL DEFAULT FALSE,
-    created         TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+    created         TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    alg             TEXT                     NOT NULL
 );
 CREATE INDEX ON mld.jwk (key_id);
 CREATE INDEX ON mld.jwk (signing_default);
+CREATE INDEX ON mld.jwk (alg);
 
 CREATE TABLE mld.link
 (

@@ -48,6 +48,16 @@ ALTER TABLE mld.jwk
 
 	//language=sql
 	query = `
+CREATE INDEX ON mld.jwk (alg)
+`
+	_, err = tx.Exec(ctx, query)
+	if err != nil {
+		return false, fmt.Errorf("failed to create index for %q query: %w", a.Metadata().Filename, err)
+	}
+	options.Sugared.Debug(`Created index on "alg" column of "mld.jwk" table.`)
+
+	//language=sql
+	query = `
 SELECT id, assets FROM mld.jwk
 `
 	rows, err := tx.Query(ctx, query)
