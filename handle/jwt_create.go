@@ -33,7 +33,10 @@ func (s *Server) HandleJWTCreate(ctx context.Context, req model.ValidJWTCreateRe
 		return model.JWTCreateResponse{}, fmt.Errorf("failed to add registered claims to JWT claims: %w", err)
 	}
 
-	meta, err := s.Store.ReadSigningKey(ctx)
+	options := storage.ReadSigningKeyOptions{
+		JWTAlg: jwtCreateArgs.JWTAlg,
+	}
+	meta, err := s.Store.ReadSigningKey(ctx, options)
 	if err != nil {
 		return model.JWTCreateResponse{}, fmt.Errorf("failed to get JWT signing key: %w", err)
 	}
@@ -158,7 +161,10 @@ func (s *Server) createLinkArgs(ctx context.Context, args model.ValidLinkCreateA
 		Claims: edited,
 	}
 
-	meta, err := s.Store.ReadSigningKey(ctx)
+	options := storage.ReadSigningKeyOptions{
+		JWTAlg: args.JWTCreateArgs.JWTAlg,
+	}
+	meta, err := s.Store.ReadSigningKey(ctx, options)
 	if err != nil {
 		return createArgs, fmt.Errorf("failed to get JWT signing key: %w", err)
 	}
