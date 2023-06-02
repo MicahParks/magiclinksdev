@@ -252,6 +252,10 @@ definitions:
     description: "Parameters used to create a JWT."
     type: "object"
     properties:
+      jwtAlg:
+        description: "The algorithm to use when signing the JWT. It defaults depends on the server's configuration. The
+        default server configuration is EdDSA."
+        type: "string"
       jwtClaims:
         description: "The JWT claims used to create the signed JWT."
         $ref: "#/definitions/JWTClaims"

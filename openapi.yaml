@@ -256,6 +256,10 @@ components:
     JWTCreateArgs:
       type: object
       properties:
+        jwtAlg:
+          type: string
+          description: The algorithm to use when signing the JWT. It defaults depends
+            on the server's configuration. The default server configuration is EdDSA.
         jwtClaims:
           $ref: '#/components/schemas/JWTClaims'
         jwtLifespanSeconds:

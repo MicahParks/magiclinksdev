@@ -234,17 +234,30 @@ WHERE api_key = $1
 
 	return sa, nil
 }
-func (p postgres) ReadSigningKey(ctx context.Context) (meta jwkset.KeyWithMeta[storage.JWKSetCustomKeyMeta], err error) {
+func (p postgres) ReadSigningKey(ctx context.Context, options storage.ReadSigningKeyOptions) (meta jwkset.KeyWithMeta[storage.JWKSetCustomKeyMeta], err error) {
 	tx := ctx.Value(ctxkey.Tx).(*Transaction).Tx
 
 	//language=sql
-	const query = `
+	query := `
 SELECT assets
 FROM mld.jwk
 WHERE signing_default = TRUE
 `
+
+	args := make([]interface{}, 0)
+	if options.JWTAlg != "" {
+		//language=sql
+		query = `
+SELECT assets
+FROM mld.jwk
+WHERE alg = $1
+ORDER BY created DESC
+`
+		args = append(args, options.JWTAlg)
+	}
+
 	assets := make([]byte, 0)
-	err = tx.QueryRow(ctx, query).Scan(&assets)
+	err = tx.QueryRow(ctx, query, args...).Scan(&assets)
 	if err != nil {
 		return meta, fmt.Errorf("failed to read signing key from Postgres: %w", err)
 	}
@@ -256,7 +269,7 @@ WHERE signing_default = TRUE
 
 	return meta, nil
 }
-func (p postgres) ReadSigningKeySet(ctx context.Context, keyID string) error {
+func (p postgres) UpdateDefaultSigningKey(ctx context.Context, keyID string) error {
 	tx := ctx.Value(ctxkey.Tx).(*Transaction).Tx
 
 	//language=sql
