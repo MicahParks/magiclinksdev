@@ -89,9 +89,9 @@ func New(ctx context.Context, config Config) (storage.Storage, *pgxpool.Pool, er
 	return post, p, nil
 }
 
-func compareSemVer(actual, expected string) error {
-	config := semver.Canonical(actual)
-	database := semver.Canonical(expected)
+func compareSemVer(programSemVer, databaseSemVer string) error {
+	config := semver.Canonical(programSemVer)
+	database := semver.Canonical(databaseSemVer)
 	validConfig := semver.IsValid(config)
 	validDatabase := semver.IsValid(database)
 	if !validConfig || !validDatabase {

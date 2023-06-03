@@ -7,73 +7,73 @@ import (
 
 func TestCompareSemVer(t *testing.T) {
 	cases := []struct {
-		fromConfig string
-		inDatabase string
-		name       string
-		setupErr   bool
+		programSemVer  string
+		databaseSemVer string
+		name           string
+		setupErr       bool
 	}{
 		{
 			name:     "Empty",
 			setupErr: true,
 		},
 		{
-			fromConfig: "v1.0.0",
-			name:       "EmptyConfig",
-			setupErr:   true,
+			programSemVer: "v1.0.0",
+			name:          "EmptyConfig",
+			setupErr:      true,
 		},
 		{
-			inDatabase: "v1.0.0",
-			name:       "EmptyDatabase",
-			setupErr:   true,
+			databaseSemVer: "v1.0.0",
+			name:           "EmptyDatabase",
+			setupErr:       true,
 		},
 		{
-			fromConfig: "v0.1.0",
-			inDatabase: "v0.1.1",
-			name:       "InvalidDev",
-			setupErr:   true,
+			programSemVer:  "v0.1.0",
+			databaseSemVer: "v0.1.1",
+			name:           "InvalidDev",
+			setupErr:       true,
 		},
 		{
-			fromConfig: "v0.1.0",
-			inDatabase: "v0.1.0",
-			name:       "ValidDev",
+			programSemVer:  "v0.1.0",
+			databaseSemVer: "v0.1.0",
+			name:           "ValidDev",
 		},
 		{
-			fromConfig: "v1.0.0",
-			inDatabase: "v1.0.0",
-			name:       "Valid",
+			programSemVer:  "v1.0.0",
+			databaseSemVer: "v1.0.0",
+			name:           "Valid",
 		},
 		{
-			fromConfig: "v1.0.0",
-			inDatabase: "v1.0.1",
-			name:       "ValidPatch",
+			programSemVer:  "v1.0.0",
+			databaseSemVer: "v1.0.1",
+			name:           "ValidPatch",
 		},
 		{
-			fromConfig: "v1.0.0",
-			inDatabase: "v1.1.0",
-			name:       "ValidMinor",
+			programSemVer:  "v1.0.0",
+			databaseSemVer: "v1.1.0",
+			name:           "ValidMinor",
 		},
 		{
-			fromConfig: "v1.1.0",
-			inDatabase: "v1.0.0",
-			name:       "InvalidMinor",
-			setupErr:   true,
+			programSemVer:  "v1.1.0",
+			databaseSemVer: "v1.0.0",
+			name:           "InvalidMinor",
+			setupErr:       true,
 		},
 		{
-			fromConfig: "v1.0.0",
-			inDatabase: "v2.0.0",
-			name:       "InvalidDatabaseMajor",
-			setupErr:   true,
+			programSemVer:  "v1.0.0",
+			databaseSemVer: "v2.0.0",
+			name:           "InvalidDatabaseMajor",
+			setupErr:       true,
 		},
 		{
-			fromConfig: "v2.0.0",
-			inDatabase: "v1.0.0",
-			name:       "InvalidConfigMajor",
-			setupErr:   true,
+			programSemVer:  "v2.0.0",
+			databaseSemVer: "v1.0.0",
+			name:           "InvalidConfigMajor",
+			setupErr:       true,
 		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := compareSemVer(tc.fromConfig, tc.inDatabase)
+			err := compareSemVer(tc.programSemVer, tc.databaseSemVer)
 			if err != nil {
 				if tc.setupErr && errors.Is(err, ErrPostgresSetupCheck) {
 					return
