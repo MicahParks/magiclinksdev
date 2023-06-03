@@ -13,7 +13,6 @@
   },
   "storage": {
     "aes256KeyBase64": "Teb2VZp1dKXJeaXgMCRyWniBFMF2/9WNBlNWSY15NdA=",
-    "dsn": "postgres://postgres:password@mldpostgres:5432/magiclinksdev",
-    "semver": "v0.0.1"
+    "dsn": "postgres://postgres:password@mldpostgres:5432/magiclinksdev"
   }
 }

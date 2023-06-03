@@ -13,6 +13,10 @@ import (
 	"github.com/MicahParks/magiclinksdev/storage"
 )
 
+const (
+	databaseVersion = "v0.1.0"
+)
+
 var (
 	// ErrPostgresSetupCheck is the error returned when the Postgres setup check fails.
 	ErrPostgresSetupCheck = errors.New("failed to perform Postgres setup check")
@@ -64,9 +68,9 @@ func New(ctx context.Context, config Config) (storage.Storage, *pgxpool.Pool, er
 	return post, p, nil
 }
 
-func compareSemVer(fromConfig, inDatabase string) error {
-	config := semver.Canonical(fromConfig)
-	database := semver.Canonical(inDatabase)
+func compareSemVer(actual, expected string) error {
+	config := semver.Canonical(actual)
+	database := semver.Canonical(expected)
 	validConfig := semver.IsValid(config)
 	validDatabase := semver.IsValid(database)
 	if !validConfig || !validDatabase {

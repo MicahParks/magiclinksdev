@@ -42,6 +42,7 @@ var _ storage.Storage = postgres{}
 // Config is the configuration for Postgres storage.
 type Config struct {
 	AES256KeyBase64 string                      `json:"aes256KeyBase64"`
+	AutoMigrate     bool                        `json:"autoMigrate"`
 	DSN             string                      `json:"dsn"`
 	Health          *jt.JSONType[time.Duration] `json:"health"`
 	InitialTimeout  *jt.JSONType[time.Duration] `json:"initialTimeout"`
@@ -49,7 +50,6 @@ type Config struct {
 	MinConns        int32                       `json:"minConns"`
 	PlaintextClaims bool                        `json:"plaintextClaims"`
 	PlaintextJWK    bool                        `json:"plaintextJWK"`
-	SemVer          string                      `json:"semver"` // https://pkg.go.dev/golang.org/x/mod/semver
 }
 
 // DefaultsAndValidate implements the jsontype.Config interface.
@@ -480,7 +480,7 @@ func (p postgres) setupCheck(ctx context.Context, config Config) error {
 		return err
 	}
 
-	err = compareSemVer(config.SemVer, s.SemVer)
+	err = compareSemVer(databaseVersion, s.SemVer)
 	if err != nil {
 		return fmt.Errorf("failed to compare configuration semver with Postgres semver: %w", err)
 	}
