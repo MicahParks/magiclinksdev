@@ -259,6 +259,9 @@ ORDER BY created DESC
 	assets := make([]byte, 0)
 	err = tx.QueryRow(ctx, query, args...).Scan(&assets)
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return meta, fmt.Errorf("failed to read signing key from Postgres: %w: %w", err, storage.ErrNotFound)
+		}
 		return meta, fmt.Errorf("failed to read signing key from Postgres: %w", err)
 	}
 

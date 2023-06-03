@@ -22,6 +22,8 @@ import (
 var (
 	// ErrRegisteredClaimProvided is returned when a registered claim is provided.
 	ErrRegisteredClaimProvided = errors.New("registered claims should not be provided")
+	// ErrJWTAlgNotFound is returned when a JWT alg is not found.
+	ErrJWTAlgNotFound = errors.New("JWT alg not found")
 )
 
 // HandleJWTCreate handles the creation of a JWT.
@@ -38,6 +40,9 @@ func (s *Server) HandleJWTCreate(ctx context.Context, req model.ValidJWTCreateRe
 	}
 	meta, err := s.Store.ReadSigningKey(ctx, options)
 	if err != nil {
+		if errors.Is(err, storage.ErrNotFound) {
+			return model.JWTCreateResponse{}, fmt.Errorf("could not fing signing key with specified JWT alg: %w", ErrJWTAlgNotFound)
+		}
 		return model.JWTCreateResponse{}, fmt.Errorf("failed to get JWT signing key: %w", err)
 	}
 	method := magiclink.BestSigningMethod(meta.Key)
@@ -166,6 +171,9 @@ func (s *Server) createLinkArgs(ctx context.Context, args model.ValidLinkCreateA
 	}
 	meta, err := s.Store.ReadSigningKey(ctx, options)
 	if err != nil {
+		if errors.Is(err, storage.ErrNotFound) {
+			return createArgs, fmt.Errorf("could not fing signing key with specified JWT alg: %w", ErrJWTAlgNotFound)
+		}
 		return createArgs, fmt.Errorf("failed to get JWT signing key: %w", err)
 	}
 

@@ -83,6 +83,10 @@ func HTTPJWTCreate(s *handle.Server) http.Handler {
 				middleware.WriteErrorBody(ctx, http.StatusBadRequest, responseDontRegisteredClaims, w)
 				return
 			}
+			if errors.Is(err, handle.ErrJWTAlgNotFound) {
+				middleware.WriteErrorBody(ctx, http.StatusBadRequest, "Specified JWT algorithm not found.", w)
+				return
+			}
 			sugared.Errorw("Failed to create JWT.",
 				mld.LogErr, err,
 			)
