@@ -259,7 +259,8 @@ components:
         jwtAlg:
           type: string
           description: The algorithm to use when signing the JWT. It defaults depends
-            on the server's configuration. The default server configuration is EdDSA.
+            on the server's configuration. The default server configuration is "EdDSA".
+            The default server options are "EdDSA" and "RS256".
         jwtClaims:
           $ref: '#/components/schemas/JWTClaims'
         jwtLifespanSeconds:
