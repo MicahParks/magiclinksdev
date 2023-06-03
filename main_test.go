@@ -64,7 +64,9 @@ func TestMain(m *testing.M) {
 
 	truncateDatabase(ctx, conf.Storage, logger)
 
-	server, err := setup.CreateTestingProvider(ctx, conf, setup.ServerOptions{})
+	server, err := setup.CreateTestingProvider(ctx, conf, setup.ServerOptions{
+		Sugared: zap.NewNop().Sugar(),
+	})
 	if err != nil {
 		logger.Fatalf(mld.LogFmt, "Failed to create server.", err)
 	}
