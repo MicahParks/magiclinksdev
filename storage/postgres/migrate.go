@@ -91,7 +91,7 @@ func (p postgresMigrator) Migrate(ctx context.Context) error {
 	}
 	err = compareSemVer(databaseVersion, setup.SemVer)
 	if err == nil {
-		p.sugared.Info("Go program and database setup table have the same semantic version. No database migration required.")
+		p.sugared.Debug("No database migrations required.")
 		err = tx.Commit(ctx)
 		if err != nil {
 			return fmt.Errorf("failed to commit migrations transaction: %w", err)
