@@ -17,6 +17,7 @@ const (
 // Alg is the migration from database version v0.0.1 to v0.1.0. This is the first database migration.
 type Alg struct{}
 
+// Metadata helps implement the Migration interface.
 func (a Alg) Metadata() Metadata {
 	return Metadata{
 		Description: `This migrates the database from version v0.0.1 to v0.1.0. This is the first database migration. It adds a column to the "mld.jwk" table to identify the key's algorithm. This is to support a new feature of client key selection.`,
@@ -25,6 +26,7 @@ func (a Alg) Metadata() Metadata {
 	}
 }
 
+// Migrate helps implement the Migration interface.
 func (a Alg) Migrate(ctx context.Context, setup Setup, tx pgx.Tx, options MigrationOptions) (applied bool, err error) {
 	needed, err := migrationNeeded(a.Metadata().SemVer, setup.SemVer)
 	if err != nil {

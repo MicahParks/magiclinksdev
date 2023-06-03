@@ -44,6 +44,7 @@ func (r ReCAPTCHAV3Config) DefaultsAndValidate() (ReCAPTCHAV3Config, error) {
 	return r, nil
 }
 
+// ReCAPTCHAV3Redirector is a Redirector that uses Google's reCAPTCHA v3 to verify the user.
 type ReCAPTCHAV3Redirector[CustomCreateArgs, CustomReadResponse, CustomKeyMeta any] struct {
 	checkOpts recaptcha.V3ResponseCheckOptions
 	tmpl      *template.Template

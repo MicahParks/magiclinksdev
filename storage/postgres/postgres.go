@@ -85,6 +85,7 @@ func (c Config) DefaultsAndValidate() (Config, error) {
 	return c, nil
 }
 
+// DecodeAES256Base64 decodes a Base64 encoded AES256 key.
 func DecodeAES256Base64(aes256KeyBase64 string) ([32]byte, error) {
 	var k [32]byte
 	key, err := base64.StdEncoding.DecodeString(aes256KeyBase64)
