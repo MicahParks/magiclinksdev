@@ -80,7 +80,7 @@ func CreateKeysIfNotExists(ctx context.Context, store storage.Storage) (keys []j
 			return nil, false, fmt.Errorf("failed to write key to storage: %w", err)
 		}
 		if meta.Custom.SigningDefault {
-			err = store.ReadSigningKeySet(ctx, meta.KeyID)
+			err = store.UpdateDefaultSigningKey(ctx, meta.KeyID)
 			if err != nil {
 				return nil, false, fmt.Errorf("failed to set signing default: %w", err)
 			}

@@ -91,10 +91,10 @@ func (t *testStorage) ReadSAFromAPIKey(_ context.Context, apiKey uuid.UUID) (mod
 	}
 	return model.ServiceAccount{}, fmt.Errorf("no service account found with API key %w", storage.ErrNotFound)
 }
-func (t *testStorage) ReadSigningKey(_ context.Context) (meta jwkset.KeyWithMeta[storage.JWKSetCustomKeyMeta], err error) {
+func (t *testStorage) ReadSigningKey(_ context.Context, _ storage.ReadSigningKeyOptions) (meta jwkset.KeyWithMeta[storage.JWKSetCustomKeyMeta], err error) {
 	return t.meta, nil
 }
-func (t *testStorage) ReadSigningKeySet(_ context.Context, _ string) error {
+func (t *testStorage) UpdateDefaultSigningKey(_ context.Context, _ string) error {
 	return nil
 }
 func (t *testStorage) DeleteKey(_ context.Context, _ string) (ok bool, err error) {
@@ -140,10 +140,10 @@ func (e ErrorStorage) ReadSA(_ context.Context, _ uuid.UUID) (model.ServiceAccou
 func (e ErrorStorage) ReadSAFromAPIKey(_ context.Context, _ uuid.UUID) (model.ServiceAccount, error) {
 	return model.ServiceAccount{}, ErrMLDTest
 }
-func (e ErrorStorage) ReadSigningKey(_ context.Context) (meta jwkset.KeyWithMeta[storage.JWKSetCustomKeyMeta], err error) {
+func (e ErrorStorage) ReadSigningKey(_ context.Context, _ storage.ReadSigningKeyOptions) (meta jwkset.KeyWithMeta[storage.JWKSetCustomKeyMeta], err error) {
 	return jwkset.KeyWithMeta[storage.JWKSetCustomKeyMeta]{}, ErrMLDTest
 }
-func (e ErrorStorage) ReadSigningKeySet(_ context.Context, _ string) error {
+func (e ErrorStorage) UpdateDefaultSigningKey(_ context.Context, _ string) error {
 	return ErrMLDTest
 }
 func (e ErrorStorage) DeleteKey(_ context.Context, _ string) (ok bool, err error) {

@@ -44,7 +44,6 @@
     "maxIdle": "4m",
     "minConns": 2,
     "plaintextClaims": false,
-    "plaintextJWK": false,
-    "semver": "v0.0.1"
+    "plaintextJWK": false
   }
 }

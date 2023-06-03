@@ -7,10 +7,15 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v4/pgxpool"
+	"go.uber.org/zap"
 	"golang.org/x/mod/semver"
 
 	"github.com/MicahParks/magiclinksdev/network/middleware/ctxkey"
 	"github.com/MicahParks/magiclinksdev/storage"
+)
+
+const (
+	databaseVersion = "v0.1.0"
 )
 
 var (
@@ -18,10 +23,54 @@ var (
 	ErrPostgresSetupCheck = errors.New("failed to perform Postgres setup check")
 )
 
-type setup struct {
+// Setup is the JSON data that sits in the setup table.
+type Setup struct {
 	PlaintextClaims bool   `json:"plaintextClaims,omitempty"`
 	PlaintextJWK    bool   `json:"plaintextJWK,omitempty"`
 	SemVer          string `json:"semver,omitempty"` // https://pkg.go.dev/golang.org/x/mod/semver
+}
+
+// NewWithSetup creates a new Postgres storage and returns its connection pool. It also performs a setup check.
+func NewWithSetup(ctx context.Context, config Config, setupSugared *zap.SugaredLogger) (storage.Storage, *pgxpool.Pool, error) {
+	post, p, err := New(ctx, config)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to create Postgres storage: %w", err)
+	}
+	if config.AutoMigrate {
+		encryptionKey, err := DecodeAES256Base64(config.AES256KeyBase64)
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to decode AES256 key: %w", err)
+		}
+		options := MigratorOptions{
+			EncryptionKey: encryptionKey,
+			SetupCtx:      ctx,
+			Sugared:       setupSugared,
+		}
+		m, err := NewMigrator(p, options)
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to create Postgres migrator: %w", err)
+		}
+		err = m.Migrate(ctx)
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to migrate Postgres database: %w", err)
+		}
+	}
+	tx, err := post.Begin(ctx)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to begin Postgres setup transaction: %w", err)
+	}
+	//goland:noinspection GoUnhandledErrorResult
+	defer tx.Rollback(ctx)
+	ctx = context.WithValue(ctx, ctxkey.Tx, tx)
+	err = post.(postgres).setupCheck(ctx, config)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to Postgres setup check: %w", err)
+	}
+	err = tx.Commit(ctx)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to commit Postgres setup transaction: %w", err)
+	}
+	return post, p, nil
 }
 
 // New creates a new Postgres storage and returns its connection pool.
@@ -36,57 +85,42 @@ func New(ctx context.Context, config Config) (storage.Storage, *pgxpool.Pool, er
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to create Postgres storage: %w", err)
 	}
-	tx, err := post.Begin(ctx)
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to begin Postgres setup transaction: %w", err)
-	}
-	//goland:noinspection GoUnhandledErrorResult
-	defer tx.Rollback(ctx)
-	ctx = context.WithValue(ctx, ctxkey.Tx, tx)
-	err = post.setupCheck(ctx, config)
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to Postgres setup check: %w", err)
-	}
-	err = tx.Commit(ctx)
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to commit Postgres setup transaction: %w", err)
-	}
 	return post, p, nil
 }
 
-func compareSemVer(fromConfig, inDatabase string) error {
-	config := semver.Canonical(fromConfig)
-	database := semver.Canonical(inDatabase)
-	validConfig := semver.IsValid(config)
+func compareSemVer(programSemVer, databaseSemVer string) error {
+	program := semver.Canonical(programSemVer)
+	database := semver.Canonical(databaseSemVer)
+	validProgram := semver.IsValid(program)
 	validDatabase := semver.IsValid(database)
-	if !validConfig || !validDatabase {
-		return fmt.Errorf("%w: Postgres database and configuration must have a Semantic Version: Configuration %q, Postgres database %q", ErrPostgresSetupCheck, config, database)
+	if !validProgram || !validDatabase {
+		return fmt.Errorf("%w: Postgres database and Go program must have a Semantic Version: Go program %q, Postgres database %q", ErrPostgresSetupCheck, program, database)
 	}
 
-	const errFmt = "%w: configuration has Semantic Version %s, but Postgres database has Semantic Version %s: a database migration is likely needed"
-	major := semver.Major(config)
+	const errFmt = "%w: Go program has Semantic Version %s, but Postgres database has Semantic Version %s: a database migration is likely needed"
+	major := semver.Major(program)
 	if major != semver.Major(database) {
-		return fmt.Errorf(errFmt, ErrPostgresSetupCheck, config, database)
+		return fmt.Errorf(errFmt, ErrPostgresSetupCheck, program, database)
 	}
 
 	if major == "v0" {
 		const extra = ": development versions must match exactly"
-		if semver.Compare(config, database) != 0 {
-			return fmt.Errorf(errFmt+extra, ErrPostgresSetupCheck, config, database)
+		if semver.Compare(program, database) != 0 {
+			return fmt.Errorf(errFmt+extra, ErrPostgresSetupCheck, program, database)
 		}
 		return nil
 	}
 
 	// Compare the minor versions.
-	config, database = semver.MajorMinor(config), semver.MajorMinor(database)
-	switch v := semver.Compare(config, database); v {
+	program, database = semver.MajorMinor(program), semver.MajorMinor(database)
+	switch v := semver.Compare(program, database); v {
 	case -1:
 		return nil // Database has newer minor version, which should be backwards compatible.
 	case 0:
 		return nil
 	case 1:
-		const extra = ": configuration has newer minor version, server may have newer features incompatible with database"
-		return fmt.Errorf(errFmt+extra, ErrPostgresSetupCheck, config, database)
+		const extra = ": Go program has newer minor version, it may have newer features incompatible with database"
+		return fmt.Errorf(errFmt+extra, ErrPostgresSetupCheck, program, database)
 	default:
 		return fmt.Errorf("unknown semver comparison result %d: %w", v, ErrPostgresSetupCheck)
 	}

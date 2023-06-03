@@ -42,6 +42,7 @@ var _ storage.Storage = postgres{}
 // Config is the configuration for Postgres storage.
 type Config struct {
 	AES256KeyBase64 string                      `json:"aes256KeyBase64"`
+	AutoMigrate     bool                        `json:"autoMigrate"`
 	DSN             string                      `json:"dsn"`
 	Health          *jt.JSONType[time.Duration] `json:"health"`
 	InitialTimeout  *jt.JSONType[time.Duration] `json:"initialTimeout"`
@@ -49,7 +50,6 @@ type Config struct {
 	MinConns        int32                       `json:"minConns"`
 	PlaintextClaims bool                        `json:"plaintextClaims"`
 	PlaintextJWK    bool                        `json:"plaintextJWK"`
-	SemVer          string                      `json:"semver"` // https://pkg.go.dev/golang.org/x/mod/semver
 }
 
 // DefaultsAndValidate implements the jsontype.Config interface.
@@ -58,12 +58,9 @@ func (c Config) DefaultsAndValidate() (Config, error) {
 		if c.AES256KeyBase64 == "" {
 			return Config{}, fmt.Errorf("AES256 key must be set when plaintext JWK and claims are disabled: %w", jt.ErrDefaultsAndValidate)
 		}
-		key, err := base64.StdEncoding.DecodeString(c.AES256KeyBase64)
+		_, err := DecodeAES256Base64(c.AES256KeyBase64)
 		if err != nil {
-			return Config{}, fmt.Errorf("failed to Base64 decode AES256 key: %s: %w", err, jt.ErrDefaultsAndValidate)
-		}
-		if len(key) != 32 {
-			return Config{}, fmt.Errorf("AES256 key must be 32 bytes, but is %d bytes: %w", len(key), jt.ErrDefaultsAndValidate)
+			return Config{}, err
 		}
 	} else {
 		if c.AES256KeyBase64 != "" {
@@ -88,6 +85,20 @@ func (c Config) DefaultsAndValidate() (Config, error) {
 	return c, nil
 }
 
+// DecodeAES256Base64 decodes a Base64 encoded AES256 key.
+func DecodeAES256Base64(aes256KeyBase64 string) ([32]byte, error) {
+	var k [32]byte
+	key, err := base64.StdEncoding.DecodeString(aes256KeyBase64)
+	if err != nil {
+		return k, fmt.Errorf("failed to Base64 decode AES256 key: %s: %w", err, jt.ErrDefaultsAndValidate)
+	}
+	if len(key) != 32 {
+		return k, fmt.Errorf("AES256 key must be 32 bytes, but is %d bytes: %w", len(key), jt.ErrDefaultsAndValidate)
+	}
+	copy(k[:], key)
+	return k, nil
+}
+
 type postgres struct {
 	aes256Key       [32]byte
 	plaintextClaims bool
@@ -102,14 +113,11 @@ func newPostgres(pool *pgxpool.Pool, config Config) (postgres, error) {
 		pool:            pool,
 	}
 	if !config.PlaintextJWK || !config.PlaintextClaims {
-		key, err := base64.StdEncoding.DecodeString(config.AES256KeyBase64)
+		var err error
+		store.aes256Key, err = DecodeAES256Base64(config.AES256KeyBase64)
 		if err != nil {
-			return postgres{}, fmt.Errorf("failed to Base64 decode AES256 key: %w", err)
+			return postgres{}, fmt.Errorf("failed to decode AES256 key: %w", err)
 		}
-		if len(key) != 32 {
-			return postgres{}, fmt.Errorf("AES256 key must be 32 bytes, but is %d bytes: %w", len(key), storage.ErrKeySize)
-		}
-		copy(store.aes256Key[:], key)
 	} else {
 		if config.AES256KeyBase64 != "" {
 			return postgres{}, fmt.Errorf("AES256 key must not be set when plaintext JWK and claims are enabled: %w", storage.ErrKeySize)
@@ -227,18 +235,34 @@ WHERE api_key = $1
 
 	return sa, nil
 }
-func (p postgres) ReadSigningKey(ctx context.Context) (meta jwkset.KeyWithMeta[storage.JWKSetCustomKeyMeta], err error) {
+func (p postgres) ReadSigningKey(ctx context.Context, options storage.ReadSigningKeyOptions) (meta jwkset.KeyWithMeta[storage.JWKSetCustomKeyMeta], err error) {
 	tx := ctx.Value(ctxkey.Tx).(*Transaction).Tx
 
 	//language=sql
-	const query = `
+	query := `
 SELECT assets
 FROM mld.jwk
 WHERE signing_default = TRUE
 `
+
+	args := make([]interface{}, 0)
+	if options.JWTAlg != "" {
+		//language=sql
+		query = `
+SELECT assets
+FROM mld.jwk
+WHERE alg = $1
+ORDER BY created DESC
+`
+		args = append(args, options.JWTAlg)
+	}
+
 	assets := make([]byte, 0)
-	err = tx.QueryRow(ctx, query).Scan(&assets)
+	err = tx.QueryRow(ctx, query, args...).Scan(&assets)
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return meta, fmt.Errorf("failed to read signing key from Postgres: %w: %w", err, storage.ErrNotFound)
+		}
 		return meta, fmt.Errorf("failed to read signing key from Postgres: %w", err)
 	}
 
@@ -249,7 +273,7 @@ WHERE signing_default = TRUE
 
 	return meta, nil
 }
-func (p postgres) ReadSigningKeySet(ctx context.Context, keyID string) error {
+func (p postgres) UpdateDefaultSigningKey(ctx context.Context, keyID string) error {
 	tx := ctx.Value(ctxkey.Tx).(*Transaction).Tx
 
 	//language=sql
@@ -438,10 +462,10 @@ func (p postgres) WriteKey(ctx context.Context, meta jwkset.KeyWithMeta[storage.
 
 	//language=sql
 	const query = `
-INSERT INTO mld.jwk (assets, key_id)
-VALUES ($1, $2)
+INSERT INTO mld.jwk (assets, key_id, alg)
+VALUES ($1, $2, $3)
 `
-	_, err = tx.Exec(ctx, query, assets, meta.KeyID)
+	_, err = tx.Exec(ctx, query, assets, meta.KeyID, meta.ALG)
 	if err != nil {
 		return fmt.Errorf("failed to write JWK to Postgres: %w", err)
 	}
@@ -452,18 +476,12 @@ VALUES ($1, $2)
 func (p postgres) setupCheck(ctx context.Context, config Config) error {
 	tx := ctx.Value(ctxkey.Tx).(*Transaction).Tx
 
-	//language=sql
-	const query = `
-SELECT setup
-FROM mld.setup
-`
-	var s setup
-	err := tx.QueryRow(ctx, query).Scan(&s)
+	s, err := ReadSetup(ctx, tx)
 	if err != nil {
-		return fmt.Errorf("failed to read setup from Postgres: %w", err)
+		return err
 	}
 
-	err = compareSemVer(config.SemVer, s.SemVer)
+	err = compareSemVer(databaseVersion, s.SemVer)
 	if err != nil {
 		return fmt.Errorf("failed to compare configuration semver with Postgres semver: %w", err)
 	}
@@ -475,6 +493,22 @@ FROM mld.setup
 	}
 
 	return nil
+}
+
+// ReadSetup reads the setup information in the database.
+func ReadSetup(ctx context.Context, tx pgx.Tx) (Setup, error) {
+	//language=sql
+	const query = `
+SELECT setup
+FROM mld.setup
+`
+	var s Setup
+	err := tx.QueryRow(ctx, query).Scan(&s)
+	if err != nil {
+		return Setup{}, fmt.Errorf("failed to read setup from Postgres: %w", err)
+	}
+
+	return s, nil
 }
 
 func (p postgres) claimsMarshal(claims jwt.Claims) ([]byte, error) {
@@ -493,7 +527,7 @@ func (p postgres) claimsMarshal(claims jwt.Claims) ([]byte, error) {
 func (p postgres) claimsUnmarshal(data []byte) (handle.SigningBytesClaims, error) {
 	var err error
 	if !p.plaintextClaims {
-		data, err = p.decrypt(data)
+		data, err = decrypt(p.aes256Key, data)
 		if err != nil {
 			return handle.SigningBytesClaims{}, fmt.Errorf("failed to decrypt claims: %w", err)
 		}
@@ -529,31 +563,7 @@ func (p postgres) jwkMarshalAssets(meta jwkset.KeyWithMeta[storage.JWKSetCustomK
 	return assets, nil
 }
 func (p postgres) jwkUnmarshalAssets(assets []byte) (jwkset.KeyWithMeta[storage.JWKSetCustomKeyMeta], error) {
-	var err error
-	var meta jwkset.KeyWithMeta[storage.JWKSetCustomKeyMeta]
-
-	if !p.plaintextJWK {
-		assets, err = p.decrypt(assets)
-		if err != nil {
-			return meta, fmt.Errorf("failed to decrypt JWK: %w", err)
-		}
-	}
-
-	var marshal jwkset.JWKMarshal
-	err = json.Unmarshal(assets, &marshal)
-	if err != nil {
-		return meta, fmt.Errorf("failed to unmarshal JWK from encrypted assets in Postgres: %w", err)
-	}
-
-	options := jwkset.KeyUnmarshalOptions{
-		AsymmetricPrivate: true,
-	}
-	meta, err = jwkset.KeyUnmarshal[storage.JWKSetCustomKeyMeta](marshal, options)
-	if err != nil {
-		return meta, fmt.Errorf("failed to unmarshal JWK from Postgres: %w", err)
-	}
-
-	return meta, nil
+	return jwkUnmarshalAssets(p.aes256Key, assets, p.plaintextJWK)
 }
 func (p postgres) encrypt(plaintext []byte) ([]byte, error) {
 	block, err := aes.NewCipher(p.aes256Key[:])
@@ -575,8 +585,35 @@ func (p postgres) encrypt(plaintext []byte) ([]byte, error) {
 
 	return ciphertext, nil
 }
-func (p postgres) decrypt(ciphertext []byte) ([]byte, error) {
-	block, err := aes.NewCipher(p.aes256Key[:])
+func jwkUnmarshalAssets(aes256Key [32]byte, assets []byte, plaintextJWK bool) (jwkset.KeyWithMeta[storage.JWKSetCustomKeyMeta], error) {
+	var err error
+	var meta jwkset.KeyWithMeta[storage.JWKSetCustomKeyMeta]
+
+	if !plaintextJWK {
+		assets, err = decrypt(aes256Key, assets)
+		if err != nil {
+			return meta, fmt.Errorf("failed to decrypt JWK: %w", err)
+		}
+	}
+
+	var marshal jwkset.JWKMarshal
+	err = json.Unmarshal(assets, &marshal)
+	if err != nil {
+		return meta, fmt.Errorf("failed to unmarshal JWK from encrypted assets in Postgres: %w", err)
+	}
+
+	options := jwkset.KeyUnmarshalOptions{
+		AsymmetricPrivate: true,
+	}
+	meta, err = jwkset.KeyUnmarshal[storage.JWKSetCustomKeyMeta](marshal, options)
+	if err != nil {
+		return meta, fmt.Errorf("failed to unmarshal JWK from Postgres: %w", err)
+	}
+
+	return meta, nil
+}
+func decrypt(aes256Key [32]byte, ciphertext []byte) ([]byte, error) {
+	block, err := aes.NewCipher(aes256Key[:])
 	if err != nil {
 		return nil, fmt.Errorf("failed to create AES cipher: %w", err)
 	}

@@ -8,8 +8,9 @@ import (
 
 // JWTCreateArgs are the unvalidated arguments for creating a JWT.
 type JWTCreateArgs struct {
-	JWTClaims          any `json:"jwtClaims"`
-	JWTLifespanSeconds int `json:"jwtLifespanSeconds"`
+	JWTAlg             string `json:"jwtAlg"`
+	JWTClaims          any    `json:"jwtClaims"`
+	JWTLifespanSeconds int    `json:"jwtLifespanSeconds"`
 }
 
 // Validate implements the Validatable interface.
@@ -28,6 +29,7 @@ func (j JWTCreateArgs) Validate(config Validation) (ValidJWTCreateArgs, error) {
 		return ValidJWTCreateArgs{}, fmt.Errorf("%w: JWT claims must be less than %d bytes", ErrInvalidModel, config.JWTClaimsMaxBytes)
 	}
 	valid := ValidJWTCreateArgs{
+		JWTAlg:      j.JWTAlg,
 		JWTClaims:   marshaled,
 		JWTLifespan: lifespan,
 	}
@@ -36,6 +38,7 @@ func (j JWTCreateArgs) Validate(config Validation) (ValidJWTCreateArgs, error) {
 
 // ValidJWTCreateArgs are the validated arguments for creating a JWT.
 type ValidJWTCreateArgs struct {
+	JWTAlg      string
 	JWTClaims   json.RawMessage
 	JWTLifespan time.Duration
 }
