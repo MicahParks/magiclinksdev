@@ -12,7 +12,6 @@ import (
 
 	"github.com/MicahParks/magiclinksdev/network/middleware/ctxkey"
 	"github.com/MicahParks/magiclinksdev/storage"
-	"github.com/MicahParks/magiclinksdev/storage/postgres/migrate"
 )
 
 const (
@@ -42,12 +41,12 @@ func NewWithSetup(ctx context.Context, config Config, setupSugared *zap.SugaredL
 		if err != nil {
 			return nil, nil, fmt.Errorf("failed to decode AES256 key: %w", err)
 		}
-		options := migrate.MigratorOptions{
+		options := MigratorOptions{
 			EncryptionKey: encryptionKey,
 			SetupCtx:      ctx,
 			Sugared:       setupSugared,
 		}
-		m, err := migrate.NewPostgresMigrator(p, options)
+		m, err := NewMigrator(p, options)
 		if err != nil {
 			return nil, nil, fmt.Errorf("failed to create Postgres migrator: %w", err)
 		}

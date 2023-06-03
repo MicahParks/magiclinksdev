@@ -11,7 +11,6 @@ import (
 	mld "github.com/MicahParks/magiclinksdev"
 	"github.com/MicahParks/magiclinksdev/setup"
 	"github.com/MicahParks/magiclinksdev/storage/postgres"
-	"github.com/MicahParks/magiclinksdev/storage/postgres/migrate"
 )
 
 func main() {
@@ -47,11 +46,11 @@ func main() {
 			mld.LogErr, err,
 		)
 	}
-	options := migrate.MigratorOptions{
+	options := postgres.MigratorOptions{
 		EncryptionKey: k,
 		Sugared:       sugared,
 	}
-	migrator, err := migrate.NewPostgresMigrator(pool, options)
+	migrator, err := postgres.NewMigrator(pool, options)
 	if err != nil {
 		sugared.Fatalw("Failed to create migrator.",
 			mld.LogErr, err,

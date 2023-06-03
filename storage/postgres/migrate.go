@@ -1,4 +1,4 @@
-package migrate
+package postgres
 
 import (
 	"context"
@@ -13,7 +13,6 @@ import (
 	"golang.org/x/mod/semver"
 
 	mld "github.com/MicahParks/magiclinksdev"
-	"github.com/MicahParks/magiclinksdev/storage/postgres"
 )
 
 const (
@@ -60,7 +59,7 @@ type Migration interface {
 	// Migrate applies the migration. The setup data should be read to determine if the migration should be applied.
 	//
 	// A storage.Tx can be retrieved from the context.Context under the key ctxkey.Tx.
-	Migrate(ctx context.Context, setup postgres.Setup, tx pgx.Tx, options MigrationOptions) (applied bool, err error)
+	Migrate(ctx context.Context, setup Setup, tx pgx.Tx, options MigrationOptions) (applied bool, err error)
 }
 
 // Metadata is metadata about a migration.
@@ -74,7 +73,7 @@ type postgresMigrator struct {
 	encryptionKey [32]byte
 	migrations    []Migration
 	pool          *pgxpool.Pool
-	setup         postgres.Setup
+	setup         Setup
 	sugared       *zap.SugaredLogger
 }
 
@@ -150,8 +149,8 @@ WHERE id
 	return nil
 }
 
-// NewPostgresMigrator returns a new Migrator for a Postgres storage implementation.
-func NewPostgresMigrator(pool *pgxpool.Pool, options MigratorOptions) (Migrator, error) {
+// NewMigrator returns a new Migrator for a Postgres storage implementation.
+func NewMigrator(pool *pgxpool.Pool, options MigratorOptions) (Migrator, error) {
 	if options.Sugared == nil {
 		options.Sugared = zap.NewNop().Sugar()
 	}
@@ -174,7 +173,7 @@ func NewPostgresMigrator(pool *pgxpool.Pool, options MigratorOptions) (Migrator,
 	//goland:noinspection GoUnhandledErrorResult
 	defer tx.Rollback(ctx)
 
-	setup, err := postgres.ReadSetup(ctx, tx)
+	setup, err := ReadSetup(ctx, tx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read setup: %w", err)
 	}

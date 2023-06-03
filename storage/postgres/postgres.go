@@ -526,7 +526,7 @@ func (p postgres) claimsMarshal(claims jwt.Claims) ([]byte, error) {
 func (p postgres) claimsUnmarshal(data []byte) (handle.SigningBytesClaims, error) {
 	var err error
 	if !p.plaintextClaims {
-		data, err = p.decrypt(data)
+		data, err = decrypt(p.aes256Key, data)
 		if err != nil {
 			return handle.SigningBytesClaims{}, fmt.Errorf("failed to decrypt claims: %w", err)
 		}
@@ -562,31 +562,7 @@ func (p postgres) jwkMarshalAssets(meta jwkset.KeyWithMeta[storage.JWKSetCustomK
 	return assets, nil
 }
 func (p postgres) jwkUnmarshalAssets(assets []byte) (jwkset.KeyWithMeta[storage.JWKSetCustomKeyMeta], error) {
-	var err error
-	var meta jwkset.KeyWithMeta[storage.JWKSetCustomKeyMeta]
-
-	if !p.plaintextJWK {
-		assets, err = p.decrypt(assets)
-		if err != nil {
-			return meta, fmt.Errorf("failed to decrypt JWK: %w", err)
-		}
-	}
-
-	var marshal jwkset.JWKMarshal
-	err = json.Unmarshal(assets, &marshal)
-	if err != nil {
-		return meta, fmt.Errorf("failed to unmarshal JWK from encrypted assets in Postgres: %w", err)
-	}
-
-	options := jwkset.KeyUnmarshalOptions{
-		AsymmetricPrivate: true,
-	}
-	meta, err = jwkset.KeyUnmarshal[storage.JWKSetCustomKeyMeta](marshal, options)
-	if err != nil {
-		return meta, fmt.Errorf("failed to unmarshal JWK from Postgres: %w", err)
-	}
-
-	return meta, nil
+	return jwkUnmarshalAssets(p.aes256Key, assets, p.plaintextJWK)
 }
 func (p postgres) encrypt(plaintext []byte) ([]byte, error) {
 	block, err := aes.NewCipher(p.aes256Key[:])
@@ -608,8 +584,35 @@ func (p postgres) encrypt(plaintext []byte) ([]byte, error) {
 
 	return ciphertext, nil
 }
-func (p postgres) decrypt(ciphertext []byte) ([]byte, error) {
-	block, err := aes.NewCipher(p.aes256Key[:])
+func jwkUnmarshalAssets(aes256Key [32]byte, assets []byte, plaintextJWK bool) (jwkset.KeyWithMeta[storage.JWKSetCustomKeyMeta], error) {
+	var err error
+	var meta jwkset.KeyWithMeta[storage.JWKSetCustomKeyMeta]
+
+	if !plaintextJWK {
+		assets, err = decrypt(aes256Key, assets)
+		if err != nil {
+			return meta, fmt.Errorf("failed to decrypt JWK: %w", err)
+		}
+	}
+
+	var marshal jwkset.JWKMarshal
+	err = json.Unmarshal(assets, &marshal)
+	if err != nil {
+		return meta, fmt.Errorf("failed to unmarshal JWK from encrypted assets in Postgres: %w", err)
+	}
+
+	options := jwkset.KeyUnmarshalOptions{
+		AsymmetricPrivate: true,
+	}
+	meta, err = jwkset.KeyUnmarshal[storage.JWKSetCustomKeyMeta](marshal, options)
+	if err != nil {
+		return meta, fmt.Errorf("failed to unmarshal JWK from Postgres: %w", err)
+	}
+
+	return meta, nil
+}
+func decrypt(aes256Key [32]byte, ciphertext []byte) ([]byte, error) {
+	block, err := aes.NewCipher(aes256Key[:])
 	if err != nil {
 		return nil, fmt.Errorf("failed to create AES cipher: %w", err)
 	}

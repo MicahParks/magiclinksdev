@@ -1,4 +1,4 @@
-package migrate
+package postgres
 
 import (
 	"context"
@@ -8,7 +8,6 @@ import (
 	"github.com/jackc/pgx/v4"
 
 	"github.com/MicahParks/magiclinksdev/storage"
-	"github.com/MicahParks/magiclinksdev/storage/postgres"
 )
 
 const (
@@ -26,7 +25,7 @@ func (a Alg) Metadata() Metadata {
 	}
 }
 
-func (a Alg) Migrate(ctx context.Context, setup postgres.Setup, tx pgx.Tx, options MigrationOptions) (applied bool, err error) {
+func (a Alg) Migrate(ctx context.Context, setup Setup, tx pgx.Tx, options MigrationOptions) (applied bool, err error) {
 	needed, err := migrationNeeded(a.Metadata().SemVer, setup.SemVer)
 	if err != nil {
 		return false, fmt.Errorf("failed to determine if migration is needed: %w", err)
@@ -79,16 +78,9 @@ SELECT id, assets FROM mld.jwk
 			return false, fmt.Errorf("failed to scan row for %q query: %w", a.Metadata().Filename, err)
 		}
 
-		if !setup.PlaintextJWK {
-			assets, err = decrypt(options.EncryptionKey, assets)
-			if err != nil {
-				return false, fmt.Errorf("failed to decrypt assets for %q query: %w", a.Metadata().Filename, err)
-			}
-		}
-
-		k.meta, err = jwkUnmarshalAssets(assets)
+		k.meta, err = jwkUnmarshalAssets(options.EncryptionKey, assets, setup.PlaintextJWK)
 		if err != nil {
-			return false, fmt.Errorf("failed to unmarshal assets for %q query: %w", a.Metadata().Filename, err)
+			return false, fmt.Errorf("failed to unmarshal JSON Web Key for %q query: %w", a.Metadata().Filename, err)
 		}
 
 		keys = append(keys, k)
