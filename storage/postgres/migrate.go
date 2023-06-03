@@ -85,6 +85,20 @@ func (p postgresMigrator) Migrate(ctx context.Context) error {
 	//goland:noinspection GoUnhandledErrorResult
 	defer tx.Rollback(ctx)
 
+	setup, err := ReadSetup(ctx, tx)
+	if err != nil {
+		return fmt.Errorf("failed to read setup: %w", err)
+	}
+	err = compareSemVer(databaseVersion, setup.SemVer)
+	if err == nil {
+		p.sugared.Info("Go program and database setup table have the same semantic version. No database migration required.")
+		err = tx.Commit(ctx)
+		if err != nil {
+			return fmt.Errorf("failed to commit migrations transaction: %w", err)
+		}
+		return nil
+	}
+
 	options := MigrationOptions{
 		EncryptionKey: p.encryptionKey,
 		Sugared:       p.sugared,
