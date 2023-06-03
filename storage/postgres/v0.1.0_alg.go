@@ -14,21 +14,19 @@ const (
 	logKID = "kid"
 )
 
-// Alg is the migration from database version v0.0.1 to v0.1.0. This is the first database migration.
-type Alg struct{}
+// algMigration is the migration from database version v0.0.1 to v0.1.0. This is the first database migration.
+type algMigration struct{}
 
-// Metadata helps implement the Migration interface.
-func (a Alg) Metadata() Metadata {
-	return Metadata{
+func (a algMigration) metadata() metadata {
+	return metadata{
 		Description: `This migrates the database from version v0.0.1 to v0.1.0. This is the first database migration. It adds a column to the "mld.jwk" table to identify the key's algorithm. This is to support a new feature of client key selection.`,
 		Filename:    "v0.1.0_alg.go",
 		SemVer:      "v0.1.0",
 	}
 }
 
-// Migrate helps implement the Migration interface.
-func (a Alg) Migrate(ctx context.Context, setup Setup, tx pgx.Tx, options MigrationOptions) (applied bool, err error) {
-	needed, err := migrationNeeded(a.Metadata().SemVer, setup.SemVer)
+func (a algMigration) migrate(ctx context.Context, setup Setup, tx pgx.Tx, options migrationOptions) (applied bool, err error) {
+	needed, err := migrationNeeded(a.metadata().SemVer, setup.SemVer)
 	if err != nil {
 		return false, fmt.Errorf("failed to determine if migration is needed: %w", err)
 	}
@@ -43,7 +41,7 @@ ALTER TABLE mld.jwk
 `
 	_, err = tx.Exec(ctx, query)
 	if err != nil {
-		return false, fmt.Errorf("failed to alter table for %q query: %w", a.Metadata().Filename, err)
+		return false, fmt.Errorf("failed to alter table for %q query: %w", a.metadata().Filename, err)
 	}
 	options.Sugared.Debug(`Added "alg" column to "mld.jwk" table.`)
 
@@ -53,7 +51,7 @@ CREATE INDEX ON mld.jwk (alg)
 `
 	_, err = tx.Exec(ctx, query)
 	if err != nil {
-		return false, fmt.Errorf("failed to create index for %q query: %w", a.Metadata().Filename, err)
+		return false, fmt.Errorf("failed to create index for %q query: %w", a.metadata().Filename, err)
 	}
 	options.Sugared.Debug(`Created index on "alg" column of "mld.jwk" table.`)
 
@@ -63,7 +61,7 @@ SELECT id, assets FROM mld.jwk
 `
 	rows, err := tx.Query(ctx, query)
 	if err != nil {
-		return false, fmt.Errorf("failed to query for existing JSON Web Keys for %q query: %w", a.Metadata().Filename, err)
+		return false, fmt.Errorf("failed to query for existing JSON Web Keys for %q query: %w", a.metadata().Filename, err)
 	}
 	defer rows.Close()
 
@@ -77,12 +75,12 @@ SELECT id, assets FROM mld.jwk
 		var assets []byte
 		err = rows.Scan(&k.id, &assets)
 		if err != nil {
-			return false, fmt.Errorf("failed to scan row for %q query: %w", a.Metadata().Filename, err)
+			return false, fmt.Errorf("failed to scan row for %q query: %w", a.metadata().Filename, err)
 		}
 
 		k.meta, err = jwkUnmarshalAssets(options.EncryptionKey, assets, setup.PlaintextJWK)
 		if err != nil {
-			return false, fmt.Errorf("failed to unmarshal JSON Web Key for %q query: %w", a.Metadata().Filename, err)
+			return false, fmt.Errorf("failed to unmarshal JSON Web Key for %q query: %w", a.metadata().Filename, err)
 		}
 
 		keys = append(keys, k)
@@ -107,7 +105,7 @@ WHERE id = $2
 		}
 		_, err = tx.Exec(ctx, query, alg, k.id)
 		if err != nil {
-			return false, fmt.Errorf("failed to update JSON Web Key for %q query: %w", a.Metadata().Filename, err)
+			return false, fmt.Errorf("failed to update JSON Web Key for %q query: %w", a.metadata().Filename, err)
 		}
 	}
 

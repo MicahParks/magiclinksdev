@@ -46,39 +46,8 @@ type MigratorOptions struct {
 	Sugared       *zap.SugaredLogger
 }
 
-// MigrationOptions hold optional data for database migrations.
-type MigrationOptions struct {
-	EncryptionKey [32]byte
-	Sugared       *zap.SugaredLogger
-}
-
-// Migration is a database migration.
-type Migration interface {
-	// Metadata returns metadata about the migration.
-	Metadata() Metadata
-	// Migrate applies the migration. The setup data should be read to determine if the migration should be applied.
-	//
-	// A storage.Tx can be retrieved from the context.Context under the key ctxkey.Tx.
-	Migrate(ctx context.Context, setup Setup, tx pgx.Tx, options MigrationOptions) (applied bool, err error)
-}
-
-// Metadata is metadata about a migration.
-type Metadata struct {
-	Description string
-	Filename    string
-	SemVer      string
-}
-
-type postgresMigrator struct {
-	encryptionKey [32]byte
-	migrations    []Migration
-	pool          *pgxpool.Pool
-	setup         Setup
-	sugared       *zap.SugaredLogger
-}
-
-func (p postgresMigrator) Migrate(ctx context.Context) error {
-	tx, err := p.pool.Begin(ctx)
+func (m migrator) Migrate(ctx context.Context) error {
+	tx, err := m.pool.Begin(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to create transaction for migrations: %w", err)
 	}
@@ -91,7 +60,7 @@ func (p postgresMigrator) Migrate(ctx context.Context) error {
 	}
 	err = compareSemVer(databaseVersion, setup.SemVer)
 	if err == nil {
-		p.sugared.Debug("No database migrations required.")
+		m.sugared.Debug("No database migrations required.")
 		err = tx.Commit(ctx)
 		if err != nil {
 			return fmt.Errorf("failed to commit migrations transaction: %w", err)
@@ -99,14 +68,14 @@ func (p postgresMigrator) Migrate(ctx context.Context) error {
 		return nil
 	}
 
-	options := MigrationOptions{
-		EncryptionKey: p.encryptionKey,
-		Sugared:       p.sugared,
+	options := migrationOptions{
+		EncryptionKey: m.encryptionKey,
+		Sugared:       m.sugared,
 	}
 
 	migrationsApplied := 0
-	for _, migration := range p.migrations {
-		meta := migration.Metadata()
+	for _, migration := range m.migrations {
+		meta := migration.metadata()
 		options.Sugared = options.Sugared.With(
 			logDescription, meta.Description,
 			logFile, meta.Filename,
@@ -114,7 +83,7 @@ func (p postgresMigrator) Migrate(ctx context.Context) error {
 		)
 
 		options.Sugared.Infow("Performing migration.")
-		applied, err := migration.Migrate(ctx, p.setup, tx, options)
+		applied, err := migration.migrate(ctx, m.setup, tx, options)
 		if err != nil {
 			options.Sugared.Infow("Failed to apply migration.",
 				mld.LogErr, err,
@@ -126,8 +95,8 @@ func (p postgresMigrator) Migrate(ctx context.Context) error {
 		if applied {
 			msg = "Migration applied."
 
-			p.setup.SemVer = meta.SemVer
-			data, err := json.Marshal(p.setup)
+			m.setup.SemVer = meta.SemVer
+			data, err := json.Marshal(m.setup)
 			if err != nil {
 				return fmt.Errorf("failed to marshal setup after successful migration: %w", err)
 			}
@@ -156,11 +125,19 @@ WHERE id
 		return fmt.Errorf("failed to commit migrations transaction: %w", err)
 	}
 
-	p.sugared.Infow("Migrations complete.",
+	m.sugared.Infow("Migrations complete.",
 		"migrationsApplied", migrationsApplied,
 	)
 
 	return nil
+}
+
+type migrator struct {
+	encryptionKey [32]byte
+	migrations    []migration
+	pool          *pgxpool.Pool
+	setup         Setup
+	sugared       *zap.SugaredLogger
 }
 
 // NewMigrator returns a new Migrator for a Postgres storage implementation.
@@ -197,11 +174,11 @@ func NewMigrator(pool *pgxpool.Pool, options MigratorOptions) (Migrator, error) 
 		return nil, fmt.Errorf("failed to commit migrator setup transaction: %w", err)
 	}
 
-	migrations := []Migration{
-		Alg{},
+	migrations := []migration{
+		algMigration{},
 	}
 
-	m := postgresMigrator{
+	m := migrator{
 		encryptionKey: options.EncryptionKey,
 		migrations:    migrations,
 		pool:          pool,
@@ -210,6 +187,26 @@ func NewMigrator(pool *pgxpool.Pool, options MigratorOptions) (Migrator, error) 
 	}
 
 	return m, nil
+}
+
+type metadata struct {
+	Description string
+	Filename    string
+	SemVer      string
+}
+
+type migrationOptions struct {
+	EncryptionKey [32]byte
+	Sugared       *zap.SugaredLogger
+}
+
+type migration interface {
+	// metadata returns metadata about the migration.
+	metadata() metadata
+	// migrate applies the migration. The setup data should be read to determine if the migration should be applied.
+	//
+	// A storage.Tx can be retrieved from the context.Context under the key ctxkey.Tx.
+	migrate(ctx context.Context, setup Setup, tx pgx.Tx, options migrationOptions) (applied bool, err error)
 }
 
 func migrationNeeded(migration, setup string) (bool, error) {
