@@ -206,7 +206,7 @@ func (o ServerOptions) ApplyDefaults() ServerOptions {
 // CreateNopProviderServer creates a new magiclinksdev server with a no-operation email provider.
 func CreateNopProviderServer(ctx context.Context, conf NopConfig, options ServerOptions) (*handle.Server, error) {
 	rateLimiter := rlimit.NewMemory(conf.RateLimiter)
-	store, _, err := postgres.NewWithSetup(ctx, conf.Storage)
+	store, _, err := postgres.NewWithSetup(ctx, conf.Storage, options.Sugared.With("postgresSetup", true))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create storage: %w", err)
 	}
@@ -237,7 +237,7 @@ func CreateMultiProviderServer(ctx context.Context, conf MultiConfig, options Se
 		return nil, fmt.Errorf("failed to create email provider: %w", err)
 	}
 	rateLimiter := rlimit.NewMemory(conf.RateLimiter)
-	store, _, err := postgres.NewWithSetup(ctx, conf.Storage)
+	store, _, err := postgres.NewWithSetup(ctx, conf.Storage, options.Sugared.With("postgresSetup", true))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create storage: %w", err)
 	}
@@ -256,7 +256,7 @@ func CreateSESProvider(ctx context.Context, conf SESConfig, options ServerOption
 		return nil, fmt.Errorf("failed to create email provider: %w", err)
 	}
 	rateLimiter := rlimit.NewMemory(conf.RateLimiter)
-	store, _, err := postgres.NewWithSetup(ctx, conf.Storage)
+	store, _, err := postgres.NewWithSetup(ctx, conf.Storage, options.Sugared.With("postgresSetup", true))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create storage: %w", err)
 	}
@@ -275,7 +275,7 @@ func CreateSendGridProvider(ctx context.Context, conf SendGridConfig, options Se
 		return nil, fmt.Errorf("failed to create email provider: %w", err)
 	}
 	rateLimiter := rlimit.NewMemory(conf.RateLimiter)
-	store, _, err := postgres.NewWithSetup(ctx, conf.Storage)
+	store, _, err := postgres.NewWithSetup(ctx, conf.Storage, options.Sugared.With("postgresSetup", true))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create storage: %w", err)
 	}
@@ -291,7 +291,7 @@ func CreateSendGridProvider(ctx context.Context, conf SendGridConfig, options Se
 func CreateTestingProvider(ctx context.Context, conf TestConfig, options ServerOptions) (*handle.Server, error) {
 	provider := mldtest.NopProvider{}
 	rateLimiter := rlimit.NewMemory(conf.RateLimiter)
-	store, _, err := postgres.NewWithSetup(ctx, conf.Storage)
+	store, _, err := postgres.NewWithSetup(ctx, conf.Storage, options.Sugared.With("postgresSetup", true))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create storage: %w", err)
 	}

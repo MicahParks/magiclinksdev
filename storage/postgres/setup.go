@@ -7,10 +7,12 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v4/pgxpool"
+	"go.uber.org/zap"
 	"golang.org/x/mod/semver"
 
 	"github.com/MicahParks/magiclinksdev/network/middleware/ctxkey"
 	"github.com/MicahParks/magiclinksdev/storage"
+	"github.com/MicahParks/magiclinksdev/storage/postgres/migrate"
 )
 
 const (
@@ -30,10 +32,29 @@ type Setup struct {
 }
 
 // NewWithSetup creates a new Postgres storage and returns its connection pool. It also performs a setup check.
-func NewWithSetup(ctx context.Context, config Config) (storage.Storage, *pgxpool.Pool, error) {
+func NewWithSetup(ctx context.Context, config Config, setupSugared *zap.SugaredLogger) (storage.Storage, *pgxpool.Pool, error) {
 	post, p, err := New(ctx, config)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to create Postgres storage: %w", err)
+	}
+	if config.AutoMigrate {
+		encryptionKey, err := DecodeAES256Base64(config.AES256KeyBase64)
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to decode AES256 key: %w", err)
+		}
+		options := migrate.MigratorOptions{
+			EncryptionKey: encryptionKey,
+			SetupCtx:      ctx,
+			Sugared:       setupSugared,
+		}
+		m, err := migrate.NewPostgresMigrator(p, options)
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to create Postgres migrator: %w", err)
+		}
+		err = m.Migrate(ctx)
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to migrate Postgres database: %w", err)
+		}
 	}
 	tx, err := post.Begin(ctx)
 	if err != nil {

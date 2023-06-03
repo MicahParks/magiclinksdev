@@ -43,7 +43,7 @@ type Migrator interface {
 // MigratorOptions are options for creating a Migrator.
 type MigratorOptions struct {
 	EncryptionKey [32]byte
-	SetupTimeout  time.Duration
+	SetupCtx      context.Context
 	Sugared       *zap.SugaredLogger
 }
 
@@ -152,16 +152,16 @@ WHERE id
 
 // NewPostgresMigrator returns a new Migrator for a Postgres storage implementation.
 func NewPostgresMigrator(pool *pgxpool.Pool, options MigratorOptions) (Migrator, error) {
-	timeout := options.SetupTimeout
-	if timeout == 0 {
-		timeout = time.Second * 30
-	}
 	if options.Sugared == nil {
 		options.Sugared = zap.NewNop().Sugar()
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
+	ctx := options.SetupCtx
+	if ctx == nil {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(context.Background(), time.Minute)
+		defer cancel()
+	}
 
 	tx, err := pool.BeginTx(context.Background(), pgx.TxOptions{
 		IsoLevel:       pgx.Serializable,

@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/MicahParks/jwkset"
+	"go.uber.org/zap"
 
 	mld "github.com/MicahParks/magiclinksdev"
 	"github.com/MicahParks/magiclinksdev/mldtest"
@@ -119,7 +120,7 @@ func createKeyIfNotExists(ctx context.Context, store storage.Storage, logger *lo
 }
 
 func truncateDatabase(ctx context.Context, config postgres.Config, logger *log.Logger) {
-	store, _, err := postgres.NewWithSetup(ctx, config)
+	store, _, err := postgres.NewWithSetup(ctx, config, zap.NewNop().Sugar())
 	if err != nil {
 		logger.Fatalf(mld.LogFmt, "Failed to create storage.", err)
 	}
