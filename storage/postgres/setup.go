@@ -90,38 +90,38 @@ func New(ctx context.Context, config Config) (storage.Storage, *pgxpool.Pool, er
 }
 
 func compareSemVer(programSemVer, databaseSemVer string) error {
-	config := semver.Canonical(programSemVer)
+	program := semver.Canonical(programSemVer)
 	database := semver.Canonical(databaseSemVer)
-	validConfig := semver.IsValid(config)
+	validProgram := semver.IsValid(program)
 	validDatabase := semver.IsValid(database)
-	if !validConfig || !validDatabase {
-		return fmt.Errorf("%w: Postgres database and configuration must have a Semantic Version: Configuration %q, Postgres database %q", ErrPostgresSetupCheck, config, database)
+	if !validProgram || !validDatabase {
+		return fmt.Errorf("%w: Postgres database and Go program must have a Semantic Version: Go program %q, Postgres database %q", ErrPostgresSetupCheck, program, database)
 	}
 
-	const errFmt = "%w: configuration has Semantic Version %s, but Postgres database has Semantic Version %s: a database migration is likely needed"
-	major := semver.Major(config)
+	const errFmt = "%w: Go program has Semantic Version %s, but Postgres database has Semantic Version %s: a database migration is likely needed"
+	major := semver.Major(program)
 	if major != semver.Major(database) {
-		return fmt.Errorf(errFmt, ErrPostgresSetupCheck, config, database)
+		return fmt.Errorf(errFmt, ErrPostgresSetupCheck, program, database)
 	}
 
 	if major == "v0" {
 		const extra = ": development versions must match exactly"
-		if semver.Compare(config, database) != 0 {
-			return fmt.Errorf(errFmt+extra, ErrPostgresSetupCheck, config, database)
+		if semver.Compare(program, database) != 0 {
+			return fmt.Errorf(errFmt+extra, ErrPostgresSetupCheck, program, database)
 		}
 		return nil
 	}
 
 	// Compare the minor versions.
-	config, database = semver.MajorMinor(config), semver.MajorMinor(database)
-	switch v := semver.Compare(config, database); v {
+	program, database = semver.MajorMinor(program), semver.MajorMinor(database)
+	switch v := semver.Compare(program, database); v {
 	case -1:
 		return nil // Database has newer minor version, which should be backwards compatible.
 	case 0:
 		return nil
 	case 1:
-		const extra = ": configuration has newer minor version, server may have newer features incompatible with database"
-		return fmt.Errorf(errFmt+extra, ErrPostgresSetupCheck, config, database)
+		const extra = ": Go program has newer minor version, it may have newer features incompatible with database"
+		return fmt.Errorf(errFmt+extra, ErrPostgresSetupCheck, program, database)
 	default:
 		return fmt.Errorf("unknown semver comparison result %d: %w", v, ErrPostgresSetupCheck)
 	}
