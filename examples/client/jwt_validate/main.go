@@ -1,7 +1,7 @@
 package main
 
 import (
-	"go.uber.org/zap"
+	"log/slog"
 
 	mld "github.com/MicahParks/magiclinksdev"
 	"github.com/MicahParks/magiclinksdev/client"
@@ -9,15 +9,11 @@ import (
 )
 
 func main() {
-	logger, err := zap.NewDevelopment()
-	if err != nil {
-		panic(err)
-	}
-	sugared := logger.Sugar()
+	logger := slog.Default()
 
 	c, err := client.New(mldtest.APIKey, mldtest.Aud, mldtest.BaseURL, mldtest.Iss, client.Options{})
 	if err != nil {
-		sugared.Fatalw("Failed to create client.",
+		logger.Error("Failed to create client.",
 			mld.LogErr, err,
 		)
 	}
@@ -27,12 +23,12 @@ func main() {
 	var claims mldtest.TestClaims
 	token, err := c.LocalJWTValidate(rawJWT, &claims)
 	if err != nil {
-		sugared.Fatalw("Failed to validate JWT. This is normal for the default example.",
+		logger.Error("Failed to validate JWT. This is normal for the default example.",
 			mld.LogErr, err,
 		)
 	}
 
-	sugared.Infow("JWT is valid.",
+	logger.Info("JWT is valid.",
 		"claims", claims,
 		"token", token,
 	)

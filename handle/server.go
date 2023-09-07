@@ -2,10 +2,10 @@ package handle
 
 import (
 	"context"
+	"log/slog"
 	"net/http"
 
 	"github.com/MicahParks/jwkset"
-	"go.uber.org/zap"
 
 	"github.com/MicahParks/magiclinksdev/config"
 	"github.com/MicahParks/magiclinksdev/email"
@@ -24,7 +24,7 @@ type Server struct {
 	Limiter        rlimit.RateLimiter
 	MagicLink      magiclink.MagicLink[storage.MagicLinkCustomCreateArgs, storage.MagicLinkCustomReadResponse, storage.JWKSetCustomKeyMeta]
 	Store          storage.Storage
-	Sugared        *zap.SugaredLogger
+	Logger         *slog.Logger
 	MiddlewareHook MiddlewareHook
 }
 

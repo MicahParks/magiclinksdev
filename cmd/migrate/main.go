@@ -3,10 +3,10 @@ package main
 import (
 	"context"
 	"log"
+	"log/slog"
 	"os"
 
 	jt "github.com/MicahParks/jsontype"
-	"go.uber.org/zap"
 
 	mld "github.com/MicahParks/magiclinksdev"
 	"github.com/MicahParks/magiclinksdev/setup"
@@ -22,45 +22,40 @@ func main() {
 		log.Fatalf(mld.LogFmt, "Failed to read configuration.", err)
 	}
 
-	var logger *zap.Logger
-	if os.Getenv("DEV_MODE") == "true" {
-		logger, err = zap.NewDevelopment()
-	} else {
-		logger, err = zap.NewProduction()
-	}
-	if err != nil {
-		log.Fatalf(mld.LogFmt, "Failed to create logger.", err)
-	}
-	sugared := logger.Sugar()
+	logger := slog.Default()
 
 	_, pool, err := postgres.New(ctx, conf.Storage)
 	if err != nil {
-		sugared.Fatalw("Failed to create postgres pool.",
+		logger.ErrorContext(ctx, "Failed to create postgres pool.",
 			mld.LogErr, err,
 		)
+		os.Exit(1)
 	}
 
 	k, err := postgres.DecodeAES256Base64(conf.Storage.AES256KeyBase64)
 	if err != nil {
-		sugared.Fatalw("Failed to decode AES256 key.",
+		logger.ErrorContext(ctx, "Failed to decode AES256 key.",
 			mld.LogErr, err,
 		)
+		os.Exit(1)
 	}
 	options := postgres.MigratorOptions{
 		EncryptionKey: k,
-		Sugared:       sugared,
+		Logger:        logger,
 	}
 	migrator, err := postgres.NewMigrator(pool, options)
 	if err != nil {
-		sugared.Fatalw("Failed to create migrator.",
+		logger.ErrorContext(ctx, "Failed to create migrator.",
 			mld.LogErr, err,
 		)
+		os.Exit(1)
 	}
 
 	err = migrator.Migrate(ctx)
 	if err != nil {
-		sugared.Fatalw("Failed to migrate.",
+		logger.ErrorContext(ctx, "Failed to migrate.",
 			mld.LogErr, err,
 		)
+		os.Exit(1)
 	}
 }

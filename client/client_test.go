@@ -5,6 +5,8 @@ import (
 	"crypto/ed25519"
 	"encoding/json"
 	"errors"
+	"io"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -17,7 +19,6 @@ import (
 	"github.com/MicahParks/keyfunc"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/uuid"
-	"go.uber.org/zap"
 
 	mld "github.com/MicahParks/magiclinksdev"
 	"github.com/MicahParks/magiclinksdev/config"
@@ -370,7 +371,7 @@ func newClient(ctx context.Context, t *testing.T) Client {
 		HTTPMux:               nil,
 		MagicLinkErrorHandler: nil,
 		MiddlewareHook:        nil,
-		Sugared:               zap.NewNop().Sugar(),
+		Logger:                slog.New(slog.NewJSONHandler(io.Discard, nil)),
 	}
 	conf, err := conf.DefaultsAndValidate()
 	if err != nil {

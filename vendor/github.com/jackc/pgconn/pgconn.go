@@ -128,19 +128,13 @@ func ConnectWithOptions(ctx context.Context, connString string, parseConfigOptio
 // authentication error will terminate the chain of attempts (like libpq:
 // https://www.postgresql.org/docs/11/libpq-connect.html#LIBPQ-MULTIPLE-HOSTS) and be returned as the error. Otherwise,
 // if all attempts fail the last error is returned.
-func ConnectConfig(ctx context.Context, config *Config) (pgConn *PgConn, err error) {
+func ConnectConfig(octx context.Context, config *Config) (pgConn *PgConn, err error) {
 	// Default values are set in ParseConfig. Enforce initial creation by ParseConfig rather than setting defaults from
 	// zero values.
 	if !config.createdByParseConfig {
 		panic("config must be created by ParseConfig")
 	}
 
-	// ConnectTimeout restricts the whole connection process.
-	if config.ConnectTimeout != 0 {
-		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(ctx, config.ConnectTimeout)
-		defer cancel()
-	}
 	// Simplify usage by treating primary config and fallbacks the same.
 	fallbackConfigs := []*FallbackConfig{
 		{
@@ -150,7 +144,7 @@ func ConnectConfig(ctx context.Context, config *Config) (pgConn *PgConn, err err
 		},
 	}
 	fallbackConfigs = append(fallbackConfigs, config.Fallbacks...)
-
+	ctx := octx
 	fallbackConfigs, err = expandWithIPs(ctx, config.LookupFunc, fallbackConfigs)
 	if err != nil {
 		return nil, &connectError{config: config, msg: "hostname resolving error", err: err}
@@ -162,7 +156,18 @@ func ConnectConfig(ctx context.Context, config *Config) (pgConn *PgConn, err err
 
 	foundBestServer := false
 	var fallbackConfig *FallbackConfig
-	for _, fc := range fallbackConfigs {
+	for i, fc := range fallbackConfigs {
+		// ConnectTimeout restricts the whole connection process.
+		if config.ConnectTimeout != 0 {
+			// create new context first time or when previous host was different
+			if i == 0 || (fallbackConfigs[i].Host != fallbackConfigs[i-1].Host) {
+				var cancel context.CancelFunc
+				ctx, cancel = context.WithTimeout(octx, config.ConnectTimeout)
+				defer cancel()
+			}
+		} else {
+			ctx = octx
+		}
 		pgConn, err = connect(ctx, config, fc, false)
 		if err == nil {
 			foundBestServer = true
@@ -174,7 +179,7 @@ func ConnectConfig(ctx context.Context, config *Config) (pgConn *PgConn, err err
 			const ERRCODE_INVALID_CATALOG_NAME = "3D000"                // db does not exist
 			const ERRCODE_INSUFFICIENT_PRIVILEGE = "42501"              // missing connect privilege
 			if pgerr.Code == ERRCODE_INVALID_PASSWORD ||
-				pgerr.Code == ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION ||
+				pgerr.Code == ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION && fc.TLSConfig != nil ||
 				pgerr.Code == ERRCODE_INVALID_CATALOG_NAME ||
 				pgerr.Code == ERRCODE_INSUFFICIENT_PRIVILEGE {
 				break
@@ -597,9 +602,10 @@ func (pgConn *PgConn) PID() uint32 {
 // TxStatus returns the current TxStatus as reported by the server in the ReadyForQuery message.
 //
 // Possible return values:
-//   'I' - idle / not in transaction
-//   'T' - in a transaction
-//   'E' - in a failed transaction
+//
+//	'I' - idle / not in transaction
+//	'T' - in a transaction
+//	'E' - in a failed transaction
 //
 // See https://www.postgresql.org/docs/current/protocol-message-formats.html.
 func (pgConn *PgConn) TxStatus() byte {
@@ -1252,8 +1258,11 @@ func (pgConn *PgConn) CopyFrom(ctx context.Context, r io.Reader, sql string) (Co
 	abortCopyChan := make(chan struct{})
 	copyErrChan := make(chan error, 1)
 	signalMessageChan := pgConn.signalMessage()
+	var wg sync.WaitGroup
+	wg.Add(1)
 
 	go func() {
+		defer wg.Done()
 		buf := make([]byte, 0, 65536)
 		buf = append(buf, 'd')
 		sp := len(buf)
@@ -1307,6 +1316,8 @@ func (pgConn *PgConn) CopyFrom(ctx context.Context, r io.Reader, sql string) (Co
 		}
 	}
 	close(abortCopyChan)
+	// Make sure io goroutine finishes before writing.
+	wg.Wait()
 
 	buf = buf[:0]
 	if copyErr == io.EOF || pgErr != nil {

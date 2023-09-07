@@ -4,11 +4,12 @@ import (
 	"bytes"
 	"context"
 	_ "embed"
+	"log/slog"
 	"net/http"
 	"net/url"
+	"os"
 	"time"
 
-	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 
 	mld "github.com/MicahParks/magiclinksdev"
@@ -23,31 +24,24 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Hour)
 	defer cancel()
 
-	logger, err := zap.NewDevelopment()
-	if err != nil {
-		panic(err)
-	}
-	sugared := logger.Sugar()
+	l := slog.Default()
 
 	u, err := url.Parse("http://localhost:8080")
 	if err != nil {
-		sugared.Fatalw("Failed to parse URL.",
+		l.ErrorContext(ctx, "Failed to parse URL.",
 			mld.LogErr, err,
 		)
+		os.Exit(1)
 	}
 	u, err = u.Parse(network.PathLinkCreate)
 	if err != nil {
-		sugared.Fatalw("Failed to parse URL.",
+		l.ErrorContext(ctx, "Failed to parse URL.",
 			mld.LogErr, err,
 		)
+		os.Exit(1)
 	}
 
 	g, ctx := errgroup.WithContext(ctx)
-	if err != nil {
-		sugared.Fatalw("Failed to create errgroup.",
-			mld.LogErr, err,
-		)
-	}
 
 	start := time.Now()
 	for i := 0; i < 1000; i++ {
@@ -55,26 +49,29 @@ func main() {
 			for j := 0; j < 1000; j++ {
 				req, err := http.NewRequestWithContext(ctx, http.MethodPost, u.String(), bytes.NewReader(linkJSON))
 				if err != nil {
-					sugared.Fatalw("Failed to create request.",
+					l.ErrorContext(ctx, "Failed to create request.",
 						mld.LogErr, err,
 					)
+					os.Exit(1)
 				}
 
 				req.Header.Set(middleware.APIKeyHeader, "40084740-0bc3-455d-b298-e23a31561580") // Admin API key from config.
 
 				resp, err := http.DefaultClient.Do(req)
 				if err != nil {
-					sugared.Fatalw("Failed to send request.",
+					l.ErrorContext(ctx, "Failed to send request.",
 						mld.LogErr, err,
 					)
+					os.Exit(1)
 				}
 				//goland:noinspection GoUnhandledErrorResult
 				_ = resp.Body.Close()
 
 				if resp.StatusCode != http.StatusOK {
-					sugared.Fatalw("Failed to create service account.",
+					l.ErrorContext(ctx, "Failed to create service account.",
 						"status", resp.StatusCode,
 					)
+					os.Exit(1)
 				}
 			}
 			return nil
@@ -83,9 +80,10 @@ func main() {
 
 	err = g.Wait()
 	if err != nil {
-		sugared.Fatalw("Failed to send requests.",
+		l.ErrorContext(ctx, "Failed to send requests.",
 			mld.LogErr, err,
 		)
+		os.Exit(1)
 	}
 
 	total := time.Since(start)
