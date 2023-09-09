@@ -18,6 +18,9 @@ type Config struct {
 	BaseURL             *jt.JSONType[*url.URL]      `json:"baseURL"`
 	Iss                 string                      `json:"iss"`
 	JWKS                JWKS                        `json:"jwks"`
+	LogDebug            bool                        `json:"logDebug"` // TODO Use to configure logger.
+	LogJSON             bool                        `json:"logJSON"`  // TODO Use to configure logger.
+	Port                uint16                      `json:"port"`
 	PreventRobots       PreventRobots               `json:"preventRobots"`
 	RelativeRedirectURL *jt.JSONType[*url.URL]      `json:"relativeRedirectURL"`
 	RequestTimeout      *jt.JSONType[time.Duration] `json:"requestTimeout"`
@@ -66,6 +69,9 @@ func (c Config) DefaultsAndValidate() (Config, error) {
 	c.JWKS, err = c.JWKS.DefaultsAndValidate()
 	if err != nil {
 		return Config{}, fmt.Errorf("failed to validate and apply defaults for JWKS: %w", err)
+	}
+	if c.Port == 0 {
+		c.Port = 8080
 	}
 	c.PreventRobots, err = c.PreventRobots.DefaultsAndValidate()
 	if err != nil {

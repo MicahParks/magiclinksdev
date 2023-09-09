@@ -70,11 +70,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8080"
-	}
-
 	mux, err := network.CreateHTTPHandlers(server)
 	if err != nil {
 		logger.ErrorContext(ctx, "Failed to create HTTP handlers.",
@@ -83,7 +78,7 @@ func main() {
 		os.Exit(1)
 	}
 	httpServer := &http.Server{
-		Addr:    fmt.Sprintf(":%s", port),
+		Addr:    fmt.Sprintf(":%d", conf.Server.Port),
 		Handler: mux,
 	}
 
@@ -91,7 +86,7 @@ func main() {
 	go serverShutdown(ctx, conf.Server, logger, idleConnsClosed, httpServer)
 
 	logger.InfoContext(ctx, "Server is listening.",
-		"port", port,
+		"port", conf.Server.Port,
 	)
 	err = httpServer.ListenAndServe()
 	if !errors.Is(err, http.ErrServerClosed) {
