@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"log"
-	"log/slog"
 	"os"
 
 	jt "github.com/MicahParks/jsontype"
@@ -22,7 +21,7 @@ func main() {
 		log.Fatalf(mld.LogFmt, "Failed to read configuration.", err)
 	}
 
-	logger := slog.Default()
+	logger := setup.CreateLogger(conf.Server)
 
 	_, pool, err := postgres.New(ctx, conf.Storage)
 	if err != nil {
