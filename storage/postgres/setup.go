@@ -7,7 +7,7 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"golang.org/x/mod/semver"
 
 	"github.com/MicahParks/magiclinksdev/network/middleware/ctxkey"
@@ -138,7 +138,7 @@ func pool(ctx context.Context, config Config) (*pgxpool.Pool, error) {
 	var conn *pgxpool.Pool
 	const retries = 5
 	for i := 0; i < retries; i++ {
-		conn, err = pgxpool.ConnectConfig(ctx, c)
+		conn, err = pgxpool.NewWithConfig(ctx, c)
 		if err != nil {
 			select {
 			case <-ctx.Done():

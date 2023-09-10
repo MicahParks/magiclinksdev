@@ -9,8 +9,8 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/jackc/pgx/v4"
-	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"golang.org/x/mod/semver"
 
 	mld "github.com/MicahParks/magiclinksdev"

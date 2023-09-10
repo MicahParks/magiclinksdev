@@ -8,7 +8,7 @@ import (
 	"net/http"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v5"
 
 	mld "github.com/MicahParks/magiclinksdev"
 	"github.com/MicahParks/magiclinksdev/handle"
