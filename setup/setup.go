@@ -471,6 +471,13 @@ func CreateLogger(srvConf config.Config) *slog.Logger {
 	} else {
 		logger = slog.New(slog.NewTextHandler(os.Stdout, &logOpts))
 	}
+
+	if badLevel {
+		logger.Warn("Invalid log level. Using debug.",
+			"level", srvConf.LogLevel,
+		)
+	}
+
 	slog.SetDefault(logger)
 
 	return logger
