@@ -3,7 +3,7 @@ module github.com/MicahParks/magiclinksdev/cmd/stress
 go 1.21.1
 
 require (
-	github.com/MicahParks/magiclinksdev v0.4.1
+	github.com/MicahParks/magiclinksdev v0.4.3
 	golang.org/x/sync v0.3.0
 )
 

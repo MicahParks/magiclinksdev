@@ -4,8 +4,8 @@ github.com/MicahParks/jwkset v0.3.1 h1:DIVazR/elD8CLWPblrVo610TzovIDYMcvlM4X0UT0
 github.com/MicahParks/jwkset v0.3.1/go.mod h1:Ob0sxSgMmQZFg4GO59PVBnfm+jtdQ1MJbfZDU90tEwM=
 github.com/MicahParks/keyfunc v1.9.0 h1:lhKd5xrFHLNOWrDc4Tyb/Q1AJ4LCzQ48GVJyVIID3+o=
 github.com/MicahParks/keyfunc v1.9.0/go.mod h1:IdnCilugA0O/99dW+/MkvlyrsX8+L8+x95xuVNtM5jw=
-github.com/MicahParks/magiclinksdev v0.4.1 h1:NcrdBAVlApMeZoABKhTqI/bh7CJ0NaC0zV8K5/EePV4=
-github.com/MicahParks/magiclinksdev v0.4.1/go.mod h1:avz0c4ftuAk6GWtOkBe/yUgAb+MZmUuTF3xPpsC/XJQ=
+github.com/MicahParks/magiclinksdev v0.4.3 h1:kSnPlAZwW8uzdiE/aC2AcPNs8zcFAklHlzLVlMIdSIo=
+github.com/MicahParks/magiclinksdev v0.4.3/go.mod h1:avz0c4ftuAk6GWtOkBe/yUgAb+MZmUuTF3xPpsC/XJQ=
 github.com/MicahParks/recaptcha v0.0.5 h1:RvKq7E1BZJtz5ubSkBun20jXxIsMWt2oZ0ppTJOzX1A=
 github.com/MicahParks/recaptcha v0.0.5/go.mod h1:aFv3iZDDs6Pbi6tRpUm8gofaTUnDxOQ27x5KsK0CZwE=
 github.com/aws/aws-sdk-go v1.45.6 h1:Y2isQQBZsnO15dzUQo9YQRThtHgrV200XCH05BRHVJI=
