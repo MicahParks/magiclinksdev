@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"net/url"
+	"strings"
 	"time"
 
 	jt "github.com/MicahParks/jsontype"
@@ -12,14 +13,23 @@ import (
 	"github.com/MicahParks/magiclinksdev/model"
 )
 
+const (
+	LogLevelDebug LogLevel = "debug"
+	LogLevelInfo  LogLevel = "info"
+	LogLevelWarn  LogLevel = "warn"
+	LogLevelError LogLevel = "error"
+)
+
+type LogLevel string
+
 // Config is the configuration for the magiclinksdev server.
 type Config struct {
 	AdminConfig         []model.AdminCreateArgs     `json:"adminConfig"`
 	BaseURL             *jt.JSONType[*url.URL]      `json:"baseURL"`
 	Iss                 string                      `json:"iss"`
 	JWKS                JWKS                        `json:"jwks"`
-	LogDebug            bool                        `json:"logDebug"` // TODO Use to configure logger.
-	LogJSON             bool                        `json:"logJSON"`  // TODO Use to configure logger.
+	LogJSON             bool                        `json:"logJSON"`
+	LogLevel            LogLevel                    `json:"logLevel"`
 	Port                uint16                      `json:"port"`
 	PreventRobots       PreventRobots               `json:"preventRobots"`
 	RelativeRedirectURL *jt.JSONType[*url.URL]      `json:"relativeRedirectURL"`
@@ -72,6 +82,16 @@ func (c Config) DefaultsAndValidate() (Config, error) {
 	}
 	if c.Port == 0 {
 		c.Port = 8080
+	}
+	if c.LogLevel == "" {
+		c.LogLevel = LogLevelInfo
+	} else {
+		c.LogLevel = LogLevel(strings.ToLower(string(c.LogLevel)))
+	}
+	switch c.LogLevel {
+	case LogLevelDebug, LogLevelInfo, LogLevelWarn, LogLevelError:
+	default:
+		return Config{}, fmt.Errorf("invalid log level %q: %w", c.LogLevel, jt.ErrDefaultsAndValidate)
 	}
 	c.PreventRobots, err = c.PreventRobots.DefaultsAndValidate()
 	if err != nil {

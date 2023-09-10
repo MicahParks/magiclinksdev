@@ -451,8 +451,19 @@ func CreateLogger(srvConf config.Config) *slog.Logger {
 	logOpts := slog.HandlerOptions{
 		Level: slog.LevelInfo,
 	}
-	if srvConf.LogDebug {
+	badLevel := false
+	switch srvConf.LogLevel {
+	case config.LogLevelDebug:
 		logOpts.Level = slog.LevelDebug
+	case config.LogLevelInfo:
+		logOpts.Level = slog.LevelInfo
+	case config.LogLevelWarn:
+		logOpts.Level = slog.LevelWarn
+	case config.LogLevelError:
+		logOpts.Level = slog.LevelError
+	default:
+		logOpts.Level = slog.LevelDebug
+		badLevel = true
 	}
 	var logger *slog.Logger
 	if srvConf.LogJSON {
@@ -465,7 +476,7 @@ func CreateLogger(srvConf config.Config) *slog.Logger {
 	return logger
 }
 
-func RunServer(ctx context.Context, logger *slog.Logger, server *handle.Server, srvConf config.Config) {
+func RunServer(ctx context.Context, logger *slog.Logger, server *handle.Server) {
 	mux, err := network.CreateHTTPHandlers(server)
 	if err != nil {
 		logger.ErrorContext(ctx, "Failed to create HTTP handlers.",
@@ -474,15 +485,15 @@ func RunServer(ctx context.Context, logger *slog.Logger, server *handle.Server, 
 		os.Exit(1)
 	}
 	httpServer := &http.Server{
-		Addr:    fmt.Sprintf(":%d", srvConf.Port),
+		Addr:    fmt.Sprintf(":%d", server.Config.Port),
 		Handler: mux,
 	}
 
 	idleConnsClosed := make(chan struct{})
-	go serverShutdown(ctx, srvConf, logger, idleConnsClosed, httpServer)
+	go serverShutdown(ctx, server.Config, logger, idleConnsClosed, httpServer)
 
 	logger.InfoContext(ctx, "Server is listening.",
-		"port", srvConf.Port,
+		"port", server.Config.Port,
 	)
 	err = httpServer.ListenAndServe()
 	if !errors.Is(err, http.ErrServerClosed) {

@@ -33,5 +33,5 @@ func main() {
 		)
 	}
 
-	setup.RunServer(ctx, logger, server, conf.Server)
+	setup.RunServer(ctx, logger, server)
 }

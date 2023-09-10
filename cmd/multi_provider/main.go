@@ -35,5 +35,5 @@ func main() {
 		os.Exit(1)
 	}
 
-	setup.RunServer(ctx, logger, server, conf.Server)
+	setup.RunServer(ctx, logger, server)
 }
