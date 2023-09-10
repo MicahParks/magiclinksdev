@@ -12,8 +12,8 @@ const (
 	RequestUUID ContextKey = iota
 	// ServiceAccount is the context key for the request's service account value.
 	ServiceAccount
-	// Sugared is the context key for the request's zap sugared logger value.
-	Sugared
+	// Logger is the context key for the request's logger value.
+	Logger
 	// Tx is the context key for the request's transaction value.
 	Tx
 )

@@ -5,14 +5,15 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"testing"
 	"time"
 
 	"github.com/MicahParks/jwkset"
-	"go.uber.org/zap"
 
 	mld "github.com/MicahParks/magiclinksdev"
 	"github.com/MicahParks/magiclinksdev/mldtest"
@@ -65,7 +66,7 @@ func TestMain(m *testing.M) {
 	truncateDatabase(ctx, conf.Storage, logger)
 
 	server, err := setup.CreateTestingProvider(ctx, conf, setup.ServerOptions{
-		Sugared: zap.NewNop().Sugar(),
+		Logger: slog.New(slog.NewJSONHandler(io.Discard, nil)),
 	})
 	if err != nil {
 		logger.Fatalf(mld.LogFmt, "Failed to create server.", err)
@@ -122,7 +123,7 @@ func createKeyIfNotExists(ctx context.Context, store storage.Storage, logger *lo
 }
 
 func truncateDatabase(ctx context.Context, config postgres.Config, logger *log.Logger) {
-	store, _, err := postgres.NewWithSetup(ctx, config, zap.NewNop().Sugar())
+	store, _, err := postgres.NewWithSetup(ctx, config, slog.New(slog.NewJSONHandler(io.Discard, nil)))
 	if err != nil {
 		logger.Fatalf(mld.LogFmt, "Failed to create storage.", err)
 	}

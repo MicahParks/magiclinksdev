@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/MicahParks/jwkset"
-	"github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v5"
 
 	"github.com/MicahParks/magiclinksdev/storage"
 )
@@ -43,7 +43,7 @@ ALTER TABLE mld.jwk
 	if err != nil {
 		return false, fmt.Errorf("failed to alter table for %q query: %w", a.metadata().Filename, err)
 	}
-	options.Sugared.Debug(`Added "alg" column to "mld.jwk" table.`)
+	options.Logger.DebugContext(ctx, `Added "alg" column to "mld.jwk" table.`)
 
 	//language=sql
 	query = `
@@ -53,7 +53,7 @@ CREATE INDEX ON mld.jwk (alg)
 	if err != nil {
 		return false, fmt.Errorf("failed to create index for %q query: %w", a.metadata().Filename, err)
 	}
-	options.Sugared.Debug(`Created index on "alg" column of "mld.jwk" table.`)
+	options.Logger.DebugContext(ctx, `Created index on "alg" column of "mld.jwk" table.`)
 
 	//language=sql
 	query = `
@@ -86,7 +86,9 @@ SELECT id, assets FROM mld.jwk
 		keys = append(keys, k)
 	}
 	rows.Close()
-	options.Sugared.Infof("Found %d existing JSON Web Keys.", len(keys))
+	options.Logger.InfoContext(ctx, "Found existing JSON Web Keys.",
+		"existingKeys", len(keys),
+	)
 
 	//language=sql
 	query = `
@@ -98,7 +100,7 @@ WHERE id = $2
 	for _, k := range keys {
 		alg := k.meta.ALG
 		if alg == "" {
-			options.Sugared.Warnw("Found a JSON Web Key with an empty algorithm. Skipping. Client applications will be unable to select this key explicitly.",
+			options.Logger.WarnContext(ctx, "Found a JSON Web Key with an empty algorithm. Skipping. Client applications will be unable to select this key explicitly.",
 				logKID, k.id,
 			)
 			continue

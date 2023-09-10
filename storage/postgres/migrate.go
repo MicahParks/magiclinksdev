@@ -5,11 +5,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
+	"log/slog"
 	"time"
 
-	"github.com/jackc/pgx/v4"
-	"github.com/jackc/pgx/v4/pgxpool"
-	"go.uber.org/zap"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"golang.org/x/mod/semver"
 
 	mld "github.com/MicahParks/magiclinksdev"
@@ -42,8 +43,8 @@ type Migrator interface {
 // MigratorOptions are options for creating a Migrator.
 type MigratorOptions struct {
 	EncryptionKey [32]byte
+	Logger        *slog.Logger
 	SetupCtx      context.Context
-	Sugared       *zap.SugaredLogger
 }
 
 func (m migrator) Migrate(ctx context.Context) error {
@@ -60,7 +61,7 @@ func (m migrator) Migrate(ctx context.Context) error {
 	}
 	err = compareSemVer(databaseVersion, setup.SemVer)
 	if err == nil {
-		m.sugared.Debug("No database migrations required.")
+		m.logger.DebugContext(ctx, "No database migrations required.")
 		err = tx.Commit(ctx)
 		if err != nil {
 			return fmt.Errorf("failed to commit migrations transaction: %w", err)
@@ -70,22 +71,22 @@ func (m migrator) Migrate(ctx context.Context) error {
 
 	options := migrationOptions{
 		EncryptionKey: m.encryptionKey,
-		Sugared:       m.sugared,
+		Logger:        m.logger,
 	}
 
 	migrationsApplied := 0
-	for _, migration := range m.migrations {
-		meta := migration.metadata()
-		options.Sugared = options.Sugared.With(
+	for _, mig := range m.migrations {
+		meta := mig.metadata()
+		options.Logger = options.Logger.With(
 			logDescription, meta.Description,
 			logFile, meta.Filename,
 			logVersion, meta.SemVer,
 		)
 
-		options.Sugared.Infow("Performing migration.")
-		applied, err := migration.migrate(ctx, m.setup, tx, options)
+		options.Logger.InfoContext(ctx, "Performing migration.")
+		applied, err := mig.migrate(ctx, m.setup, tx, options)
 		if err != nil {
-			options.Sugared.Infow("Failed to apply migration.",
+			options.Logger.InfoContext(ctx, "Failed to apply migration.",
 				mld.LogErr, err,
 			)
 			return fmt.Errorf("failed to apply migration %q: %w", meta.SemVer, err)
@@ -113,7 +114,7 @@ WHERE id
 			}
 			migrationsApplied++
 		}
-		options.Sugared.Infow(msg,
+		options.Logger.InfoContext(ctx, msg,
 			logDescription, meta.Description,
 			logFile, meta.Filename,
 			logVersion, meta.SemVer,
@@ -125,7 +126,7 @@ WHERE id
 		return fmt.Errorf("failed to commit migrations transaction: %w", err)
 	}
 
-	m.sugared.Infow("Migrations complete.",
+	m.logger.InfoContext(ctx, "Migrations complete.",
 		"migrationsApplied", migrationsApplied,
 	)
 
@@ -134,16 +135,16 @@ WHERE id
 
 type migrator struct {
 	encryptionKey [32]byte
+	logger        *slog.Logger
 	migrations    []migration
 	pool          *pgxpool.Pool
 	setup         Setup
-	sugared       *zap.SugaredLogger
 }
 
 // NewMigrator returns a new Migrator for a Postgres storage implementation.
 func NewMigrator(pool *pgxpool.Pool, options MigratorOptions) (Migrator, error) {
-	if options.Sugared == nil {
-		options.Sugared = zap.NewNop().Sugar()
+	if options.Logger == nil {
+		options.Logger = slog.New(slog.NewJSONHandler(io.Discard, nil))
 	}
 
 	ctx := options.SetupCtx
@@ -183,7 +184,7 @@ func NewMigrator(pool *pgxpool.Pool, options MigratorOptions) (Migrator, error) 
 		migrations:    migrations,
 		pool:          pool,
 		setup:         setup,
-		sugared:       options.Sugared,
+		logger:        options.Logger,
 	}
 
 	return m, nil
@@ -197,7 +198,7 @@ type metadata struct {
 
 type migrationOptions struct {
 	EncryptionKey [32]byte
-	Sugared       *zap.SugaredLogger
+	Logger        *slog.Logger
 }
 
 type migration interface {

@@ -4,11 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"log/slog"
 	"net/http"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v4"
-	"go.uber.org/zap"
+	"github.com/jackc/pgx/v5"
 
 	mld "github.com/MicahParks/magiclinksdev"
 	"github.com/MicahParks/magiclinksdev/handle"
@@ -82,11 +82,11 @@ func createAuthn(server *handle.Server) Middleware {
 			}
 			ctx = context.WithValue(ctx, ctxkey.ServiceAccount, sa)
 
-			fields := createZapFields(req, reqUUID)
-			fields = append(fields, zap.String("saUUID", sa.UUID.String()))
-			logger := server.Sugared.With(fields...)
-			logger.Debug("Request authenticated.")
-			ctx = context.WithValue(ctx, ctxkey.Sugared, logger)
+			logArgs := createLogArgs(req, reqUUID)
+			logArgs = append(logArgs, "saUUID", sa.UUID.String())
+			logger := server.Logger.With(logArgs...)
+			logger.DebugContext(ctx, "Request authenticated.")
+			ctx = context.WithValue(ctx, ctxkey.Logger, logger)
 
 			req = req.WithContext(ctx)
 			next.ServeHTTP(w, req)
@@ -94,11 +94,11 @@ func createAuthn(server *handle.Server) Middleware {
 	}
 }
 
-func createZapFields(req *http.Request, reqUUID uuid.UUID) []interface{} {
-	return []interface{}{
-		zap.String("method", req.Method),
-		zap.String("requestUUID", reqUUID.String()),
-		zap.String("url", req.URL.String()),
+func createLogArgs(req *http.Request, reqUUID uuid.UUID) []any {
+	return []any{
+		"method", req.Method,
+		"requestUUID", reqUUID.String(),
+		"url", req.URL.String(),
 	}
 }
 
@@ -107,9 +107,9 @@ func createLogger(server *handle.Server) Middleware {
 		return http.HandlerFunc(func(writer http.ResponseWriter, req *http.Request) {
 			ctx := req.Context()
 			reqUUID := ctx.Value(ctxkey.RequestUUID).(uuid.UUID)
-			logger := server.Sugared.With(createZapFields(req, reqUUID)...)
-			logger.Debug("Request started.")
-			ctx = context.WithValue(ctx, ctxkey.Sugared, logger)
+			logger := server.Logger.With(createLogArgs(req, reqUUID)...)
+			logger.DebugContext(ctx, "Request started.")
+			ctx = context.WithValue(ctx, ctxkey.Logger, logger)
 			req = req.WithContext(ctx)
 			next.ServeHTTP(writer, req)
 		})
@@ -128,8 +128,8 @@ func commitTx(next http.Handler) http.Handler {
 			if errors.Is(err, pgx.ErrTxClosed) {
 				return
 			}
-			sugared := ctx.Value(ctxkey.Sugared).(*zap.SugaredLogger)
-			sugared.Errorw("Failed to commit transaction.",
+			logger := ctx.Value(ctxkey.Logger).(*slog.Logger)
+			logger.ErrorContext(ctx, "Failed to commit transaction.",
 				mld.LogErr, err,
 			)
 			WriteErrorBody(ctx, http.StatusInternalServerError, mld.ResponseInternalServerError, writer)
@@ -158,8 +158,8 @@ func createRateLimit(server *handle.Server) Middleware {
 			sa := ctx.Value(ctxkey.ServiceAccount).(model.ServiceAccount)
 			err := server.Limiter.Wait(ctx, sa.UUID.String())
 			if err != nil {
-				sugared := ctx.Value(ctxkey.Sugared).(*zap.SugaredLogger)
-				sugared.Warnw("Service account request exceeds rate limit.",
+				logger := ctx.Value(ctxkey.Logger).(*slog.Logger)
+				logger.WarnContext(ctx, "Service account request exceeds rate limit.",
 					mld.LogErr, err,
 				)
 				WriteErrorBody(ctx, http.StatusTooManyRequests, mld.ResponseTooManyRequests, writer)
@@ -174,11 +174,11 @@ func createTx(server *handle.Server) Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(writer http.ResponseWriter, req *http.Request) {
 			ctx := req.Context()
-			sugared := ctx.Value(ctxkey.Sugared).(*zap.SugaredLogger)
+			logger := ctx.Value(ctxkey.Logger).(*slog.Logger)
 
 			tx, err := server.Store.Begin(ctx)
 			if err != nil {
-				sugared.Errorw("Failed to start transaction.",
+				logger.ErrorContext(ctx, "Failed to start transaction.",
 					mld.LogErr, err,
 				)
 				WriteErrorBody(ctx, http.StatusInternalServerError, mld.ResponseInternalServerError, writer)
@@ -191,7 +191,7 @@ func createTx(server *handle.Server) Middleware {
 
 			err = tx.Rollback(ctx)
 			if err != nil && !errors.Is(err, pgx.ErrTxClosed) {
-				sugared.Errorw("Failed to rollback transaction.",
+				logger.ErrorContext(ctx, "Failed to rollback transaction.",
 					mld.LogErr, err,
 				)
 				return

@@ -4,9 +4,9 @@ import (
 	"context"
 	_ "embed"
 	"encoding/json"
+	"log/slog"
+	"os"
 	"time"
-
-	"go.uber.org/zap"
 
 	mld "github.com/MicahParks/magiclinksdev"
 	"github.com/MicahParks/magiclinksdev/client"
@@ -18,24 +18,22 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
-	logger, err := zap.NewDevelopment()
-	if err != nil {
-		panic(err)
-	}
-	sugared := logger.Sugar()
+	logger := slog.Default()
 
 	c, err := client.New(mldtest.APIKey, mldtest.Aud, mldtest.BaseURL, mldtest.Iss, client.Options{})
 	if err != nil {
-		sugared.Fatalw("Failed to create client.",
+		logger.ErrorContext(ctx, "Failed to create client.",
 			mld.LogErr, err,
 		)
+		os.Exit(1)
 	}
 
 	claims, err := json.Marshal(mldtest.TClaims)
 	if err != nil {
-		sugared.Fatalw("Failed to marshal claims.",
+		logger.ErrorContext(ctx, "Failed to marshal claims.",
 			mld.LogErr, err,
 		)
+		os.Exit(1)
 	}
 
 	req := model.LinkCreateRequest{
@@ -52,22 +50,24 @@ func main() {
 	resp, mldErr, err := c.LinkCreate(ctx, req)
 	if err != nil {
 		if mldErr.Code != 0 {
-			sugared = sugared.With(
+			logger = logger.With(
 				"code", mldErr.Code,
 				"message", mldErr.Message,
 				"requestUUID", mldErr.RequestMetadata.UUID,
 			)
 		}
-		sugared.Fatalw("Failed to create link.",
+		logger.ErrorContext(ctx, "Failed to create link.",
 			mld.LogErr, err,
 		)
+		os.Exit(1)
 	}
 
 	data, err := json.MarshalIndent(resp, "", "  ")
 	if err != nil {
-		sugared.Fatalw("Failed to marshal response.",
+		logger.ErrorContext(ctx, "Failed to marshal response.",
 			mld.LogErr, err,
 		)
+		os.Exit(1)
 	}
 
 	println(string(data))

@@ -6,9 +6,8 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
-
-	"go.uber.org/zap"
 
 	mld "github.com/MicahParks/magiclinksdev"
 	"github.com/MicahParks/magiclinksdev/handle"
@@ -31,7 +30,7 @@ type Validatable[T any] interface {
 func HTTPEmailLinkCreate(s *handle.Server) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		sugared := ctx.Value(ctxkey.Sugared).(*zap.SugaredLogger)
+		logger := ctx.Value(ctxkey.Logger).(*slog.Logger)
 		tx := ctx.Value(ctxkey.Tx).(storage.Tx)
 
 		validated, done := unmarshalRequest[model.EmailLinkCreateRequest, model.ValidEmailLinkCreateRequest](r, s.Config.Validation, w)
@@ -45,7 +44,7 @@ func HTTPEmailLinkCreate(s *handle.Server) http.Handler {
 				middleware.WriteErrorBody(ctx, http.StatusBadRequest, responseDontRegisteredClaims, w)
 				return
 			}
-			sugared.Errorw("Failed to create email link.",
+			logger.ErrorContext(ctx, "Failed to create email link.",
 				mld.LogErr, err,
 			)
 			middleware.WriteErrorBody(ctx, http.StatusInternalServerError, mld.ResponseInternalServerError, w)
@@ -54,7 +53,7 @@ func HTTPEmailLinkCreate(s *handle.Server) http.Handler {
 
 		err = tx.Commit(ctx)
 		if err != nil {
-			sugared.Errorw("Failed to commit transaction for create email link.",
+			logger.ErrorContext(ctx, "Failed to commit transaction for create email link.",
 				mld.LogErr, err,
 			)
 			middleware.WriteErrorBody(ctx, http.StatusInternalServerError, mld.ResponseInternalServerError, w)
@@ -69,7 +68,7 @@ func HTTPEmailLinkCreate(s *handle.Server) http.Handler {
 func HTTPJWTCreate(s *handle.Server) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		sugared := ctx.Value(ctxkey.Sugared).(*zap.SugaredLogger)
+		logger := ctx.Value(ctxkey.Logger).(*slog.Logger)
 		tx := ctx.Value(ctxkey.Tx).(storage.Tx)
 
 		validated, done := unmarshalRequest[model.JWTCreateRequest, model.ValidJWTCreateRequest](r, s.Config.Validation, w)
@@ -87,7 +86,7 @@ func HTTPJWTCreate(s *handle.Server) http.Handler {
 				middleware.WriteErrorBody(ctx, http.StatusBadRequest, "Specified JWT algorithm not found.", w)
 				return
 			}
-			sugared.Errorw("Failed to create JWT.",
+			logger.ErrorContext(ctx, "Failed to create JWT.",
 				mld.LogErr, err,
 			)
 			middleware.WriteErrorBody(ctx, http.StatusInternalServerError, mld.ResponseInternalServerError, w)
@@ -96,7 +95,7 @@ func HTTPJWTCreate(s *handle.Server) http.Handler {
 
 		err = tx.Commit(ctx)
 		if err != nil {
-			sugared.Errorw("Failed to commit transaction for create JWT.",
+			logger.ErrorContext(ctx, "Failed to commit transaction for create JWT.",
 				mld.LogErr, err,
 			)
 			middleware.WriteErrorBody(ctx, http.StatusInternalServerError, mld.ResponseInternalServerError, w)
@@ -111,7 +110,7 @@ func HTTPJWTCreate(s *handle.Server) http.Handler {
 func HTTPJWTValidate(s *handle.Server) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		sugared := ctx.Value(ctxkey.Sugared).(*zap.SugaredLogger)
+		logger := ctx.Value(ctxkey.Logger).(*slog.Logger)
 		tx := ctx.Value(ctxkey.Tx).(storage.Tx)
 
 		validated, done := unmarshalRequest[model.JWTValidateRequest, model.ValidJWTValidateRequest](r, s.Config.Validation, w)
@@ -125,7 +124,7 @@ func HTTPJWTValidate(s *handle.Server) http.Handler {
 				middleware.WriteErrorBody(ctx, http.StatusUnprocessableEntity, fmt.Sprintf("Invalid JWT: %s", err), w)
 				return
 			}
-			sugared.Errorw("Failed to validate JWT.",
+			logger.ErrorContext(ctx, "Failed to validate JWT.",
 				mld.LogErr, err,
 			)
 			middleware.WriteErrorBody(ctx, http.StatusInternalServerError, fmt.Sprintf("Failed to handle request: %s", err), w)
@@ -134,7 +133,7 @@ func HTTPJWTValidate(s *handle.Server) http.Handler {
 
 		err = tx.Commit(ctx)
 		if err != nil {
-			sugared.Errorw("Failed to commit transaction for validate JWT.",
+			logger.ErrorContext(ctx, "Failed to commit transaction for validate JWT.",
 				mld.LogErr, err,
 			)
 			middleware.WriteErrorBody(ctx, http.StatusInternalServerError, fmt.Sprintf("Failed to commit storage transaction: %s.", err), w)
@@ -149,7 +148,7 @@ func HTTPJWTValidate(s *handle.Server) http.Handler {
 func HTTPLinkCreate(s *handle.Server) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		sugared := ctx.Value(ctxkey.Sugared).(*zap.SugaredLogger)
+		logger := ctx.Value(ctxkey.Logger).(*slog.Logger)
 		tx := ctx.Value(ctxkey.Tx).(storage.Tx)
 
 		validated, done := unmarshalRequest[model.LinkCreateRequest, model.ValidLinkCreateRequest](r, s.Config.Validation, w)
@@ -163,7 +162,7 @@ func HTTPLinkCreate(s *handle.Server) http.Handler {
 				middleware.WriteErrorBody(ctx, http.StatusBadRequest, responseDontRegisteredClaims, w)
 				return
 			}
-			sugared.Errorw("Failed to commit transaction for create link.",
+			logger.ErrorContext(ctx, "Failed to commit transaction for create link.",
 				mld.LogErr, err,
 			)
 			middleware.WriteErrorBody(ctx, http.StatusInternalServerError, mld.ResponseInternalServerError, w)
@@ -172,7 +171,7 @@ func HTTPLinkCreate(s *handle.Server) http.Handler {
 
 		err = tx.Commit(ctx)
 		if err != nil {
-			sugared.Errorw("Failed to commit transaction for create link.",
+			logger.ErrorContext(ctx, "Failed to commit transaction for create link.",
 				mld.LogErr, err,
 			)
 			middleware.WriteErrorBody(ctx, http.StatusInternalServerError, mld.ResponseInternalServerError, w)
@@ -194,7 +193,7 @@ func HTTPReady(_ *handle.Server) http.Handler {
 func HTTPServiceAccountCreate(s *handle.Server) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		sugared := ctx.Value(ctxkey.Sugared).(*zap.SugaredLogger)
+		logger := ctx.Value(ctxkey.Logger).(*slog.Logger)
 		tx := ctx.Value(ctxkey.Tx).(storage.Tx)
 
 		validated, done := unmarshalRequest[model.ServiceAccountCreateRequest, model.ValidServiceAccountCreateRequest](r, s.Config.Validation, w)
@@ -204,7 +203,7 @@ func HTTPServiceAccountCreate(s *handle.Server) http.Handler {
 
 		response, err := s.HandleServiceAccountCreate(ctx, validated)
 		if err != nil {
-			sugared.Errorw("Failed to create service account.",
+			logger.ErrorContext(ctx, "Failed to create service account.",
 				mld.LogErr, err,
 			)
 			middleware.WriteErrorBody(ctx, http.StatusInternalServerError, mld.ResponseInternalServerError, w)
@@ -213,14 +212,14 @@ func HTTPServiceAccountCreate(s *handle.Server) http.Handler {
 
 		err = tx.Commit(ctx)
 		if err != nil {
-			sugared.Errorw("Failed to commit transaction for create service account.",
+			logger.ErrorContext(ctx, "Failed to commit transaction for create service account.",
 				mld.LogErr, err,
 			)
 			middleware.WriteErrorBody(ctx, http.StatusInternalServerError, mld.ResponseInternalServerError, w)
 			return
 		}
 
-		sugared.Infow("Created new service account.",
+		logger.InfoContext(ctx, "Created new service account.",
 			mld.LogRequestBody, validated,
 			mld.LogResponseBody, response,
 		)

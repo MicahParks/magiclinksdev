@@ -4,11 +4,14 @@ import (
 	"bytes"
 	"context"
 	_ "embed"
+	"log/slog"
 	"net/http"
 	"net/url"
+	"os"
+	"strings"
 	"time"
 
-	"go.uber.org/zap"
+	"github.com/MicahParks/magiclinksdev/mldtest"
 	"golang.org/x/sync/errgroup"
 
 	mld "github.com/MicahParks/magiclinksdev"
@@ -23,58 +26,60 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Hour)
 	defer cancel()
 
-	logger, err := zap.NewDevelopment()
-	if err != nil {
-		panic(err)
-	}
-	sugared := logger.Sugar()
+	l := slog.Default()
 
 	u, err := url.Parse("http://localhost:8080")
 	if err != nil {
-		sugared.Fatalw("Failed to parse URL.",
+		l.ErrorContext(ctx, "Failed to parse URL.",
 			mld.LogErr, err,
 		)
+		exit(ctx, l, time.Now(), 1)
 	}
-	u, err = u.Parse(network.PathLinkCreate)
+	u, err = u.Parse("/api/v1/" + network.PathLinkCreate)
 	if err != nil {
-		sugared.Fatalw("Failed to parse URL.",
+		l.ErrorContext(ctx, "Failed to parse URL.",
 			mld.LogErr, err,
 		)
+		exit(ctx, l, time.Now(), 1)
 	}
 
 	g, ctx := errgroup.WithContext(ctx)
-	if err != nil {
-		sugared.Fatalw("Failed to create errgroup.",
-			mld.LogErr, err,
-		)
-	}
 
 	start := time.Now()
+	defer func() {
+		l.InfoContext(ctx, "Stress test complete.",
+			"duration", time.Since(start).String(),
+		)
+	}()
 	for i := 0; i < 1000; i++ {
 		g.Go(func() error {
 			for j := 0; j < 1000; j++ {
 				req, err := http.NewRequestWithContext(ctx, http.MethodPost, u.String(), bytes.NewReader(linkJSON))
 				if err != nil {
-					sugared.Fatalw("Failed to create request.",
+					l.ErrorContext(ctx, "Failed to create request.",
 						mld.LogErr, err,
 					)
+					exit(ctx, l, start, 1)
 				}
 
-				req.Header.Set(middleware.APIKeyHeader, "40084740-0bc3-455d-b298-e23a31561580") // Admin API key from config.
+				req.Header.Set(middleware.APIKeyHeader, mldtest.APIKey.String())
+				req.Header.Set(mld.HeaderContentType, mld.ContentTypeJSON)
 
 				resp, err := http.DefaultClient.Do(req)
 				if err != nil {
-					sugared.Fatalw("Failed to send request.",
+					l.ErrorContext(ctx, "Failed to send request.",
 						mld.LogErr, err,
 					)
+					exit(ctx, l, start, 1)
 				}
 				//goland:noinspection GoUnhandledErrorResult
 				_ = resp.Body.Close()
 
-				if resp.StatusCode != http.StatusOK {
-					sugared.Fatalw("Failed to create service account.",
+				if resp.StatusCode != http.StatusCreated {
+					l.ErrorContext(ctx, "Failed to create link.",
 						"status", resp.StatusCode,
 					)
+					exit(ctx, l, start, 1)
 				}
 			}
 			return nil
@@ -83,12 +88,25 @@ func main() {
 
 	err = g.Wait()
 	if err != nil {
-		sugared.Fatalw("Failed to send requests.",
+		l.ErrorContext(ctx, "Failed to send requests.",
 			mld.LogErr, err,
 		)
+		exit(ctx, l, start, 1)
 	}
 
-	total := time.Since(start)
+	exit(ctx, l, start, 0)
+}
 
-	println(total.String())
+func exit(ctx context.Context, l *slog.Logger, start time.Time, code int) {
+	msg := strings.Builder{}
+	msg.WriteString("Stress test finish")
+	if code == 0 {
+		msg.WriteString("ed successfully.")
+	} else {
+		msg.WriteString("ed with errors.")
+	}
+	l.InfoContext(ctx, msg.String(),
+		"duration", time.Since(start).String(),
+	)
+	os.Exit(code)
 }

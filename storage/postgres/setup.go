@@ -4,10 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"time"
 
-	"github.com/jackc/pgx/v4/pgxpool"
-	"go.uber.org/zap"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"golang.org/x/mod/semver"
 
 	"github.com/MicahParks/magiclinksdev/network/middleware/ctxkey"
@@ -31,7 +31,7 @@ type Setup struct {
 }
 
 // NewWithSetup creates a new Postgres storage and returns its connection pool. It also performs a setup check.
-func NewWithSetup(ctx context.Context, config Config, setupSugared *zap.SugaredLogger) (storage.Storage, *pgxpool.Pool, error) {
+func NewWithSetup(ctx context.Context, config Config, setupLogger *slog.Logger) (storage.Storage, *pgxpool.Pool, error) {
 	post, p, err := New(ctx, config)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to create Postgres storage: %w", err)
@@ -44,7 +44,7 @@ func NewWithSetup(ctx context.Context, config Config, setupSugared *zap.SugaredL
 		options := MigratorOptions{
 			EncryptionKey: encryptionKey,
 			SetupCtx:      ctx,
-			Sugared:       setupSugared,
+			Logger:        setupLogger,
 		}
 		m, err := NewMigrator(p, options)
 		if err != nil {
@@ -138,7 +138,7 @@ func pool(ctx context.Context, config Config) (*pgxpool.Pool, error) {
 	var conn *pgxpool.Pool
 	const retries = 5
 	for i := 0; i < retries; i++ {
-		conn, err = pgxpool.ConnectConfig(ctx, c)
+		conn, err = pgxpool.NewWithConfig(ctx, c)
 		if err != nil {
 			select {
 			case <-ctx.Done():

@@ -4,16 +4,20 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
+	"log/slog"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
-
-	"go.uber.org/zap"
 
 	"github.com/MicahParks/magiclinksdev/config"
 	"github.com/MicahParks/magiclinksdev/email/sendgrid"
 	"github.com/MicahParks/magiclinksdev/email/ses"
 	"github.com/MicahParks/magiclinksdev/magiclink"
 	"github.com/MicahParks/magiclinksdev/mldtest"
+	"github.com/MicahParks/magiclinksdev/network"
 	"github.com/MicahParks/magiclinksdev/rlimit"
 
 	mld "github.com/MicahParks/magiclinksdev"
@@ -184,15 +188,15 @@ type ServerInterfaces struct {
 // ServerOptions holds all the options for a magiclinksdev server.
 type ServerOptions struct {
 	HTTPMux               *http.ServeMux
+	Logger                *slog.Logger
 	MagicLinkErrorHandler magiclink.ErrorHandler
 	MiddlewareHook        handle.MiddlewareHook
-	Sugared               *zap.SugaredLogger
 }
 
 // ApplyDefaults applies the default values to the options.
 func (o ServerOptions) ApplyDefaults() ServerOptions {
-	if o.Sugared == nil {
-		o.Sugared = zap.NewNop().Sugar()
+	if o.Logger == nil {
+		o.Logger = slog.New(slog.NewJSONHandler(io.Discard, nil))
 	}
 	if o.HTTPMux == nil {
 		o.HTTPMux = http.NewServeMux()
@@ -206,11 +210,11 @@ func (o ServerOptions) ApplyDefaults() ServerOptions {
 // CreateNopProviderServer creates a new magiclinksdev server with a no-operation email provider.
 func CreateNopProviderServer(ctx context.Context, conf NopConfig, options ServerOptions) (*handle.Server, error) {
 	rateLimiter := rlimit.NewMemory(conf.RateLimiter)
-	store, _, err := postgres.NewWithSetup(ctx, conf.Storage, options.Sugared.With("postgresSetup", true))
+	store, _, err := postgres.NewWithSetup(ctx, conf.Storage, options.Logger.With("postgresSetup", true))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create storage: %w", err)
 	}
-	nop := nopProvider{sugared: options.Sugared.With(zap.String("provider", "nop"))}
+	nop := nopProvider{logger: options.Logger.With("provider", "nop")}
 	interfaces := ServerInterfaces{
 		EmailProvider: nop,
 		RateLimiter:   rateLimiter,
@@ -230,14 +234,14 @@ func CreateMultiProviderServer(ctx context.Context, conf MultiConfig, options Se
 		return nil, fmt.Errorf("failed to create email provider: %w", err)
 	}
 	opts := email.MultiProviderOptions{
-		Sugared: options.Sugared.With(zap.String("provider", "multi")),
+		Logger: options.Logger.With("provider", "multi"),
 	}
 	multiProvider, err := email.NewMultiProvider([]email.Provider{sesProvider, sendgridProvider}, opts)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create email provider: %w", err)
 	}
 	rateLimiter := rlimit.NewMemory(conf.RateLimiter)
-	store, _, err := postgres.NewWithSetup(ctx, conf.Storage, options.Sugared.With("postgresSetup", true))
+	store, _, err := postgres.NewWithSetup(ctx, conf.Storage, options.Logger.With("postgresSetup", true))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create storage: %w", err)
 	}
@@ -256,7 +260,7 @@ func CreateSESProvider(ctx context.Context, conf SESConfig, options ServerOption
 		return nil, fmt.Errorf("failed to create email provider: %w", err)
 	}
 	rateLimiter := rlimit.NewMemory(conf.RateLimiter)
-	store, _, err := postgres.NewWithSetup(ctx, conf.Storage, options.Sugared.With("postgresSetup", true))
+	store, _, err := postgres.NewWithSetup(ctx, conf.Storage, options.Logger.With("postgresSetup", true))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create storage: %w", err)
 	}
@@ -275,7 +279,7 @@ func CreateSendGridProvider(ctx context.Context, conf SendGridConfig, options Se
 		return nil, fmt.Errorf("failed to create email provider: %w", err)
 	}
 	rateLimiter := rlimit.NewMemory(conf.RateLimiter)
-	store, _, err := postgres.NewWithSetup(ctx, conf.Storage, options.Sugared.With("postgresSetup", true))
+	store, _, err := postgres.NewWithSetup(ctx, conf.Storage, options.Logger.With("postgresSetup", true))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create storage: %w", err)
 	}
@@ -291,7 +295,7 @@ func CreateSendGridProvider(ctx context.Context, conf SendGridConfig, options Se
 func CreateTestingProvider(ctx context.Context, conf TestConfig, options ServerOptions) (*handle.Server, error) {
 	provider := mldtest.NopProvider{}
 	rateLimiter := rlimit.NewMemory(conf.RateLimiter)
-	store, _, err := postgres.NewWithSetup(ctx, conf.Storage, options.Sugared.With("postgresSetup", true))
+	store, _, err := postgres.NewWithSetup(ctx, conf.Storage, options.Logger.With("postgresSetup", true))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create storage: %w", err)
 	}
@@ -306,7 +310,7 @@ func CreateTestingProvider(ctx context.Context, conf TestConfig, options ServerO
 // CreateServer creates a new magiclinksdev server.
 func CreateServer(ctx context.Context, conf config.Config, options ServerOptions, interfaces ServerInterfaces) (*handle.Server, error) {
 	options = options.ApplyDefaults()
-	sugared := options.Sugared
+	logger := options.Logger
 
 	magicLinkServiceURL, err := conf.BaseURL.Get().Parse(conf.RelativeRedirectURL.Get().EscapedPath())
 	if err != nil {
@@ -346,12 +350,12 @@ func CreateServer(ctx context.Context, conf config.Config, options ServerOptions
 			return nil, fmt.Errorf("failed to create key if they didn't already exist: %w", err)
 		}
 		if existed {
-			sugared.Info("JWK Set keys already exist.")
+			logger.InfoContext(ctx, "JWK Set keys already exist.")
 		} else {
-			sugared.Info("JWK Set keys created.")
+			logger.InfoContext(ctx, "JWK Set keys created.")
 		}
 	} else {
-		sugared.Info("Ignoring default JWK Set check.")
+		logger.InfoContext(ctx, "Ignoring default JWK Set check.")
 	}
 
 	for _, adminConfig := range conf.AdminConfig {
@@ -370,7 +374,7 @@ func CreateServer(ctx context.Context, conf config.Config, options ServerOptions
 				return nil, fmt.Errorf("failed to check if admin account exists: %w", err)
 			}
 		}
-		sugared.Infow("Admin account already exists. Skipping creation.",
+		logger.InfoContext(ctx, "Admin account already exists. Skipping creation.",
 			"uuid", valid.UUID,
 		)
 	}
@@ -392,10 +396,10 @@ func CreateServer(ctx context.Context, conf config.Config, options ServerOptions
 		HTTPMux:        options.HTTPMux,
 		JWKS:           magicLink.JWKSet(),
 		Limiter:        interfaces.RateLimiter,
+		Logger:         logger,
 		MagicLink:      magicLink,
 		MiddlewareHook: options.MiddlewareHook,
 		Store:          interfaces.Store,
-		Sugared:        sugared,
 	}
 
 	return server, err
@@ -405,14 +409,14 @@ func CreateServer(ctx context.Context, conf config.Config, options ServerOptions
 func MagicLinkErrorHandler(h magiclink.ErrorHandler) magiclink.ErrorHandler {
 	return magiclink.ErrorHandlerFunc(func(args magiclink.ErrorHandlerArgs) {
 		ctx := args.Request.Context()
-		sugared := ctx.Value(ctxkey.Sugared).(*zap.SugaredLogger)
-		sugared.Errorw("Failed to handle magic link.",
+		logger := ctx.Value(ctxkey.Logger).(*slog.Logger)
+		logger.ErrorContext(ctx, "Failed to handle magic link.",
 			mld.LogErr, args.Err,
 		)
 		tx := ctx.Value(ctxkey.Tx).(storage.Tx)
 		err := tx.Rollback(ctx)
 		if err != nil {
-			sugared.Errorw("Failed to rollback transaction.",
+			logger.ErrorContext(ctx, "Failed to rollback transaction.",
 				mld.LogErr, err,
 			)
 		}
@@ -432,13 +436,103 @@ func (n nopMiddlewareHook) Hook(options handle.MiddlewareOptions) handle.Middlew
 }
 
 type nopProvider struct {
-	sugared *zap.SugaredLogger
+	logger *slog.Logger
 }
 
 // Send implements email.Provider.
-func (n nopProvider) Send(_ context.Context, e email.Email) error {
-	n.sugared.Debugw("Sending email.",
+func (n nopProvider) Send(ctx context.Context, e email.Email) error {
+	n.logger.DebugContext(ctx, "Sending email.",
 		"email", e,
 	)
 	return nil
+}
+
+func CreateLogger(srvConf config.Config) *slog.Logger {
+	logOpts := slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}
+	badLevel := false
+	switch srvConf.LogLevel {
+	case config.LogLevelDebug:
+		logOpts.Level = slog.LevelDebug
+	case config.LogLevelInfo:
+		logOpts.Level = slog.LevelInfo
+	case config.LogLevelWarn:
+		logOpts.Level = slog.LevelWarn
+	case config.LogLevelError:
+		logOpts.Level = slog.LevelError
+	default:
+		logOpts.Level = slog.LevelDebug
+		badLevel = true
+	}
+	var logger *slog.Logger
+	if srvConf.LogJSON {
+		logger = slog.New(slog.NewJSONHandler(os.Stdout, &logOpts))
+	} else {
+		logger = slog.New(slog.NewTextHandler(os.Stdout, &logOpts))
+	}
+
+	if badLevel {
+		logger.Warn("Invalid log level. Using debug.",
+			"level", srvConf.LogLevel,
+		)
+	}
+
+	slog.SetDefault(logger)
+
+	return logger
+}
+
+func RunServer(ctx context.Context, logger *slog.Logger, server *handle.Server) {
+	mux, err := network.CreateHTTPHandlers(server)
+	if err != nil {
+		logger.ErrorContext(ctx, "Failed to create HTTP handlers.",
+			mld.LogErr, err,
+		)
+		os.Exit(1)
+	}
+	httpServer := &http.Server{
+		Addr:    fmt.Sprintf(":%d", server.Config.Port),
+		Handler: mux,
+	}
+
+	idleConnsClosed := make(chan struct{})
+	go serverShutdown(ctx, server.Config, logger, idleConnsClosed, httpServer)
+
+	logger.InfoContext(ctx, "Server is listening.",
+		"port", server.Config.Port,
+	)
+	err = httpServer.ListenAndServe()
+	if !errors.Is(err, http.ErrServerClosed) {
+		logger.ErrorContext(ctx, "Failed to listen and serve.",
+			mld.LogErr, err,
+		)
+		os.Exit(1)
+	}
+
+	<-idleConnsClosed
+}
+
+func serverShutdown(ctx context.Context, conf config.Config, logger *slog.Logger, idleConnsClosed chan struct{}, srv *http.Server) {
+	shutdown := make(chan os.Signal, 1)
+	signal.Notify(shutdown, syscall.SIGINT, syscall.SIGTERM)
+	select {
+	case <-shutdown:
+		logger.InfoContext(ctx, "Got a SIGINT or SIGTERM.")
+	case <-ctx.Done():
+		logger.InfoContext(ctx, "Context over.",
+			mld.LogErr, ctx.Err(),
+		)
+	}
+
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), conf.ShutdownTimeout.Get())
+	defer cancel()
+	err := srv.Shutdown(shutdownCtx)
+	if err != nil {
+		logger.InfoContext(ctx, "Couldn't shut down server before time ended.",
+			mld.LogErr, err,
+		)
+	}
+
+	close(idleConnsClosed)
 }
