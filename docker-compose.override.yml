@@ -1,9 +1,0 @@
-version: "3"
-services:
-  mldpostgres:
-    image: "postgres:15"
-    container_name: "mldpostgres"
-    environment:
-      POSTGRES_PASSWORD: "password"
-    volumes:
-      - "./storage/postgres/startup.sql:/docker-entrypoint-initdb.d/startup.sql"

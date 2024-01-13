@@ -135,10 +135,13 @@ func pool(ctx context.Context, config Config) (*pgxpool.Pool, error) {
 	c.MaxConnIdleTime = config.MaxIdle.Get()
 	c.MinConns = config.MinConns
 
-	var conn *pgxpool.Pool
+	conn, err := pgxpool.NewWithConfig(ctx, c)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create database connection pool: %w", err)
+	}
 	const retries = 5
 	for i := 0; i < retries; i++ {
-		conn, err = pgxpool.NewWithConfig(ctx, c)
+		err = conn.Ping(ctx)
 		if err != nil {
 			select {
 			case <-ctx.Done():
