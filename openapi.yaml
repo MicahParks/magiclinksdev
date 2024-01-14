@@ -3,16 +3,17 @@ info:
   title: magiclinks.dev
   description: "The API specification for the magiclinksdev project. \n\n The default\
     \ JWK Set relative URL path is `/api/v1/jwks.json`. \n\n The documentation site\
-    \ is at https://docs.magiclinks.dev \n This is an ELv2 licensed project: https://github.com/MicahParks/magiclinksdev\
-    \ \n The optional SaaS platform's landing page is: https://magiclinks.dev "
+    \ is at https://docs.magiclinks.dev \n This is an Apache License 2.0 project:\
+    \ https://github.com/MicahParks/magiclinksdev \n The optional SaaS platform's\
+    \ landing page is: https://magiclinks.dev "
   version: 1.0.0
 servers:
-- url: https://magiclinks.dev/api/v1
+  - url: https://magiclinks.dev/api/v1
 security:
-- apiKey: []
+  - apiKey: []
 tags:
-- name: admin
-  description: Endpoints for service accounts authorized with an admin API key.
+  - name: admin
+    description: Endpoints for service accounts authorized with an admin API key.
 paths:
   /ready:
     get:
@@ -20,7 +21,7 @@ paths:
       description: Check if the service is running and ready to accept requests.
       operationId: ready
       responses:
-        200:
+        "200":
           description: The service is running and ready to accept requests.
           content: {}
         default:
@@ -29,7 +30,7 @@ paths:
   /admin/service-account/create:
     post:
       tags:
-      - admin
+        - admin
       summary: Create a new service account
       description: Create a new service account with the parameters.
       operationId: serviceAccountCreate
@@ -41,7 +42,7 @@ paths:
               $ref: '#/components/schemas/ServiceAccountCreateRequest'
         required: true
       responses:
-        201:
+        "201":
           description: successful operation
           content:
             application/json:
@@ -56,7 +57,7 @@ paths:
       x-codegen-request-body-name: body
   /jwt/create:
     post:
-      summary: Create a JWT, typically for a JWT refresh.
+      summary: "Create a JWT, typically for a JWT refresh."
       description: Create a JWT with the parameters. The intended use case is to refresh
         an authentic and valid JWT.
       operationId: jwtCreate
@@ -68,7 +69,7 @@ paths:
               $ref: '#/components/schemas/JWTCreateRequest'
         required: true
       responses:
-        201:
+        "201":
           description: The JWT was created successfully.
           content:
             application/json:
@@ -84,11 +85,11 @@ paths:
   /jwt/validate:
     post:
       summary: Validate a JWT.
-      description: 'Validate a JWT and return the payload. Ideally the client would
-        cache a copy of the JWK Set and validate JWTs locally. This endpoint is for
-        use cases where the native language does not have an adequate JWK Set client.
-        Consider deploying an instance of the JWK Set Client Proxy (JCP) if you need
-        this in production: https://github.com/MicahParks/jcp'
+      description: "Validate a JWT and return the payload. Ideally the client would\
+        \ cache a copy of the JWK Set and validate JWTs locally. This endpoint is\
+        \ for use cases where the native language does not have an adequate JWK Set\
+        \ client. Consider deploying an instance of the JWK Set Client Proxy (JCP)\
+        \ if you need this in production: https://github.com/MicahParks/jcp"
       operationId: jwtValidate
       requestBody:
         description: The JWT to validate.
@@ -98,13 +99,13 @@ paths:
               $ref: '#/components/schemas/JWTValidateRequest'
         required: true
       responses:
-        200:
+        "200":
           description: The JWT was signed by an active key in the JWK Set.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/JWTValidateResponse'
-        422:
+        "422":
           description: The given JWT was invalid.
           content:
             application/json:
@@ -120,8 +121,8 @@ paths:
   /link/create:
     post:
       summary: Create a magic link.
-      description: Create a magic link that, when clicked, will create a JWT with
-        the given claims and include that JWT in the URL query key of a redirect.
+      description: "Create a magic link that, when clicked, will create a JWT with\
+        \ the given claims and include that JWT in the URL query key of a redirect."
       operationId: linkCreate
       requestBody:
         content:
@@ -130,7 +131,7 @@ paths:
               $ref: '#/components/schemas/LinkCreateRequest'
         required: true
       responses:
-        201:
+        "201":
           description: The magic link was created successfully.
           content:
             application/json:
@@ -155,7 +156,7 @@ paths:
               $ref: '#/components/schemas/EmailLinkCreateRequest'
         required: true
       responses:
-        201:
+        "201":
           description: The request has been accepted by the email provider.
           content:
             application/json:
@@ -247,7 +248,7 @@ components:
       description: Any valid JSON object.
     JWTCreateRequest:
       required:
-      - jwtCreateArgs
+        - jwtCreateArgs
       type: object
       properties:
         jwtCreateArgs:
@@ -265,9 +266,9 @@ components:
           $ref: '#/components/schemas/JWTClaims'
         jwtLifespanSeconds:
           type: integer
-          description: The lifespan of the JWT in seconds. The JWT's lifespan starts
-            after the magic link has been visited and the JWT is signed. It defaults
-            to 5 minutes. The minimum value is 5 and the maximum value is 2,592,000.
+          description: "The lifespan of the JWT in seconds. The JWT's lifespan starts\
+            \ after the magic link has been visited and the JWT is signed. It defaults\
+            \ to 5 minutes. The minimum value is 5 and the maximum value is 2,592,000."
       description: Parameters used to create a JWT.
     JWTCreateResults:
       type: object
@@ -286,7 +287,7 @@ components:
       description: The response body for the /jwt/create endpoint.
     JWTValidateRequest:
       required:
-      - jwtValidateArgs
+        - jwtValidateArgs
       type: object
       properties:
         jwtValidateArgs:
@@ -319,20 +320,20 @@ components:
       description: The response body for the /jwt/validate endpoint.
     LinkCreateArgs:
       required:
-      - redirectURL
+        - redirectURL
       type: object
       properties:
         jwtCreateArgs:
           $ref: '#/components/schemas/JWTCreateArgs'
         linkExpires:
           type: integer
-          description: The number of seconds the link should be active for after the
-            request has been processed. It defaults to 1 hour. The minimum value is
-            5 and the maximum value is 2,592,000.
+          description: "The number of seconds the link should be active for after\
+            \ the request has been processed. It defaults to 1 hour. The minimum value\
+            \ is 5 and the maximum value is 2,592,000."
         redirectQueryKey:
           type: string
-          description: The URL query key in the redirectURL to contain the signed
-            JWT when the magic link is used. By default, "jwt" is used.
+          description: "The URL query key in the redirectURL to contain the signed\
+            \ JWT when the magic link is used. By default, \"jwt\" is used."
         redirectURL:
           type: string
           description: The URL to redirect to with the signed JWT when the link is
@@ -340,7 +341,7 @@ components:
       description: Parameters to create any magic link.
     LinkCreateRequest:
       required:
-      - linkArgs
+        - linkArgs
       type: object
       properties:
         linkArgs:
@@ -351,14 +352,14 @@ components:
       properties:
         magicLink:
           type: string
-          description: The magic link that, when visited, will sign a JWT with the
-            given information and pass it along in a redirect to the given URL. The
-            link can only be used once. This link should as if it were the signed
-            JWT.
+          description: "The magic link that, when visited, will sign a JWT with the\
+            \ given information and pass it along in a redirect to the given URL.\
+            \ The link can only be used once. This link should as if it were the signed\
+            \ JWT."
         secret:
           type: string
-          description: The secret embedded in the magic link. It can only be used
-            once, so using it will automatically expire the link.
+          description: "The secret embedded in the magic link. It can only be used\
+            \ once, so using it will automatically expire the link."
       description: The results for creating a magic link.
     LinkCreateResponse:
       type: object
@@ -370,10 +371,10 @@ components:
       description: The response body for the /link/create endpoint.
     EmailLinkCreateArgs:
       required:
-      - serviceName
-      - subject
-      - title
-      - toEmail
+        - serviceName
+        - subject
+        - title
+        - toEmail
       type: object
       properties:
         buttonText:
@@ -385,7 +386,7 @@ components:
         greeting:
           type: string
           description: The smaller text above the title.
-          example: Hello Jane Doe,
+          example: "Hello Jane Doe,"
         logoClickURL:
           type: string
           description: The URL to redirect to when the logo is clicked.
@@ -405,13 +406,13 @@ components:
           example: Login to example.com
         subTitle:
           type: string
-          description: The smaller text, right above the magic link button.
+          description: "The smaller text, right above the magic link button."
           example: Login using the button below.
         title:
           type: string
-          description: The larger text, right above the subtitle. It must be between
-            5 and 256 characters inclusive. Make sure to include the name of your
-            application.
+          description: "The larger text, right above the subtitle. It must be between\
+            \ 5 and 256 characters inclusive. Make sure to include the name of your\
+            \ application."
           example: Login to example.com with a magic link
         toEmail:
           type: string
@@ -425,8 +426,8 @@ components:
       description: Parameters to create an email magic link.
     EmailLinkCreateRequest:
       required:
-      - emailArgs
-      - linkArgs
+        - emailArgs
+        - linkArgs
       type: object
       properties:
         emailArgs:
@@ -465,7 +466,7 @@ components:
       description: Parameters to create a service account.
     ServiceAccountCreateRequest:
       required:
-      - createServiceAccountArgs
+        - createServiceAccountArgs
       type: object
       properties:
         createServiceAccountArgs:
@@ -490,3 +491,4 @@ components:
       type: apiKey
       name: X-API-KEY
       in: header
+x-original-swagger-version: "2.0"
