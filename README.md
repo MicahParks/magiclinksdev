@@ -57,11 +57,8 @@ page to get started in minutes. For reference on configuring your self-hosted in
 
 ## Source code and license
 
-The **magiclinksdev** project is [publicly available on GitHub](https://github.com/MicahParks/magiclinksdev) and
-licensed
-under [**Elastic License 2.0 (ELv2)**](https://github.com/MicahParks/magiclinksdev/blob/master/LICENSE). The ELv2 is a
-permissive license with three simple limitations. Please see
-the [ELv2 FAQ](https://www.elastic.co/licensing/elastic-license/faq) for more information.
+The **magiclinksdev** project is [open source on GitHub](https://github.com/MicahParks/magiclinksdev) and licensed
+under [Apache License 2.0](https://github.com/MicahParks/magiclinksdev/blob/master/LICENSE).
 
 ## Optional SaaS platform
 
