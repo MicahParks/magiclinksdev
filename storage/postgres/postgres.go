@@ -235,7 +235,7 @@ WHERE api_key = $1
 
 	return sa, nil
 }
-func (p postgres) ReadSigningKey(ctx context.Context, options storage.ReadSigningKeyOptions) (meta jwkset.KeyWithMeta[storage.JWKSetCustomKeyMeta], err error) {
+func (p postgres) ReadSigningKey(ctx context.Context, options storage.ReadSigningKeyOptions) (jwk jwkset.JWK, err error) {
 	tx := ctx.Value(ctxkey.Tx).(*Transaction).Tx
 
 	//language=sql
@@ -261,17 +261,17 @@ ORDER BY created DESC
 	err = tx.QueryRow(ctx, query, args...).Scan(&assets)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return meta, fmt.Errorf("failed to read signing key from Postgres: %w: %w", err, storage.ErrNotFound)
+			return jwk, fmt.Errorf("failed to read signing key from Postgres: %w: %w", err, storage.ErrNotFound)
 		}
-		return meta, fmt.Errorf("failed to read signing key from Postgres: %w", err)
+		return jwk, fmt.Errorf("failed to read signing key from Postgres: %w", err)
 	}
 
-	meta, err = p.jwkUnmarshalAssets(assets)
+	jwk, err = p.jwkUnmarshalAssets(assets)
 	if err != nil {
-		return meta, fmt.Errorf("failed to unmarshal signing key JWK assets from Postgres: %w", err)
+		return jwk, fmt.Errorf("failed to unmarshal signing key JWK assets from Postgres: %w", err)
 	}
 
-	return meta, nil
+	return jwk, nil
 }
 func (p postgres) UpdateDefaultSigningKey(ctx context.Context, keyID string) error {
 	tx := ctx.Value(ctxkey.Tx).(*Transaction).Tx
@@ -394,9 +394,8 @@ WHERE key_id = $1
 	}
 	return res.RowsAffected() == 1, nil
 }
-func (p postgres) ReadKey(ctx context.Context, keyID string) (jwkset.KeyWithMeta[storage.JWKSetCustomKeyMeta], error) {
+func (p postgres) ReadKey(ctx context.Context, keyID string) (jwkset.JWK, error) {
 	tx := ctx.Value(ctxkey.Tx).(*Transaction).Tx
-	var meta jwkset.KeyWithMeta[storage.JWKSetCustomKeyMeta]
 
 	//language=sql
 	const query = `
@@ -408,17 +407,17 @@ WHERE key_id = $1
 	assets := make([]byte, 0)
 	err := tx.QueryRow(ctx, query, keyID).Scan(&assets)
 	if err != nil {
-		return meta, fmt.Errorf("failed to read JWK from Postgres: %w", err)
+		return jwkset.JWK{}, fmt.Errorf("failed to read JWK from Postgres: %w", err)
 	}
 
-	meta, err = p.jwkUnmarshalAssets(assets)
+	jwk, err := p.jwkUnmarshalAssets(assets)
 	if err != nil {
-		return meta, fmt.Errorf("failed to unmarshal JWK assets from Postgres: %w", err)
+		return jwkset.JWK{}, fmt.Errorf("failed to unmarshal JWK assets from Postgres: %w", err)
 	}
 
-	return meta, nil
+	return jwk, nil
 }
-func (p postgres) SnapshotKeys(ctx context.Context) ([]jwkset.KeyWithMeta[storage.JWKSetCustomKeyMeta], error) {
+func (p postgres) SnapshotKeys(ctx context.Context) ([]jwkset.JWK, error) {
 	tx := ctx.Value(ctxkey.Tx).(*Transaction).Tx
 
 	//language=sql
@@ -432,7 +431,7 @@ FROM mld.jwk
 	}
 	defer rows.Close()
 
-	keys := make([]jwkset.KeyWithMeta[storage.JWKSetCustomKeyMeta], 0)
+	keys := make([]jwkset.JWK, 0)
 	for rows.Next() {
 		assets := make([]byte, 0)
 		var signingDefault bool
@@ -441,21 +440,21 @@ FROM mld.jwk
 			return nil, fmt.Errorf("failed to scan JWK from Postgres: %w", err)
 		}
 
-		meta, err := p.jwkUnmarshalAssets(assets)
+		jwk, err := p.jwkUnmarshalAssets(assets)
 		if err != nil {
 			return nil, fmt.Errorf("failed to unmarshal JWK assets from Postgres: %w", err)
 		}
-		meta.Custom.SigningDefault = signingDefault
+		jwk.Custom.SigningDefault = signingDefault
 
-		keys = append(keys, meta)
+		keys = append(keys, jwk)
 	}
 
 	return keys, nil
 }
-func (p postgres) WriteKey(ctx context.Context, meta jwkset.KeyWithMeta[storage.JWKSetCustomKeyMeta]) error {
+func (p postgres) WriteKey(ctx context.Context, jwk jwkset.JWK) error {
 	tx := ctx.Value(ctxkey.Tx).(*Transaction).Tx
 
-	assets, err := p.jwkMarshalAssets(meta)
+	assets, err := p.jwkMarshalAssets(jwk)
 	if err != nil {
 		return fmt.Errorf("failed to marshal JWK assets: %w", err)
 	}
@@ -465,7 +464,7 @@ func (p postgres) WriteKey(ctx context.Context, meta jwkset.KeyWithMeta[storage.
 INSERT INTO mld.jwk (assets, key_id, alg)
 VALUES ($1, $2, $3)
 `
-	_, err = tx.Exec(ctx, query, assets, meta.KeyID, meta.ALG)
+	_, err = tx.Exec(ctx, query, assets, jwk.Marshal().KID, jwk.Marshal().ALG)
 	if err != nil {
 		return fmt.Errorf("failed to write JWK to Postgres: %w", err)
 	}
@@ -539,18 +538,10 @@ func (p postgres) claimsUnmarshal(data []byte) (handle.SigningBytesClaims, error
 	}
 	return claims, nil
 }
-func (p postgres) jwkMarshalAssets(meta jwkset.KeyWithMeta[storage.JWKSetCustomKeyMeta]) ([]byte, error) {
-	options := jwkset.KeyMarshalOptions{
-		AsymmetricPrivate: true,
-	}
-	marshal, err := jwkset.KeyMarshal(meta, options)
+func (p postgres) jwkMarshalAssets(jwk jwkset.JWK) ([]byte, error) {
+	assets, err := json.Marshal(jwk.Marshal())
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal JWK: %w", err)
-	}
-
-	assets, err := json.Marshal(marshal)
-	if err != nil {
-		return nil, fmt.Errorf("failed to marshal JWK assets: %w", err)
 	}
 
 	if !p.plaintextJWK {
@@ -562,7 +553,7 @@ func (p postgres) jwkMarshalAssets(meta jwkset.KeyWithMeta[storage.JWKSetCustomK
 
 	return assets, nil
 }
-func (p postgres) jwkUnmarshalAssets(assets []byte) (jwkset.KeyWithMeta[storage.JWKSetCustomKeyMeta], error) {
+func (p postgres) jwkUnmarshalAssets(assets []byte) (jwkset.JWK, error) {
 	return jwkUnmarshalAssets(p.aes256Key, assets, p.plaintextJWK)
 }
 func (p postgres) encrypt(plaintext []byte) ([]byte, error) {
@@ -585,32 +576,24 @@ func (p postgres) encrypt(plaintext []byte) ([]byte, error) {
 
 	return ciphertext, nil
 }
-func jwkUnmarshalAssets(aes256Key [32]byte, assets []byte, plaintextJWK bool) (jwkset.KeyWithMeta[storage.JWKSetCustomKeyMeta], error) {
+func jwkUnmarshalAssets(aes256Key [32]byte, assets []byte, plaintextJWK bool) (jwkset.JWK, error) {
 	var err error
-	var meta jwkset.KeyWithMeta[storage.JWKSetCustomKeyMeta]
-
 	if !plaintextJWK {
 		assets, err = decrypt(aes256Key, assets)
 		if err != nil {
-			return meta, fmt.Errorf("failed to decrypt JWK: %w", err)
+			return jwkset.JWK{}, fmt.Errorf("failed to decrypt JWK: %w", err)
 		}
 	}
 
-	var marshal jwkset.JWKMarshal
-	err = json.Unmarshal(assets, &marshal)
+	marshalOptions := jwkset.JWKMarshalOptions{
+		Private: true,
+	}
+	jwk, err := jwkset.NewJWKFromRawJSON(assets, marshalOptions, jwkset.JWKValidateOptions{})
 	if err != nil {
-		return meta, fmt.Errorf("failed to unmarshal JWK from encrypted assets in Postgres: %w", err)
+		return jwkset.JWK{}, fmt.Errorf("failed to unmarshal JWK: %w", err)
 	}
 
-	options := jwkset.KeyUnmarshalOptions{
-		AsymmetricPrivate: true,
-	}
-	meta, err = jwkset.KeyUnmarshal[storage.JWKSetCustomKeyMeta](marshal, options)
-	if err != nil {
-		return meta, fmt.Errorf("failed to unmarshal JWK from Postgres: %w", err)
-	}
-
-	return meta, nil
+	return jwk, nil
 }
 func decrypt(aes256Key [32]byte, ciphertext []byte) ([]byte, error) {
 	block, err := aes.NewCipher(aes256Key[:])

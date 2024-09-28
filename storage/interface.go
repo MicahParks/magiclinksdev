@@ -28,11 +28,11 @@ type Storage interface {
 	CreateSA(ctx context.Context, args model.ValidServiceAccountCreateArgs) (model.ServiceAccount, error)
 	ReadSA(ctx context.Context, u uuid.UUID) (model.ServiceAccount, error)
 	ReadSAFromAPIKey(ctx context.Context, apiKey uuid.UUID) (model.ServiceAccount, error)
-	ReadSigningKey(ctx context.Context, options ReadSigningKeyOptions) (meta jwkset.KeyWithMeta[JWKSetCustomKeyMeta], err error)
+	ReadSigningKey(ctx context.Context, options ReadSigningKeyOptions) (jwk jwkset.JWK, err error)
 	UpdateDefaultSigningKey(ctx context.Context, keyID string) error
 
-	jwkset.Storage[JWKSetCustomKeyMeta]
-	magiclink.Storage[MagicLinkCustomCreateArgs, MagicLinkCustomReadResponse, JWKSetCustomKeyMeta]
+	jwkset.Storage
+	magiclink.Storage[MagicLinkCustomCreateArgs, MagicLinkCustomReadResponse]
 }
 
 // Tx is the interface for a transaction.
