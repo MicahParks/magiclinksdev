@@ -89,7 +89,7 @@ func (m MagicLink[CustomCreateArgs, CustomReadResponse]) JWKSHandler() http.Hand
 }
 
 // JWKSet is a getter method to return the underlying JWK Set.
-func (m MagicLink[CustomCreateArgs, CustomReadResponse]) JWKSet() jwkset.JWKSet {
+func (m MagicLink[CustomCreateArgs, CustomReadResponse]) JWKSet() jwkset.Storage {
 	return m.jwks.jwks
 }
 
@@ -165,31 +165,31 @@ func (m MagicLink[CustomCreateArgs, CustomReadResponse]) HandleMagicLink(ctx con
 		return "", response, ErrMagicLinkRead
 	}
 
-	var meta jwkset.KeyWithMeta
+	var jwk jwkset.JWK
 	if response.CreateArgs.JWTKeyID != nil {
-		meta, err = m.jwks.jwks.Store.ReadKey(ctx, *response.CreateArgs.JWTKeyID)
+		jwk, err = m.jwks.jwks.KeyRead(ctx, *response.CreateArgs.JWTKeyID)
 		if err != nil {
 			return "", response, fmt.Errorf("%w: %s", ErrJWKSReadGivenKID, err)
 		}
 	} else {
-		allKeys, err := m.jwks.jwks.Store.SnapshotKeys(ctx)
+		allKeys, err := m.jwks.jwks.KeyReadAll(ctx)
 		if err != nil {
 			return "", response, fmt.Errorf("%w: %s", ErrJWKSSnapshot, err)
 		}
 		if len(allKeys) == 0 {
 			return "", response, ErrJWKSEmpty
 		}
-		meta = allKeys[0]
+		jwk = allKeys[0]
 	}
 
 	signingMethod := jwt.GetSigningMethod(response.CreateArgs.JWTSigningMethod)
 	if signingMethod == nil {
-		signingMethod = BestSigningMethod(meta.Key)
+		signingMethod = BestSigningMethod(jwk.Key)
 	}
 
 	token := jwt.NewWithClaims(signingMethod, response.CreateArgs.JWTClaims)
-	token.Header[jwkset.HeaderKID] = meta.KeyID
-	jwtB64, err = token.SignedString(meta.Key)
+	token.Header[jwkset.HeaderKID] = jwk.Marshal().KID
+	jwtB64, err = token.SignedString(jwk.Key)
 	if err != nil {
 		return "", response, fmt.Errorf("%w: %s", ErrJWTSign, err)
 	}
@@ -212,7 +212,7 @@ func (m MagicLink[CustomCreateArgs, CustomReadResponse]) handleError(err error, 
 }
 
 // BestSigningMethod returns the best signing method for the given key.
-func BestSigningMethod(key interface{}) jwt.SigningMethod {
+func BestSigningMethod(key any) jwt.SigningMethod {
 	var signingMethod jwt.SigningMethod
 	switch key := key.(type) {
 	case *ecdsa.PrivateKey:

@@ -33,19 +33,19 @@ func makeCases(t *testing.T) []testCase {
 
 	ec, ed, r := testKeys(t)
 	jwksStoreWithAllKeys := jwkset.NewMemoryStorage()
-	err := jwksStoreWithAllKeys.WriteKey(ctx, jwkset.NewKey(ec, ecdsaKID))
+	err := jwksStoreWithAllKeys.KeyWrite(ctx, newJWKWithKID(t, ec, ecdsaKID))
 	if err != nil {
 		t.Fatalf("Failed to write EC key to JWKS store: %s", err)
 	}
-	err = jwksStoreWithAllKeys.WriteKey(ctx, jwkset.NewKey(ed, eddsaKID))
+	err = jwksStoreWithAllKeys.KeyWrite(ctx, newJWKWithKID(t, ed, eddsaKID))
 	if err != nil {
 		t.Fatalf("Failed to write ED key to JWKS store: %s", err)
 	}
-	err = jwksStoreWithAllKeys.WriteKey(ctx, jwkset.NewKey(r, rsaKID))
+	err = jwksStoreWithAllKeys.KeyWrite(ctx, newJWKWithKID(t, r, rsaKID))
 	if err != nil {
 		t.Fatalf("Failed to write RSA key to JWKS store: %s", err)
 	}
-	err = jwksStoreWithAllKeys.WriteKey(ctx, jwkset.NewKey([]byte("my-hmac-secret"), hmacKID))
+	err = jwksStoreWithAllKeys.KeyWrite(ctx, newJWKWithKID(t, []byte("my-hmac-secret"), hmacKID))
 	if err != nil {
 		t.Fatalf("Failed to write HMAC key to JWKS store: %s", err)
 	}
@@ -114,6 +114,22 @@ func testKeys(t *testing.T) (*ecdsa.PrivateKey, ed25519.PrivateKey, *rsa.Private
 		t.Fatalf("Failed to parse RSA test key: %s", err)
 	}
 	return ec, ed.(ed25519.PrivateKey), r
+}
+
+func newJWKWithKID(t *testing.T, key any, kid string) jwkset.JWK {
+	options := jwkset.JWKOptions{
+		Marshal: jwkset.JWKMarshalOptions{
+			Private: true,
+		},
+		Metadata: jwkset.JWKMetadataOptions{
+			KID: kid,
+		},
+	}
+	jwk, err := jwkset.NewJWKFromKey(key, options)
+	if err != nil {
+		t.Fatalf("Failed to create JWK with KID: %s", err)
+	}
+	return jwk
 }
 
 const (

@@ -68,7 +68,7 @@ func TestTable(t *testing.T) {
 	}))
 	defer appServer.Close()
 
-	for _, tc := range makeCases[any](t) {
+	for _, tc := range makeCases(t) {
 		t.Run(tc.name, func(t *testing.T) {
 			testCreateCases(ctx, t, appServer, tc.createArgs, redirectChan, tc.setupParam)
 		})
@@ -194,7 +194,7 @@ func magiclinkSetup[CustomCreateArgs, CustomReadResponse any](ctx context.Contex
 }
 
 func keyfunc(ctx context.Context, store jwkset.Storage) jwt.Keyfunc {
-	return func(token *jwt.Token) (interface{}, error) {
+	return func(token *jwt.Token) (any, error) {
 		kid, ok := token.Header[jwkset.HeaderKID].(string)
 		if !ok {
 			return nil, errors.New("failed to parse kid from token header")
