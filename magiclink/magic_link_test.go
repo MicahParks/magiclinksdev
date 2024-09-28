@@ -2,9 +2,7 @@ package magiclink_test
 
 import (
 	"context"
-	"crypto/ecdsa"
-	"crypto/ed25519"
-	"crypto/rsa"
+	"crypto"
 	"errors"
 	"io"
 	"net/http"
@@ -78,7 +76,7 @@ func TestTable(t *testing.T) {
 }
 
 func testCreateCases(ctx context.Context, t *testing.T, appServer *httptest.Server, createArgs []createArg, redirectChan <-chan url.Values, sParam setupArgs) {
-	m, magicServer := magiclinkSetup(ctx, t, sParam)
+	m, magicServer := magiclinkSetup[any, any](ctx, t, sParam)
 	defer magicServer.Close()
 
 	redirectURL, err := url.Parse(appServer.URL)
@@ -140,7 +138,7 @@ func testCreateCases(ctx context.Context, t *testing.T, appServer *httptest.Serv
 		}
 
 		resultClaims := jwtClaims{}
-		token, err := jwt.ParseWithClaims(jwtB64, &resultClaims, keyfunc(ctx, m.JWKSet().Store))
+		token, err := jwt.ParseWithClaims(jwtB64, &resultClaims, keyfunc(ctx, m.JWKSet()))
 		if err != nil {
 			t.Fatalf("Failed to parse JWT: %s", err)
 		}
@@ -201,18 +199,18 @@ func keyfunc(ctx context.Context, store jwkset.Storage) jwt.Keyfunc {
 		if !ok {
 			return nil, errors.New("failed to parse kid from token header")
 		}
-		key, err := store.ReadKey(ctx, kid)
+		jwk, err := store.KeyRead(ctx, kid)
 		if err != nil {
 			return nil, err
 		}
-		switch key.Key.(type) {
-		case *ecdsa.PrivateKey:
-			return key.Key.(*ecdsa.PrivateKey).Public(), nil
-		case ed25519.PrivateKey:
-			return key.Key.(ed25519.PrivateKey).Public(), nil
-		case *rsa.PrivateKey:
-			return key.Key.(*rsa.PrivateKey).Public(), nil
+		type publicKeyer interface {
+			Public() crypto.PublicKey
 		}
-		return key.Key, nil
+		key := jwk.Key()
+		pk, ok := key.(publicKeyer)
+		if ok {
+			return pk.Public(), nil
+		}
+		return key, nil
 	}
 }

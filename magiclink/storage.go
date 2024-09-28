@@ -17,7 +17,7 @@ type Storage[CustomCreateArgs, CustomReadResponse any] interface {
 	ReadLink(ctx context.Context, secret string) (ReadResponse[CustomCreateArgs, CustomReadResponse], error)
 }
 
-var _ Storage[any, any] = &memoryMagicLink[any, any, any]{}
+var _ Storage[any, any] = &memoryMagicLink[any, any]{}
 
 type memoryMagicLink[CustomCreateArgs, CustomReadResponse any] struct {
 	links map[string]ReadResponse[CustomCreateArgs, CustomReadResponse]

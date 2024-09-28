@@ -92,14 +92,14 @@ func TestReCAPTCHAV3Redirector_Redirect(t *testing.T) {
 				},
 				Verifier: tt.verifier,
 			}
-			redirector := magiclink.NewReCAPTCHAV3Redirector[any, any, any](conf)
+			redirector := magiclink.NewReCAPTCHAV3Redirector[any, any](conf)
 
 			r, err := http.NewRequest(tt.method, tt.url, nil)
 			if err != nil {
 				t.Fatalf("Failed to create request: %v.", err)
 			}
 			recorder := httptest.NewRecorder()
-			args := magiclink.RedirectorArgs[any, any, any]{
+			args := magiclink.RedirectorArgs[any, any]{
 				ReadAndExpireLink: func(ctx context.Context, secret string) (jwtB64 string, response magiclink.ReadResponse[any, any], err error) {
 					return jwtB64FromBackend, magiclink.ReadResponse[any, any]{
 						CreateArgs: magiclink.CreateArgs[any]{
