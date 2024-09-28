@@ -113,17 +113,17 @@ func (f ErrorHandlerFunc) Handle(args ErrorHandlerArgs) {
 }
 
 // Config contains the required assets to create a MagicLink service.
-type Config[CustomCreateArgs, CustomReadResponse, CustomKeyMeta any] struct {
+type Config[CustomCreateArgs, CustomReadResponse any] struct {
 	ErrorHandler     ErrorHandler
-	JWKS             JWKSArgs[CustomKeyMeta]
-	CustomRedirector Redirector[CustomCreateArgs, CustomReadResponse, CustomKeyMeta]
+	JWKS             JWKSArgs
+	CustomRedirector Redirector[CustomCreateArgs, CustomReadResponse]
 	ServiceURL       *url.URL
 	SecretQueryKey   string
-	Store            Storage[CustomCreateArgs, CustomReadResponse, CustomKeyMeta]
+	Store            Storage[CustomCreateArgs, CustomReadResponse]
 }
 
 // Valid confirms the Config is valid.
-func (c Config[CustomCreateArgs, CustomReadResponse, CustomKeyMeta]) Valid() error {
+func (c Config[CustomCreateArgs, CustomReadResponse]) Valid() error {
 	if c.ServiceURL == nil {
 		return fmt.Errorf("%w: include a service URL, this is used to build magic links", ErrArgs)
 	}
@@ -131,7 +131,7 @@ func (c Config[CustomCreateArgs, CustomReadResponse, CustomKeyMeta]) Valid() err
 }
 
 // JWKSArgs are the parameters for the MagicLink service's JWK Set.
-type JWKSArgs[CustomKeyMeta any] struct {
+type JWKSArgs struct {
 	CacheRefresh time.Duration
-	Store        jwkset.Storage[CustomKeyMeta]
+	Store        jwkset.Storage
 }

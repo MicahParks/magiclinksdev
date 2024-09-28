@@ -9,7 +9,7 @@ import (
 )
 
 // Storage represents the underlying storage for the MagicLink service.
-type Storage[CustomCreateArgs, CustomReadResponse, CustomKeyMeta any] interface {
+type Storage[CustomCreateArgs, CustomReadResponse any] interface {
 	// CreateLink creates a secret for the given parameters and stores the pair. The secret is returned to the caller.
 	CreateLink(ctx context.Context, args CreateArgs[CustomCreateArgs]) (secret string, err error)
 	// ReadLink finds the creation parameters for the given secret. ErrLinkNotFound is returned if the secret is not
@@ -17,20 +17,20 @@ type Storage[CustomCreateArgs, CustomReadResponse, CustomKeyMeta any] interface 
 	ReadLink(ctx context.Context, secret string) (ReadResponse[CustomCreateArgs, CustomReadResponse], error)
 }
 
-var _ Storage[any, any, any] = &memoryMagicLink[any, any, any]{}
+var _ Storage[any, any] = &memoryMagicLink[any, any, any]{}
 
-type memoryMagicLink[CustomCreateArgs, CustomReadResponse, CustomKeyMeta any] struct {
+type memoryMagicLink[CustomCreateArgs, CustomReadResponse any] struct {
 	links map[string]ReadResponse[CustomCreateArgs, CustomReadResponse]
 	mux   sync.Mutex
 }
 
 // NewMemoryStorage creates an in-memory implementation of the MagicLink Storage.
-func NewMemoryStorage[CustomCreateArgs, CustomReadResponse, CustomKeyMeta any]() Storage[CustomCreateArgs, CustomReadResponse, CustomKeyMeta] {
-	return &memoryMagicLink[CustomCreateArgs, CustomReadResponse, CustomKeyMeta]{
+func NewMemoryStorage[CustomCreateArgs, CustomReadResponse any]() Storage[CustomCreateArgs, CustomReadResponse] {
+	return &memoryMagicLink[CustomCreateArgs, CustomReadResponse]{
 		links: map[string]ReadResponse[CustomCreateArgs, CustomReadResponse]{},
 	}
 }
-func (m *memoryMagicLink[CustomCreateArgs, CustomReadResponse, CustomKeyMeta]) CreateLink(_ context.Context, args CreateArgs[CustomCreateArgs]) (secret string, err error) {
+func (m *memoryMagicLink[CustomCreateArgs, CustomReadResponse]) CreateLink(_ context.Context, args CreateArgs[CustomCreateArgs]) (secret string, err error) {
 	m.mux.Lock()
 	defer m.mux.Unlock()
 	u, err := uuid.NewRandom()
@@ -46,7 +46,7 @@ func (m *memoryMagicLink[CustomCreateArgs, CustomReadResponse, CustomKeyMeta]) C
 	m.links[secret] = response
 	return secret, nil
 }
-func (m *memoryMagicLink[CustomCreateArgs, CustomReadResponse, CustomKeyMeta]) ReadLink(_ context.Context, secret string) (ReadResponse[CustomCreateArgs, CustomReadResponse], error) {
+func (m *memoryMagicLink[CustomCreateArgs, CustomReadResponse]) ReadLink(_ context.Context, secret string) (ReadResponse[CustomCreateArgs, CustomReadResponse], error) {
 	m.mux.Lock()
 	defer m.mux.Unlock()
 	args, ok := m.links[secret]

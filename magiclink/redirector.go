@@ -6,7 +6,7 @@ import (
 )
 
 // RedirectorArgs are passed to a Redirector when performing a redirect.
-type RedirectorArgs[CustomCreateArgs, CustomReadResponse, CustomKeyMeta any] struct {
+type RedirectorArgs[CustomCreateArgs, CustomReadResponse any] struct {
 	ReadAndExpireLink func(ctx context.Context, secret string) (jwtB64 string, response ReadResponse[CustomCreateArgs, CustomReadResponse], err error)
 	Request           *http.Request
 	Secret            string
@@ -14,6 +14,6 @@ type RedirectorArgs[CustomCreateArgs, CustomReadResponse, CustomKeyMeta any] str
 }
 
 // Redirector is a custom implementation of redirecting a user to a magic link target.
-type Redirector[CustomCreateArgs, CustomReadResponse, CustomKeyMeta any] interface {
-	Redirect(args RedirectorArgs[CustomCreateArgs, CustomReadResponse, CustomKeyMeta])
+type Redirector[CustomCreateArgs, CustomReadResponse any] interface {
+	Redirect(args RedirectorArgs[CustomCreateArgs, CustomReadResponse])
 }

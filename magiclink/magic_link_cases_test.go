@@ -20,11 +20,11 @@ var (
 	hmacKID  = "h"
 )
 
-func makeCases[CustomKeyMeta any](t *testing.T) []testCase[CustomKeyMeta] {
+func makeCases(t *testing.T) []testCase {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
-	noGivenJWKSStoreCase := testCase[CustomKeyMeta]{
+	noGivenJWKSStoreCase := testCase{
 		createArgs: []createArg{
 			{},
 		},
@@ -32,25 +32,25 @@ func makeCases[CustomKeyMeta any](t *testing.T) []testCase[CustomKeyMeta] {
 	}
 
 	ec, ed, r := testKeys(t)
-	jwksStoreWithAllKeys := jwkset.NewMemoryStorage[CustomKeyMeta]()
-	err := jwksStoreWithAllKeys.WriteKey(ctx, jwkset.NewKey[CustomKeyMeta](ec, ecdsaKID))
+	jwksStoreWithAllKeys := jwkset.NewMemoryStorage()
+	err := jwksStoreWithAllKeys.WriteKey(ctx, jwkset.NewKey(ec, ecdsaKID))
 	if err != nil {
 		t.Fatalf("Failed to write EC key to JWKS store: %s", err)
 	}
-	err = jwksStoreWithAllKeys.WriteKey(ctx, jwkset.NewKey[CustomKeyMeta](ed, eddsaKID))
+	err = jwksStoreWithAllKeys.WriteKey(ctx, jwkset.NewKey(ed, eddsaKID))
 	if err != nil {
 		t.Fatalf("Failed to write ED key to JWKS store: %s", err)
 	}
-	err = jwksStoreWithAllKeys.WriteKey(ctx, jwkset.NewKey[CustomKeyMeta](r, rsaKID))
+	err = jwksStoreWithAllKeys.WriteKey(ctx, jwkset.NewKey(r, rsaKID))
 	if err != nil {
 		t.Fatalf("Failed to write RSA key to JWKS store: %s", err)
 	}
-	err = jwksStoreWithAllKeys.WriteKey(ctx, jwkset.NewKey[CustomKeyMeta]([]byte("my-hmac-secret"), hmacKID))
+	err = jwksStoreWithAllKeys.WriteKey(ctx, jwkset.NewKey([]byte("my-hmac-secret"), hmacKID))
 	if err != nil {
 		t.Fatalf("Failed to write HMAC key to JWKS store: %s", err)
 	}
 
-	fourTypesOfKeys := testCase[CustomKeyMeta]{
+	fourTypesOfKeys := testCase{
 		createArgs: []createArg{
 			{
 				JWTKeyID: &ecdsaKID,
@@ -65,22 +65,22 @@ func makeCases[CustomKeyMeta any](t *testing.T) []testCase[CustomKeyMeta] {
 				JWTKeyID: &hmacKID,
 			},
 		},
-		setupParam: setupArgs[CustomKeyMeta]{
+		setupParam: setupArgs{
 			jwksStore: jwksStoreWithAllKeys,
 		},
 		name: "Four types of keys present",
 	}
 
-	getJWKS := testCase[CustomKeyMeta]{
-		setupParam: setupArgs[CustomKeyMeta]{
+	getJWKS := testCase{
+		setupParam: setupArgs{
 			jwksGet:   true,
 			jwksStore: jwksStoreWithAllKeys,
 		},
 		name: "Get JWK Set JSON",
 	}
 
-	getJWKSCacheRefresh := testCase[CustomKeyMeta]{
-		setupParam: setupArgs[CustomKeyMeta]{
+	getJWKSCacheRefresh := testCase{
+		setupParam: setupArgs{
 			jwksGet:          true,
 			jwksGetDelay:     51 * time.Millisecond,
 			jwksCacheRefresh: 50 * time.Millisecond,
@@ -89,7 +89,7 @@ func makeCases[CustomKeyMeta any](t *testing.T) []testCase[CustomKeyMeta] {
 		name: "Get JWK Set JSON after a cache refresh",
 	}
 
-	return []testCase[CustomKeyMeta]{
+	return []testCase{
 		noGivenJWKSStoreCase,
 		fourTypesOfKeys,
 		getJWKS,

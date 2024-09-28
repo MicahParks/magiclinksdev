@@ -38,12 +38,12 @@ type jwtClaims struct {
 	jwt.RegisteredClaims
 }
 
-type setupArgs[CustomKeyMeta any] struct {
+type setupArgs struct {
 	errorHandler     magiclink.ErrorHandler
 	jwksGet          bool
 	jwksGetDelay     time.Duration
 	jwksCacheRefresh time.Duration
-	jwksStore        jwkset.Storage[CustomKeyMeta]
+	jwksStore        jwkset.Storage
 	secretQueryKey   string
 }
 
@@ -53,9 +53,9 @@ type createArg struct {
 	RedirectQueryKey string
 }
 
-type testCase[CustomKeyMeta any] struct {
+type testCase struct {
 	createArgs []createArg
-	setupParam setupArgs[CustomKeyMeta]
+	setupParam setupArgs
 	name       string
 }
 
@@ -77,8 +77,8 @@ func TestTable(t *testing.T) {
 	}
 }
 
-func testCreateCases[CustomKeyMeta any](ctx context.Context, t *testing.T, appServer *httptest.Server, createArgs []createArg, redirectChan <-chan url.Values, sParam setupArgs[CustomKeyMeta]) {
-	m, magicServer := magiclinkSetup[any, any](ctx, t, sParam)
+func testCreateCases(ctx context.Context, t *testing.T, appServer *httptest.Server, createArgs []createArg, redirectChan <-chan url.Values, sParam setupArgs) {
+	m, magicServer := magiclinkSetup(ctx, t, sParam)
 	defer magicServer.Close()
 
 	redirectURL, err := url.Parse(appServer.URL)
@@ -153,7 +153,7 @@ func testCreateCases[CustomKeyMeta any](ctx context.Context, t *testing.T, appSe
 	}
 }
 
-func magiclinkSetup[CustomCreateArgs, CustomReadResponse, CustomKeyMeta any](ctx context.Context, t *testing.T, args setupArgs[CustomKeyMeta]) (magiclink.MagicLink[CustomCreateArgs, CustomReadResponse, CustomKeyMeta], *httptest.Server) {
+func magiclinkSetup[CustomCreateArgs, CustomReadResponse any](ctx context.Context, t *testing.T, args setupArgs) (magiclink.MagicLink[CustomCreateArgs, CustomReadResponse], *httptest.Server) {
 	dH := &dynamicHandler{}
 	server := httptest.NewServer(dH)
 	serviceURL, err := url.Parse(server.URL)
@@ -165,12 +165,12 @@ func magiclinkSetup[CustomCreateArgs, CustomReadResponse, CustomKeyMeta any](ctx
 		t.Fatalf("Failed to parse magic link path: %s", err)
 	}
 
-	config := magiclink.Config[CustomCreateArgs, CustomReadResponse, CustomKeyMeta]{
+	config := magiclink.Config[CustomCreateArgs, CustomReadResponse]{
 		ErrorHandler:   args.errorHandler,
 		ServiceURL:     serviceURL,
 		SecretQueryKey: args.secretQueryKey,
 		Store:          nil,
-		JWKS: magiclink.JWKSArgs[CustomKeyMeta]{
+		JWKS: magiclink.JWKSArgs{
 			CacheRefresh: args.jwksCacheRefresh,
 			Store:        args.jwksStore,
 		},
@@ -195,7 +195,7 @@ func magiclinkSetup[CustomCreateArgs, CustomReadResponse, CustomKeyMeta any](ctx
 	return m, server
 }
 
-func keyfunc[CustomKeyMeta any](ctx context.Context, store jwkset.Storage[CustomKeyMeta]) jwt.Keyfunc {
+func keyfunc(ctx context.Context, store jwkset.Storage) jwt.Keyfunc {
 	return func(token *jwt.Token) (interface{}, error) {
 		kid, ok := token.Header[jwkset.HeaderKID].(string)
 		if !ok {
