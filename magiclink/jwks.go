@@ -36,18 +36,26 @@ func newJWKSCache(ctx context.Context, config JWKSArgs) (*jwksCache, error) {
 		if err != nil {
 			return nil, fmt.Errorf("failed to generate UUID for generated RSA key: %w", err)
 		}
-		meta := jwkset.NewKey(private, u.String())
-		err = store.WriteKey(ctx, meta)
+		options := jwkset.JWKOptions{
+			Marshal: jwkset.JWKMarshalOptions{
+				Private: true,
+			},
+			Metadata: jwkset.JWKMetadataOptions{
+				ALG: jwkset.AlgEdDSA,
+				KID: u.String(),
+			},
+		}
+		jwk, err := jwkset.NewJWKFromKey(private, options)
 		if err != nil {
-			return nil, fmt.Errorf("failed to store generated RSA key: %w", err)
+			return nil, fmt.Errorf("failed to create JWK from generated EdDSA key: %w", err)
+		}
+		err = store.KeyWrite(ctx, jwk)
+		if err != nil {
+			return nil, fmt.Errorf("failed to write generated EdDSA key to storage: %w", err)
 		}
 	}
 
-	jwkSet := jwkset.JWKSet{
-		Store: store,
-	}
-
-	initialCache, err := jwkSet.JSONPublic(ctx)
+	initialCache, err := store.JSONPublic(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get initial JWK Set as JSON: %w", err)
 	}
@@ -59,7 +67,7 @@ func newJWKSCache(ctx context.Context, config JWKSArgs) (*jwksCache, error) {
 
 	jCache := &jwksCache{
 		cached:      initialCache,
-		jwks:        jwkSet,
+		jwks:        store,
 		lastRefresh: time.Now(),
 		refresh:     cacheRefresh,
 	}
