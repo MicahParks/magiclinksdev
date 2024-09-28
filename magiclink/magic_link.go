@@ -184,12 +184,12 @@ func (m MagicLink[CustomCreateArgs, CustomReadResponse]) HandleMagicLink(ctx con
 
 	signingMethod := jwt.GetSigningMethod(response.CreateArgs.JWTSigningMethod)
 	if signingMethod == nil {
-		signingMethod = BestSigningMethod(jwk.Key)
+		signingMethod = BestSigningMethod(jwk.Key())
 	}
 
 	token := jwt.NewWithClaims(signingMethod, response.CreateArgs.JWTClaims)
 	token.Header[jwkset.HeaderKID] = jwk.Marshal().KID
-	jwtB64, err = token.SignedString(jwk.Key)
+	jwtB64, err = token.SignedString(jwk.Key())
 	if err != nil {
 		return "", response, fmt.Errorf("%w: %s", ErrJWTSign, err)
 	}
