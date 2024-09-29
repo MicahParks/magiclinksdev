@@ -64,8 +64,8 @@ SELECT id, assets FROM mld.jwk
 	defer rows.Close()
 
 	type key struct {
-		id   int64
-		meta jwkset.Storage
+		id  int64
+		jwk jwkset.JWK
 	}
 	keys := make([]key, 0)
 	for rows.Next() {
@@ -76,7 +76,7 @@ SELECT id, assets FROM mld.jwk
 			return false, fmt.Errorf("failed to scan row for %q query: %w", a.metadata().Filename, err)
 		}
 
-		k.meta, err = jwkUnmarshalAssets(options.EncryptionKey, assets, setup.PlaintextJWK)
+		k.jwk, err = jwkUnmarshalAssets(options.EncryptionKey, assets, setup.PlaintextJWK)
 		if err != nil {
 			return false, fmt.Errorf("failed to unmarshal JSON Web Key for %q query: %w", a.metadata().Filename, err)
 		}
@@ -96,7 +96,7 @@ WHERE id = $2
 `
 
 	for _, k := range keys {
-		alg := k.meta.ALG
+		alg := k.jwk.Marshal().ALG
 		if alg == "" {
 			options.Logger.WarnContext(ctx, "Found a JSON Web Key with an empty algorithm. Skipping. Client applications will be unable to select this key explicitly.",
 				logKID, k.id,
