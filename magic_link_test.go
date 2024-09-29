@@ -13,7 +13,7 @@ import (
 	"time"
 
 	"github.com/MicahParks/jwkset"
-	"github.com/golang-jwt/jwt/v4"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 
 	mld "github.com/MicahParks/magiclinksdev"
@@ -39,7 +39,7 @@ func TestMagicLink(t *testing.T) {
 	for _, tc := range []testCase{
 		{
 			name: "Default signing key",
-			keyfunc: func(token *jwt.Token) (interface{}, error) {
+			keyfunc: func(token *jwt.Token) (any, error) {
 				for _, key := range assets.keys {
 					if key.Custom.SigningDefault {
 						switch k := key.Key().(type) {
@@ -66,7 +66,7 @@ func TestMagicLink(t *testing.T) {
 		},
 		{
 			name: "RSA signing key",
-			keyfunc: func(token *jwt.Token) (interface{}, error) {
+			keyfunc: func(token *jwt.Token) (any, error) {
 				if token.Header["alg"] != jwkset.AlgRS256.String() {
 					panic(fmt.Sprintf("unexpected alg: %s", token.Header["alg"]))
 				}

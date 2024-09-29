@@ -8,10 +8,10 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"time"
+	"slices"
 
-	"github.com/MicahParks/keyfunc"
-	"github.com/golang-jwt/jwt/v4"
+	"github.com/MicahParks/keyfunc/v3"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 
 	mld "github.com/MicahParks/magiclinksdev"
@@ -50,7 +50,7 @@ type Client struct {
 	baseURL *url.URL
 	http    *http.Client
 	jwtIss  string
-	jwks    *keyfunc.JWKS
+	keyf    keyfunc.Keyfunc
 }
 
 // New creates a new magiclinksdev client. The apiKey and aud are tied to the service account being used. The baseURL is
@@ -86,17 +86,7 @@ func New(apiKey, aud uuid.UUID, baseURL, iss string, options Options) (Client, e
 		if err != nil {
 			return Client{}, fmt.Errorf("failed to parse JWKS URL: %w", err)
 		}
-		opt := keyfunc.Options{
-			Client:            c.http,
-			RefreshInterval:   time.Hour,
-			RefreshRateLimit:  5 * time.Minute,
-			RefreshTimeout:    time.Minute,
-			RefreshUnknownKID: true,
-		}
-		if options.KeyfuncOptions != nil {
-			opt = *options.KeyfuncOptions
-		}
-		c.jwks, err = keyfunc.Get(jwksURL.String(), opt)
+		c.keyf, err = keyfunc.NewDefault([]string{jwksURL.String()})
 		if err != nil {
 			return Client{}, fmt.Errorf("failed to get JWKS: %w", err)
 		}
@@ -110,12 +100,12 @@ func New(apiKey, aud uuid.UUID, baseURL, iss string, options Options) (Client, e
 // the documentation for jwt.ParseWithClaims for more information. Registered JWT claims will be validated regardless if
 // claims are specified or not.
 func (c Client) LocalJWTValidate(token string, claims jwt.Claims) (*jwt.Token, error) {
-	if c.jwks == nil {
+	if c.keyf == nil {
 		return nil, fmt.Errorf("%w: client configuration disabled JWK Set client, keyfunc, please enable keyfunc in magiclinksdev client creation options", ErrClientConfig)
 	}
 
 	var registered jwt.RegisteredClaims
-	t, err := jwt.ParseWithClaims(token, &registered, c.jwks.Keyfunc)
+	t, err := jwt.ParseWithClaims(token, &registered, c.keyf.Keyfunc)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse JWT: %w", err)
 	}
@@ -124,19 +114,17 @@ func (c Client) LocalJWTValidate(token string, claims jwt.Claims) (*jwt.Token, e
 		return nil, fmt.Errorf("%w: invalid JWT", handle.ErrToken)
 	}
 
-	validAud := registered.VerifyAudience(c.aud.String(), true)
-	if !validAud {
+	if !slices.Contains(registered.Audience, c.aud.String()) {
 		return nil, fmt.Errorf("%w: invalid JWT audience, this token is likely signed for another service account under the same mld instance", handle.ErrToken)
 	}
 	if c.jwtIss != "" {
-		validIss := registered.VerifyIssuer(c.jwtIss, true)
-		if !validIss {
+		if registered.Issuer != c.jwtIss {
 			return nil, fmt.Errorf("%w: invalid JWT issuer", handle.ErrToken)
 		}
 	}
 
 	if claims != nil {
-		t, err = jwt.ParseWithClaims(token, claims, c.jwks.Keyfunc)
+		t, err = jwt.ParseWithClaims(token, claims, c.keyf.Keyfunc)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse JWT: %w", err)
 		}

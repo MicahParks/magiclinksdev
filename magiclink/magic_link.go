@@ -12,7 +12,7 @@ import (
 	"net/url"
 
 	"github.com/MicahParks/jwkset"
-	"github.com/golang-jwt/jwt/v4"
+	"github.com/golang-jwt/jwt/v5"
 
 	mld "github.com/MicahParks/magiclinksdev"
 )

@@ -5,9 +5,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"slices"
 
-	"github.com/MicahParks/keyfunc"
-	"github.com/golang-jwt/jwt/v4"
+	"github.com/MicahParks/jwkset"
+	"github.com/MicahParks/keyfunc/v3"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 
 	"github.com/MicahParks/magiclinksdev/model"
@@ -24,20 +26,19 @@ func (s *Server) HandleJWTValidate(ctx context.Context, req model.ValidJWTValida
 	jwtValidateArgs := req.JWTValidateArgs
 	sa := ctx.Value(ctxkey.ServiceAccount).(model.ServiceAccount)
 
-	token, err := jwt.Parse(jwtValidateArgs.JWT, func(token *jwt.Token) (interface{}, error) {
+	token, err := jwt.Parse(jwtValidateArgs.JWT, func(token *jwt.Token) (any, error) {
 		jwksBytes, err := s.JWKS.JSONPublic(ctx) // Change to JSONPrivate if HMAC support is added.
 		if err != nil {
 			return nil, fmt.Errorf("failed to get JWKS JSON: %w", err)
 		}
-		jwks, err := keyfunc.NewJSON(jwksBytes)
+		jwks, err := keyfunc.NewJWKSetJSON(jwksBytes)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create keyfunc from JSON: %w", err)
 		}
 		return jwks.Keyfunc(token)
 	})
 	if err != nil {
-		var errJWTValid *jwt.ValidationError
-		if errors.Is(err, keyfunc.ErrKIDNotFound) || errors.As(err, &errJWTValid) {
+		if errors.Is(err, jwkset.ErrKeyNotFound) || errors.Is(err, jwt.ErrSignatureInvalid) {
 			return model.JWTValidateResponse{}, fmt.Errorf("%w: %s", ErrToken, err)
 		}
 		return model.JWTValidateResponse{}, fmt.Errorf("failed to parse JWT: %w", err)
@@ -50,12 +51,18 @@ func (s *Server) HandleJWTValidate(ctx context.Context, req model.ValidJWTValida
 	if !ok {
 		return model.JWTValidateResponse{}, fmt.Errorf("%w: claims invalid", ErrToken)
 	}
-	ok = claims.VerifyIssuer(s.Config.Iss, true)
-	if !ok {
+	givenIss, err := claims.GetIssuer()
+	if err != nil {
+		return model.JWTValidateResponse{}, fmt.Errorf("%w: failed to get issuer: %w", ErrToken, err)
+	}
+	if givenIss != s.Config.Iss {
 		return model.JWTValidateResponse{}, fmt.Errorf("%w: issuer invalid", ErrToken)
 	}
-	ok = claims.VerifyAudience(sa.Aud.String(), true)
-	if !ok {
+	givenAud, err := claims.GetAudience()
+	if err != nil {
+		return model.JWTValidateResponse{}, fmt.Errorf("%w: failed to get audience: %w", ErrToken, err)
+	}
+	if !slices.Contains(givenAud, sa.Aud.String()) {
 		return model.JWTValidateResponse{}, fmt.Errorf("%w: incorrect audience for this service account", ErrToken)
 	}
 

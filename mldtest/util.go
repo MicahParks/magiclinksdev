@@ -3,6 +3,7 @@ package mldtest
 import (
 	"errors"
 
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 )
 
@@ -37,12 +38,32 @@ type TestClaims struct {
 	Foo string `json:"foo"`
 }
 
+func (t TestClaims) GetExpirationTime() (*jwt.NumericDate, error) {
+	// TODO implement me
+	panic("implement me")
+}
+func (t TestClaims) GetIssuedAt() (*jwt.NumericDate, error) {
+	// TODO implement me
+	panic("implement me")
+}
+func (t TestClaims) GetNotBefore() (*jwt.NumericDate, error) {
+	// TODO implement me
+	panic("implement me")
+}
+func (t TestClaims) GetIssuer() (string, error) {
+	// TODO implement me
+	panic("implement me")
+}
+func (t TestClaims) GetSubject() (string, error) {
+	// TODO implement me
+	panic("implement me")
+}
+func (t TestClaims) GetAudience() (jwt.ClaimStrings, error) {
+	// TODO implement me
+	panic("implement me")
+}
+
 // Equal returns true if the two claims are equal.
 func (t TestClaims) Equal(c TestClaims) bool {
 	return t.Foo == c.Foo
-}
-
-// Valid implements the jwt.Claims interface.
-func (t TestClaims) Valid() error {
-	return nil
 }

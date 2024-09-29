@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/MicahParks/jwkset"
-	"github.com/golang-jwt/jwt/v4"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/tidwall/gjson"
 	"github.com/tidwall/sjson"

@@ -15,7 +15,7 @@ import (
 
 	jt "github.com/MicahParks/jsontype"
 	"github.com/MicahParks/jwkset"
-	"github.com/golang-jwt/jwt/v4"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -245,7 +245,7 @@ FROM mld.jwk
 WHERE signing_default = TRUE
 `
 
-	args := make([]interface{}, 0)
+	args := make([]any, 0)
 	if options.JWTAlg != "" {
 		//language=sql
 		query = `
