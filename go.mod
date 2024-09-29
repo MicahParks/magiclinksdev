@@ -7,8 +7,10 @@ toolchain go1.23.1
 require (
 	github.com/MicahParks/jsontype v0.6.1
 	github.com/MicahParks/jwkset v0.5.20
+	github.com/MicahParks/keyfunc/v3 v3.3.5
 	github.com/MicahParks/recaptcha v0.0.5
 	github.com/aws/aws-sdk-go v1.55.5
+	github.com/golang-jwt/jwt/v5 v5.2.0
 	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.7.1
 	github.com/sendgrid/sendgrid-go v3.16.0+incompatible
@@ -19,8 +21,6 @@ require (
 )
 
 require (
-	github.com/MicahParks/keyfunc/v3 v3.3.5 // indirect
-	github.com/golang-jwt/jwt/v5 v5.2.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
 	github.com/jackc/puddle/v2 v2.2.2 // indirect

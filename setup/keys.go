@@ -32,9 +32,9 @@ func CreateKeysIfNotExists(ctx context.Context, store storage.Storage) (keys []j
 			switch jwk.Marshal().ALG {
 			case jwkset.AlgEdDSA:
 				haveEdDSA = true
-				if jwk.Custom.SigningDefault {
-					defaultEdDSA = true
-				}
+				// if jwk.Custom.SigningDefault { // TODO Check for signing default.
+				// 	defaultEdDSA = true
+				// }
 			case jwkset.AlgRS256:
 				haveRS256 = true
 			}

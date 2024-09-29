@@ -444,7 +444,7 @@ FROM mld.jwk
 		if err != nil {
 			return nil, fmt.Errorf("failed to unmarshal JWK assets from Postgres: %w", err)
 		}
-		jwk.Custom.SigningDefault = signingDefault
+		// jwk.Custom.SigningDefault = signingDefault // TODO Assign signing default to JWK.
 
 		keys = append(keys, jwk)
 	}

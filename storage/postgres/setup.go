@@ -81,7 +81,7 @@ func New(ctx context.Context, config Config) (storage.Storage, *pgxpool.Pool, er
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to create Postgres connection pool: %w", err)
 	}
-	post, err := newPostgres(ctx, p, config)
+	post, err := newPostgres(p, config)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to create Postgres storage: %w", err)
 	}

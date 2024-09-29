@@ -19,6 +19,16 @@ import (
 	"github.com/MicahParks/magiclinksdev/storage"
 )
 
+const (
+	issAttr = "iss"
+	subAttr = "sub"
+	audAttr = "aud"
+	expAttr = "exp"
+	nbfAttr = "nbf"
+	iatAttr = "iat"
+	jtiAttr = "jti"
+)
+
 var (
 	// ErrRegisteredClaimProvided is returned when a registered claim is provided.
 	ErrRegisteredClaimProvided = errors.New("registered claims should not be provided")
@@ -74,6 +84,30 @@ type SigningBytesClaims struct {
 	Claims json.RawMessage
 }
 
+func (s SigningBytesClaims) GetExpirationTime() (*jwt.NumericDate, error) {
+	return jwt.NewNumericDate(time.Unix(gjson.GetBytes(s.Claims, expAttr).Int(), 0)), nil
+}
+func (s SigningBytesClaims) GetIssuedAt() (*jwt.NumericDate, error) {
+	return jwt.NewNumericDate(time.Unix(gjson.GetBytes(s.Claims, iatAttr).Int(), 0)), nil
+}
+func (s SigningBytesClaims) GetNotBefore() (*jwt.NumericDate, error) {
+	return jwt.NewNumericDate(time.Unix(gjson.GetBytes(s.Claims, nbfAttr).Int(), 0)), nil
+}
+func (s SigningBytesClaims) GetIssuer() (string, error) {
+	return gjson.GetBytes(s.Claims, issAttr).String(), nil
+}
+func (s SigningBytesClaims) GetSubject() (string, error) {
+	return gjson.GetBytes(s.Claims, subAttr).String(), nil
+}
+func (s SigningBytesClaims) GetAudience() (jwt.ClaimStrings, error) {
+	var aud jwt.ClaimStrings
+	err := json.Unmarshal([]byte(gjson.GetBytes(s.Claims, audAttr).Raw), &aud)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal audience: %w", err)
+	}
+	return aud, nil
+}
+
 // Valid helps implement the jwt.Claims interface.
 func (s SigningBytesClaims) Valid() error {
 	valid := json.Valid(s.Claims)
@@ -122,13 +156,13 @@ func (s *Server) addRegisteredClaims(ctx context.Context, args model.ValidJWTCre
 
 	// https://tools.ietf.org/html/rfc7519#section-4.1
 	rfc5119 := []string{
-		"iss",
-		"sub",
-		"aud",
-		"exp",
-		"nbf",
-		"iat",
-		"jti",
+		issAttr,
+		subAttr,
+		audAttr,
+		expAttr,
+		nbfAttr,
+		iatAttr,
+		jtiAttr,
 	}
 
 	edited := make(json.RawMessage, len(args.JWTClaims))
