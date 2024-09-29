@@ -380,7 +380,7 @@ RETURNING updated.expires, updated.jwt_claims, updated.jwt_key_id, updated.jwt_s
 JWK Set Storage
 */
 
-func (p postgres) DeleteKey(ctx context.Context, keyID string) (ok bool, err error) {
+func (p postgres) KeyDelete(ctx context.Context, keyID string) (ok bool, err error) {
 	tx := ctx.Value(ctxkey.Tx).(*Transaction).Tx
 
 	//language=sql
@@ -394,7 +394,7 @@ WHERE key_id = $1
 	}
 	return res.RowsAffected() == 1, nil
 }
-func (p postgres) ReadKey(ctx context.Context, keyID string) (jwkset.JWK, error) {
+func (p postgres) KeyRead(ctx context.Context, keyID string) (jwkset.JWK, error) {
 	tx := ctx.Value(ctxkey.Tx).(*Transaction).Tx
 
 	//language=sql
@@ -417,7 +417,7 @@ WHERE key_id = $1
 
 	return jwk, nil
 }
-func (p postgres) SnapshotKeys(ctx context.Context) ([]jwkset.JWK, error) {
+func (p postgres) KeyReadAll(ctx context.Context) ([]jwkset.JWK, error) {
 	tx := ctx.Value(ctxkey.Tx).(*Transaction).Tx
 
 	//language=sql
@@ -451,7 +451,7 @@ FROM mld.jwk
 
 	return keys, nil
 }
-func (p postgres) WriteKey(ctx context.Context, jwk jwkset.JWK) error {
+func (p postgres) KeyWrite(ctx context.Context, jwk jwkset.JWK) error {
 	tx := ctx.Value(ctxkey.Tx).(*Transaction).Tx
 
 	assets, err := p.jwkMarshalAssets(jwk)
@@ -472,6 +472,63 @@ VALUES ($1, $2, $3)
 	return nil
 }
 
+func (p postgres) JSON(ctx context.Context) (json.RawMessage, error) {
+	m, err := p.readToMemory(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read JWKs from Postgres: %w", err)
+	}
+	return m.JSON(ctx)
+}
+func (p postgres) JSONPublic(ctx context.Context) (json.RawMessage, error) {
+	m, err := p.readToMemory(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read JWKs from Postgres: %w", err)
+	}
+	return m.JSONPublic(ctx)
+}
+func (p postgres) JSONPrivate(ctx context.Context) (json.RawMessage, error) {
+	m, err := p.readToMemory(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read JWKs from Postgres: %w", err)
+	}
+	return m.JSONPrivate(ctx)
+}
+func (p postgres) JSONWithOptions(ctx context.Context, marshalOptions jwkset.JWKMarshalOptions, validationOptions jwkset.JWKValidateOptions) (json.RawMessage, error) {
+	m, err := p.readToMemory(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read JWKs from Postgres: %w", err)
+	}
+	return m.JSONWithOptions(ctx, marshalOptions, validationOptions)
+}
+func (p postgres) Marshal(ctx context.Context) (jwkset.JWKSMarshal, error) {
+	m, err := p.readToMemory(ctx)
+	if err != nil {
+		return jwkset.JWKSMarshal{}, fmt.Errorf("failed to read JWKs from Postgres: %w", err)
+	}
+	return m.Marshal(ctx)
+}
+func (p postgres) MarshalWithOptions(ctx context.Context, marshalOptions jwkset.JWKMarshalOptions, validationOptions jwkset.JWKValidateOptions) (jwkset.JWKSMarshal, error) {
+	m, err := p.readToMemory(ctx)
+	if err != nil {
+		return jwkset.JWKSMarshal{}, fmt.Errorf("failed to read JWKs from Postgres: %w", err)
+	}
+	return m.MarshalWithOptions(ctx, marshalOptions, validationOptions)
+}
+
+func (p postgres) readToMemory(ctx context.Context) (jwkset.Storage, error) {
+	allKeys, err := p.KeyReadAll(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read all keys from Postgres: %w", err)
+	}
+	m := jwkset.NewMemoryStorage()
+	for _, key := range allKeys {
+		err = m.KeyWrite(ctx, key)
+		if err != nil {
+			return nil, fmt.Errorf("failed to write key to memory: %w", err)
+		}
+	}
+	return m, nil
+}
 func (p postgres) setupCheck(ctx context.Context, config Config) error {
 	tx := ctx.Value(ctxkey.Tx).(*Transaction).Tx
 
