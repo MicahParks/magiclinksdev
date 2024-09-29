@@ -38,21 +38,21 @@ func (s *Server) HandleJWTCreate(ctx context.Context, req model.ValidJWTCreateRe
 	options := storage.ReadSigningKeyOptions{
 		JWTAlg: jwtCreateArgs.JWTAlg,
 	}
-	meta, err := s.Store.ReadSigningKey(ctx, options)
+	jwk, err := s.Store.ReadSigningKey(ctx, options)
 	if err != nil {
 		if errors.Is(err, storage.ErrNotFound) {
 			return model.JWTCreateResponse{}, fmt.Errorf("could not fing signing key with specified JWT alg: %w", ErrJWTAlgNotFound)
 		}
 		return model.JWTCreateResponse{}, fmt.Errorf("failed to get JWT signing key: %w", err)
 	}
-	method := magiclink.BestSigningMethod(meta.Key)
+	method := magiclink.BestSigningMethod(jwk.Key)
 
 	bytesClaims := SigningBytesClaims{
 		Claims: edited,
 	}
 	token := jwt.NewWithClaims(method, bytesClaims)
-	token.Header[jwkset.HeaderKID] = meta.KeyID
-	signed, err := token.SignedString(meta.Key)
+	token.Header[jwkset.HeaderKID] = jwk.Marshal().KID
+	signed, err := token.SignedString(jwk.Key)
 	if err != nil {
 		return model.JWTCreateResponse{}, fmt.Errorf("%w: %w", magiclink.ErrJWTSign, err)
 	}
@@ -169,7 +169,7 @@ func (s *Server) createLinkArgs(ctx context.Context, args model.ValidLinkCreateA
 	options := storage.ReadSigningKeyOptions{
 		JWTAlg: args.JWTCreateArgs.JWTAlg,
 	}
-	meta, err := s.Store.ReadSigningKey(ctx, options)
+	jwk, err := s.Store.ReadSigningKey(ctx, options)
 	if err != nil {
 		if errors.Is(err, storage.ErrNotFound) {
 			return createArgs, fmt.Errorf("could not fing signing key with specified JWT alg: %w", ErrJWTAlgNotFound)
@@ -177,12 +177,13 @@ func (s *Server) createLinkArgs(ctx context.Context, args model.ValidLinkCreateA
 		return createArgs, fmt.Errorf("failed to get JWT signing key: %w", err)
 	}
 
+	kID := jwk.Marshal().KID
 	createArgs = magiclink.CreateArgs[storage.MagicLinkCustomCreateArgs]{
 		Custom: storage.MagicLinkCustomCreateArgs{
 			Expires: time.Now().Add(args.LinkLifespan),
 		},
 		JWTClaims:        claims,
-		JWTKeyID:         &meta.KeyID,
+		JWTKeyID:         &kID,
 		RedirectQueryKey: args.RedirectQueryKey,
 		RedirectURL:      args.RedirectURL,
 	}
