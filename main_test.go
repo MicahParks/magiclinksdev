@@ -33,7 +33,7 @@ var (
 
 type testAssets struct {
 	conf setup.TestConfig
-	keys []jwkset.KeyWithMeta[storage.JWKSetCustomKeyMeta]
+	keys []jwkset.Storage
 	mux  *http.ServeMux
 	sa   model.ServiceAccount
 }
@@ -96,7 +96,7 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-func createKeyIfNotExists(ctx context.Context, store storage.Storage, logger *log.Logger) []jwkset.KeyWithMeta[storage.JWKSetCustomKeyMeta] {
+func createKeyIfNotExists(ctx context.Context, store storage.Storage, logger *log.Logger) []jwkset.Storage {
 	tx, err := store.Begin(ctx)
 	if err != nil {
 		logger.Fatalf(mld.LogFmt, "Failed to begin transaction.", err)

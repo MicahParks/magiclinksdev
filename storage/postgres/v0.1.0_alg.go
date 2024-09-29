@@ -6,8 +6,6 @@ import (
 
 	"github.com/MicahParks/jwkset"
 	"github.com/jackc/pgx/v5"
-
-	"github.com/MicahParks/magiclinksdev/storage"
 )
 
 const (
@@ -67,7 +65,7 @@ SELECT id, assets FROM mld.jwk
 
 	type key struct {
 		id   int64
-		meta jwkset.KeyWithMeta[storage.JWKSetCustomKeyMeta]
+		meta jwkset.Storage
 	}
 	keys := make([]key, 0)
 	for rows.Next() {
