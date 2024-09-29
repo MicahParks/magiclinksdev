@@ -42,7 +42,7 @@ func TestMagicLink(t *testing.T) {
 			keyfunc: func(token *jwt.Token) (interface{}, error) {
 				for _, key := range assets.keys {
 					if key.Custom.SigningDefault {
-						switch k := key.Key.(type) {
+						switch k := key.Key().(type) {
 						case ed25519.PrivateKey:
 							return k.Public(), nil
 						default:
@@ -71,7 +71,7 @@ func TestMagicLink(t *testing.T) {
 					panic(fmt.Sprintf("unexpected alg: %s", token.Header["alg"]))
 				}
 				for _, key := range assets.keys {
-					k, ok := key.Key.(*rsa.PrivateKey)
+					k, ok := key.Key().(*rsa.PrivateKey)
 					if ok {
 						return k.Public(), nil
 					}
