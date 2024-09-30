@@ -22,7 +22,7 @@ type Server struct {
 	HTTPMux        *http.ServeMux
 	JWKS           jwkset.Storage
 	Limiter        rlimit.RateLimiter
-	MagicLink      magiclink.MagicLink[storage.MagicLinkCustomCreateArgs, storage.MagicLinkCustomReadResponse]
+	MagicLink      magiclink.MagicLink[storage.MagicLinkCustomReadResponse]
 	Store          storage.Storage
 	Logger         *slog.Logger
 	MiddlewareHook MiddlewareHook

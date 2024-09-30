@@ -76,7 +76,7 @@ func TestTable(t *testing.T) {
 }
 
 func testCreateCases(ctx context.Context, t *testing.T, appServer *httptest.Server, createArgs []createArg, redirectChan <-chan url.Values, sParam setupArgs) {
-	m, magicServer := magiclinkSetup[any, any](ctx, t, sParam)
+	m, magicServer := magiclinkSetup[any](ctx, t, sParam)
 	defer magicServer.Close()
 
 	redirectURL, err := url.Parse(appServer.URL)
@@ -111,7 +111,7 @@ func testCreateCases(ctx context.Context, t *testing.T, appServer *httptest.Serv
 		if cParam.RedirectQueryKey == "" {
 			cParam.RedirectQueryKey = magiclink.DefaultRedirectQueryKey
 		}
-		cP := magiclink.CreateArgs[any]{
+		cP := magiclink.CreateArgs{
 			JWTClaims:        claims,
 			JWTKeyID:         cParam.JWTKeyID,
 			JWTSigningMethod: cParam.JWTSigningMethod,
@@ -151,7 +151,7 @@ func testCreateCases(ctx context.Context, t *testing.T, appServer *httptest.Serv
 	}
 }
 
-func magiclinkSetup[CustomCreateArgs, CustomReadResponse any](ctx context.Context, t *testing.T, args setupArgs) (magiclink.MagicLink[CustomCreateArgs, CustomReadResponse], *httptest.Server) {
+func magiclinkSetup[CustomReadResponse any](ctx context.Context, t *testing.T, args setupArgs) (magiclink.MagicLink[CustomReadResponse], *httptest.Server) {
 	dH := &dynamicHandler{}
 	server := httptest.NewServer(dH)
 	serviceURL, err := url.Parse(server.URL)
@@ -163,7 +163,7 @@ func magiclinkSetup[CustomCreateArgs, CustomReadResponse any](ctx context.Contex
 		t.Fatalf("Failed to parse magic link path: %s", err)
 	}
 
-	config := magiclink.Config[CustomCreateArgs, CustomReadResponse]{
+	config := magiclink.Config[CustomReadResponse]{
 		ErrorHandler:   args.errorHandler,
 		ServiceURL:     serviceURL,
 		SecretQueryKey: args.secretQueryKey,

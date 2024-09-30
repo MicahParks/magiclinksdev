@@ -188,8 +188,8 @@ func (s *Server) addRegisteredClaims(ctx context.Context, args model.ValidJWTCre
 	return edited, nil
 }
 
-func (s *Server) createLinkArgs(ctx context.Context, args model.ValidLinkCreateArgs) (magiclink.CreateArgs[storage.MagicLinkCustomCreateArgs], error) {
-	var createArgs magiclink.CreateArgs[storage.MagicLinkCustomCreateArgs]
+func (s *Server) createLinkArgs(ctx context.Context, args model.ValidLinkCreateArgs) (magiclink.CreateArgs, error) {
+	var createArgs magiclink.CreateArgs
 
 	edited, err := s.addRegisteredClaims(ctx, args.JWTCreateArgs)
 	if err != nil {
@@ -212,10 +212,8 @@ func (s *Server) createLinkArgs(ctx context.Context, args model.ValidLinkCreateA
 	}
 
 	kID := jwk.Marshal().KID
-	createArgs = magiclink.CreateArgs[storage.MagicLinkCustomCreateArgs]{
-		Custom: storage.MagicLinkCustomCreateArgs{
-			Expires: time.Now().Add(args.LinkLifespan),
-		},
+	createArgs = magiclink.CreateArgs{
+		Expires:          time.Now().Add(args.LinkLifespan),
 		JWTClaims:        claims,
 		JWTKeyID:         &kID,
 		RedirectQueryKey: args.RedirectQueryKey,

@@ -32,7 +32,7 @@ type Storage interface {
 	UpdateDefaultSigningKey(ctx context.Context, keyID string) error
 
 	jwkset.Storage
-	magiclink.Storage[MagicLinkCustomCreateArgs, MagicLinkCustomReadResponse]
+	magiclink.Storage[MagicLinkCustomReadResponse]
 }
 
 // Tx is the interface for a transaction.

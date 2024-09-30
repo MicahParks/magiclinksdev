@@ -45,7 +45,7 @@ func (r ReCAPTCHAV3Config) DefaultsAndValidate() (ReCAPTCHAV3Config, error) {
 }
 
 // ReCAPTCHAV3Redirector is a Redirector that uses Google's reCAPTCHA v3 to verify the user.
-type ReCAPTCHAV3Redirector[CustomCreateArgs, CustomReadResponse any] struct {
+type ReCAPTCHAV3Redirector[CustomReadResponse any] struct {
 	checkOpts recaptcha.V3ResponseCheckOptions
 	tmpl      *template.Template
 	tmplData  ReCAPTCHAV3TemplateData
@@ -53,7 +53,7 @@ type ReCAPTCHAV3Redirector[CustomCreateArgs, CustomReadResponse any] struct {
 }
 
 // NewReCAPTCHAV3Redirector creates a new ReCAPTCHAV3Redirector with the given config.
-func NewReCAPTCHAV3Redirector[CustomCreateArgs, CustomReadResponse any](config ReCAPTCHAV3Config) Redirector[CustomCreateArgs, CustomReadResponse] {
+func NewReCAPTCHAV3Redirector[CustomReadResponse any](config ReCAPTCHAV3Config) Redirector[CustomReadResponse] {
 	tmpl := template.Must(template.New("").Parse(recaptchav3Template))
 	checkOpts := recaptcha.V3ResponseCheckOptions{
 		APKPackageName: config.APKPackageName,
@@ -65,7 +65,7 @@ func NewReCAPTCHAV3Redirector[CustomCreateArgs, CustomReadResponse any](config R
 	if verifier == nil {
 		verifier = recaptcha.NewVerifierV3(config.SecretKey, recaptcha.VerifierV3Options{})
 	}
-	r := ReCAPTCHAV3Redirector[CustomCreateArgs, CustomReadResponse]{
+	r := ReCAPTCHAV3Redirector[CustomReadResponse]{
 		checkOpts: checkOpts,
 		tmpl:      tmpl,
 		tmplData:  config.TemplateData,
@@ -75,7 +75,7 @@ func NewReCAPTCHAV3Redirector[CustomCreateArgs, CustomReadResponse any](config R
 }
 
 // Redirect implements the Redirector interface.
-func (r ReCAPTCHAV3Redirector[CustomCreateArgs, CustomReadResponse]) Redirect(args RedirectorArgs[CustomCreateArgs, CustomReadResponse]) {
+func (r ReCAPTCHAV3Redirector[CustomReadResponse]) Redirect(args RedirectorArgs[CustomReadResponse]) {
 	ctx := args.Request.Context()
 
 	token := args.Request.URL.Query().Get("token")

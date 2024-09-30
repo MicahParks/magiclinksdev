@@ -9,13 +9,13 @@ import (
 )
 
 func TestCreateArgs_Valid(t *testing.T) {
-	p := magiclink.CreateArgs[any]{}
+	p := magiclink.CreateArgs{}
 	err := p.Valid()
 	if !errors.Is(err, magiclink.ErrArgs) {
 		t.Errorf("expected error %s, got %s", magiclink.ErrArgs, err)
 	}
 
-	p = magiclink.CreateArgs[any]{
+	p = magiclink.CreateArgs{
 		RedirectURL: new(url.URL),
 	}
 	err = p.Valid()
@@ -25,13 +25,13 @@ func TestCreateArgs_Valid(t *testing.T) {
 }
 
 func TestArgs_Valid(t *testing.T) {
-	p := magiclink.Config[any, any]{}
+	p := magiclink.Config[any]{}
 	err := p.Valid()
 	if !errors.Is(err, magiclink.ErrArgs) {
 		t.Errorf("expected error %s, got %s", magiclink.ErrArgs, err)
 	}
 
-	p = magiclink.Config[any, any]{
+	p = magiclink.Config[any]{
 		ServiceURL: new(url.URL),
 	}
 	err = p.Valid()

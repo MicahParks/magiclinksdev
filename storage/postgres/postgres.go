@@ -294,7 +294,7 @@ WHERE key_id = $1
   Magic link storage.
 */
 
-func (p postgres) CreateLink(ctx context.Context, args magiclink.CreateArgs[storage.MagicLinkCustomCreateArgs]) (secret string, err error) {
+func (p postgres) CreateLink(ctx context.Context, args magiclink.CreateArgs) (secret string, err error) {
 	tx := ctx.Value(ctxkey.Tx).(*Transaction).Tx
 	sa := ctx.Value(ctxkey.ServiceAccount).(model.ServiceAccount)
 
@@ -316,16 +316,16 @@ INTO mld.link (expires, jwt_claims, jwt_key_id, jwt_signing_method, redirect_que
                        sa_id)
 VALUES ($2, $3, $4, $5, $6, $7, $8, (SELECT id FROM sa))
 `
-	_, err = tx.Exec(ctx, query, sa.UUID, args.Custom.Expires, claims, args.JWTKeyID, args.JWTSigningMethod, args.RedirectQueryKey, args.RedirectURL.String(), s)
+	_, err = tx.Exec(ctx, query, sa.UUID, args.Expires, claims, args.JWTKeyID, args.JWTSigningMethod, args.RedirectQueryKey, args.RedirectURL.String(), s)
 	if err != nil {
 		return "", fmt.Errorf("failed to write magic link to Postgres: %w", err)
 	}
 
 	return s.String(), nil
 }
-func (p postgres) ReadLink(ctx context.Context, secret string) (magiclink.ReadResponse[storage.MagicLinkCustomCreateArgs, storage.MagicLinkCustomReadResponse], error) {
+func (p postgres) ReadLink(ctx context.Context, secret string) (magiclink.ReadResponse[storage.MagicLinkCustomReadResponse], error) {
 	tx := ctx.Value(ctxkey.Tx).(*Transaction).Tx
-	var response magiclink.ReadResponse[storage.MagicLinkCustomCreateArgs, storage.MagicLinkCustomReadResponse]
+	var response magiclink.ReadResponse[storage.MagicLinkCustomReadResponse]
 
 	u, err := uuid.Parse(secret)
 	if err != nil {
@@ -342,10 +342,10 @@ WHERE older.id = updated.id
 RETURNING updated.expires, updated.jwt_claims, updated.jwt_key_id, updated.jwt_signing_method, updated.redirect_query_key, updated.redirect_url, older.visited
 `
 	claims := make([]byte, 0)
-	var args magiclink.CreateArgs[storage.MagicLinkCustomCreateArgs]
+	var args magiclink.CreateArgs
 	var visited *time.Time
 	var redirectURL string
-	err = tx.QueryRow(ctx, query, u.String()).Scan(&args.Custom.Expires, &claims, &args.JWTKeyID, &args.JWTSigningMethod, &args.RedirectQueryKey, &redirectURL, &visited)
+	err = tx.QueryRow(ctx, query, u.String()).Scan(&args.Expires, &claims, &args.JWTKeyID, &args.JWTSigningMethod, &args.RedirectQueryKey, &redirectURL, &visited)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return response, fmt.Errorf("magic link not found: %w", magiclink.ErrLinkNotFound)
@@ -353,7 +353,7 @@ RETURNING updated.expires, updated.jwt_claims, updated.jwt_key_id, updated.jwt_s
 		return response, fmt.Errorf("failed to read magic link from Postgres: %w", err)
 	}
 
-	if args.Custom.Expires.Before(time.Now()) {
+	if args.Expires.Before(time.Now()) {
 		return response, fmt.Errorf("magic link expired: %w", magiclink.ErrLinkNotFound)
 	}
 
