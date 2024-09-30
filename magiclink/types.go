@@ -60,7 +60,7 @@ type ReadResponse struct {
 	// CreateArgs are the parameters used to create the magic link.
 	CreateArgs CreateArgs
 	// Visited is the first time the magic link was visited. This is nil if the magic link has not been visited.
-	Visited *time.Time
+	Visited *time.Time // TODO Move to a type outside this package. It isn't used here.
 }
 
 // CreateResponse is the response after a magic link has been created.
