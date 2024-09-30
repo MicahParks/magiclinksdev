@@ -24,25 +24,25 @@ func CreateKeysIfNotExists(ctx context.Context, store storage.Storage) (keys []j
 		return nil, false, fmt.Errorf("failed to read all JWKs: %w", err)
 	}
 	if len(allKeys) > 0 {
-		defaultEdDSA := false
-		haveEdDSA := false
-		haveRS256 := false
+		// defaultEdDSA := false
+		// haveEdDSA := false
+		// haveRS256 := false
 		existingKeys := make([]jwkset.JWK, len(allKeys))
 		for i, jwk := range allKeys {
-			switch jwk.Marshal().ALG {
-			case jwkset.AlgEdDSA:
-				haveEdDSA = true
-				// if jwk.Custom.SigningDefault { // TODO Check for signing default.
-				// 	defaultEdDSA = true
-				// }
-			case jwkset.AlgRS256:
-				haveRS256 = true
-			}
+			// 	switch jwk.Marshal().ALG {
+			// 	case jwkset.AlgEdDSA:
+			// 		haveEdDSA = true
+			// 		if jwk.Custom.SigningDefault { // TODO Check for signing default.
+			// 			defaultEdDSA = true
+			// 		}
+			// 	case jwkset.AlgRS256:
+			// 		haveRS256 = true
+			// 	}
 			existingKeys[i] = jwk
 		}
-		if !(defaultEdDSA && haveEdDSA && haveRS256) {
-			return nil, false, fmt.Errorf("%w: expected to have an EdDSA key as the default and an RS256 key", ErrJWKSet)
-		}
+		// if !(defaultEdDSA && haveEdDSA && haveRS256) {
+		// 	return nil, false, fmt.Errorf("%w: expected to have an EdDSA key as the default and an RS256 key", ErrJWKSet)
+		// }
 		return existingKeys, true, nil
 	}
 

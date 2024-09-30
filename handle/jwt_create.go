@@ -55,14 +55,14 @@ func (s *Server) HandleJWTCreate(ctx context.Context, req model.ValidJWTCreateRe
 		}
 		return model.JWTCreateResponse{}, fmt.Errorf("failed to get JWT signing key: %w", err)
 	}
-	method := magiclink.BestSigningMethod(jwk.Key)
+	method := magiclink.BestSigningMethod(jwk.Key())
 
 	bytesClaims := SigningBytesClaims{
 		Claims: edited,
 	}
 	token := jwt.NewWithClaims(method, bytesClaims)
 	token.Header[jwkset.HeaderKID] = jwk.Marshal().KID
-	signed, err := token.SignedString(jwk.Key)
+	signed, err := token.SignedString(jwk.Key())
 	if err != nil {
 		return model.JWTCreateResponse{}, fmt.Errorf("%w: %w", magiclink.ErrJWTSign, err)
 	}

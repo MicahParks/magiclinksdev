@@ -39,28 +39,22 @@ type TestClaims struct {
 }
 
 func (t TestClaims) GetExpirationTime() (*jwt.NumericDate, error) {
-	// TODO implement me
-	panic("implement me")
+	return nil, nil
 }
 func (t TestClaims) GetIssuedAt() (*jwt.NumericDate, error) {
-	// TODO implement me
-	panic("implement me")
+	return nil, nil
 }
 func (t TestClaims) GetNotBefore() (*jwt.NumericDate, error) {
-	// TODO implement me
-	panic("implement me")
+	return nil, nil
 }
 func (t TestClaims) GetIssuer() (string, error) {
-	// TODO implement me
-	panic("implement me")
+	return "", nil
 }
 func (t TestClaims) GetSubject() (string, error) {
-	// TODO implement me
-	panic("implement me")
+	return "", nil
 }
 func (t TestClaims) GetAudience() (jwt.ClaimStrings, error) {
-	// TODO implement me
-	panic("implement me")
+	return nil, nil
 }
 
 // Equal returns true if the two claims are equal.

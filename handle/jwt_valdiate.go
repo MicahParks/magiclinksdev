@@ -38,7 +38,7 @@ func (s *Server) HandleJWTValidate(ctx context.Context, req model.ValidJWTValida
 		return jwks.Keyfunc(token)
 	})
 	if err != nil {
-		if errors.Is(err, jwkset.ErrKeyNotFound) || errors.Is(err, jwt.ErrSignatureInvalid) {
+		if errors.Is(err, jwkset.ErrKeyNotFound) || errors.Is(err, jwt.ErrTokenSignatureInvalid) {
 			return model.JWTValidateResponse{}, fmt.Errorf("%w: %s", ErrToken, err)
 		}
 		return model.JWTValidateResponse{}, fmt.Errorf("failed to parse JWT: %w", err)
