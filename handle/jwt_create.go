@@ -13,20 +13,11 @@ import (
 	"github.com/tidwall/gjson"
 	"github.com/tidwall/sjson"
 
+	"github.com/MicahParks/magiclinksdev"
 	"github.com/MicahParks/magiclinksdev/magiclink"
 	"github.com/MicahParks/magiclinksdev/model"
 	"github.com/MicahParks/magiclinksdev/network/middleware/ctxkey"
 	"github.com/MicahParks/magiclinksdev/storage"
-)
-
-const (
-	issAttr = "iss"
-	subAttr = "sub"
-	audAttr = "aud"
-	expAttr = "exp"
-	nbfAttr = "nbf"
-	iatAttr = "iat"
-	jtiAttr = "jti"
 )
 
 var (
@@ -57,7 +48,7 @@ func (s *Server) HandleJWTCreate(ctx context.Context, req model.ValidJWTCreateRe
 	}
 	method := magiclink.BestSigningMethod(jwk.Key())
 
-	bytesClaims := SigningBytesClaims{
+	bytesClaims := magiclinksdev.SigningBytesClaims{
 		Claims: edited,
 	}
 	token := jwt.NewWithClaims(method, bytesClaims)
@@ -77,40 +68,6 @@ func (s *Server) HandleJWTCreate(ctx context.Context, req model.ValidJWTCreateRe
 	}
 
 	return response, nil
-}
-
-// SigningBytesClaims is a JWT claims type that allows for signing claims represented in bytes.
-type SigningBytesClaims struct {
-	Claims json.RawMessage
-}
-
-func (s SigningBytesClaims) GetExpirationTime() (*jwt.NumericDate, error) {
-	return jwt.NewNumericDate(time.Unix(gjson.GetBytes(s.Claims, expAttr).Int(), 0)), nil
-}
-func (s SigningBytesClaims) GetIssuedAt() (*jwt.NumericDate, error) {
-	return jwt.NewNumericDate(time.Unix(gjson.GetBytes(s.Claims, iatAttr).Int(), 0)), nil
-}
-func (s SigningBytesClaims) GetNotBefore() (*jwt.NumericDate, error) {
-	return jwt.NewNumericDate(time.Unix(gjson.GetBytes(s.Claims, nbfAttr).Int(), 0)), nil
-}
-func (s SigningBytesClaims) GetIssuer() (string, error) {
-	return gjson.GetBytes(s.Claims, issAttr).String(), nil
-}
-func (s SigningBytesClaims) GetSubject() (string, error) {
-	return gjson.GetBytes(s.Claims, subAttr).String(), nil
-}
-func (s SigningBytesClaims) GetAudience() (jwt.ClaimStrings, error) {
-	var aud jwt.ClaimStrings
-	err := json.Unmarshal([]byte(gjson.GetBytes(s.Claims, audAttr).Raw), &aud)
-	if err != nil {
-		return nil, fmt.Errorf("failed to unmarshal audience: %w", err)
-	}
-	return aud, nil
-}
-
-// MarshalJSON helps implement the json.Marshaler interface.
-func (s SigningBytesClaims) MarshalJSON() ([]byte, error) {
-	return s.Claims, nil
 }
 
 func (s *Server) addRegisteredClaims(ctx context.Context, args model.ValidJWTCreateArgs) (json.RawMessage, error) {
@@ -147,13 +104,13 @@ func (s *Server) addRegisteredClaims(ctx context.Context, args model.ValidJWTCre
 
 	// https://tools.ietf.org/html/rfc7519#section-4.1
 	rfc5119 := []string{
-		issAttr,
-		subAttr,
-		audAttr,
-		expAttr,
-		nbfAttr,
-		iatAttr,
-		jtiAttr,
+		magiclinksdev.AttrIss,
+		magiclinksdev.AttrSub,
+		magiclinksdev.AttrAud,
+		magiclinksdev.AttrExp,
+		magiclinksdev.AttrNbf,
+		magiclinksdev.AttrIat,
+		magiclinksdev.AttrJti,
 	}
 
 	edited := make(json.RawMessage, len(args.JWTClaims))
@@ -187,7 +144,7 @@ func (s *Server) createLinkArgs(ctx context.Context, args model.ValidLinkCreateA
 		return createArgs, fmt.Errorf("failed to add registered claims to JWT claims: %w", err)
 	}
 
-	claims := SigningBytesClaims{
+	claims := magiclinksdev.SigningBytesClaims{
 		Claims: edited,
 	}
 

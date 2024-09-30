@@ -20,10 +20,10 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
+	"github.com/MicahParks/magiclinksdev"
 	"github.com/MicahParks/magiclinksdev/magiclink"
 	"github.com/MicahParks/magiclinksdev/model"
 
-	"github.com/MicahParks/magiclinksdev/handle"
 	"github.com/MicahParks/magiclinksdev/network/middleware/ctxkey"
 	"github.com/MicahParks/magiclinksdev/storage"
 )
@@ -580,18 +580,18 @@ func (p postgres) claimsMarshal(claims jwt.Claims) ([]byte, error) {
 	}
 	return data, nil
 }
-func (p postgres) claimsUnmarshal(data []byte) (handle.SigningBytesClaims, error) {
+func (p postgres) claimsUnmarshal(data []byte) (magiclinksdev.SigningBytesClaims, error) {
 	var err error
 	if !p.plaintextClaims {
 		data, err = decrypt(p.aes256Key, data)
 		if err != nil {
-			return handle.SigningBytesClaims{}, fmt.Errorf("failed to decrypt claims: %w", err)
+			return magiclinksdev.SigningBytesClaims{}, fmt.Errorf("failed to decrypt claims: %w", err)
 		}
 	}
-	var claims handle.SigningBytesClaims
+	var claims magiclinksdev.SigningBytesClaims
 	err = json.Unmarshal(data, &claims.Claims)
 	if err != nil {
-		return handle.SigningBytesClaims{}, fmt.Errorf("failed to JSON unmarshal claims: %w", err)
+		return magiclinksdev.SigningBytesClaims{}, fmt.Errorf("failed to JSON unmarshal claims: %w", err)
 	}
 	return claims, nil
 }
