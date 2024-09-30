@@ -9,11 +9,6 @@ type ReadSigningKeyOptions struct {
 	JWTAlg string
 }
 
-// JWKSetCustomKeyMeta is the custom metadata for a JWKSet key.
-type JWKSetCustomKeyMeta struct {
-	SigningDefault bool
-}
-
 // MagicLinkCustomCreateArgs is the custom arguments for creating a magic link.
 type MagicLinkCustomCreateArgs struct {
 	Expires time.Time
