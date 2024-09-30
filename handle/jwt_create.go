@@ -108,15 +108,6 @@ func (s SigningBytesClaims) GetAudience() (jwt.ClaimStrings, error) {
 	return aud, nil
 }
 
-// Valid helps implement the jwt.Claims interface.
-func (s SigningBytesClaims) Valid() error {
-	valid := json.Valid(s.Claims)
-	if !valid {
-		return fmt.Errorf("%w: invalid JSON for JWT claims", model.ErrInvalidModel)
-	}
-	return nil
-}
-
 // MarshalJSON helps implement the json.Marshaler interface.
 func (s SigningBytesClaims) MarshalJSON() ([]byte, error) {
 	return s.Claims, nil
