@@ -1,4 +1,4 @@
-package postgres
+package storage
 
 import (
 	"context"
@@ -25,7 +25,6 @@ import (
 	"github.com/MicahParks/magiclinksdev/model"
 
 	"github.com/MicahParks/magiclinksdev/network/middleware/ctxkey"
-	"github.com/MicahParks/magiclinksdev/storage"
 )
 
 const (
@@ -37,7 +36,7 @@ RETURNING id
 `
 )
 
-var _ storage.Storage = postgres{}
+var _ Storage = postgres{}
 
 // Config is the configuration for Postgres storage.
 type Config struct {
@@ -120,12 +119,12 @@ func newPostgres(pool *pgxpool.Pool, config Config) (postgres, error) {
 		}
 	} else {
 		if config.AES256KeyBase64 != "" {
-			return postgres{}, fmt.Errorf("AES256 key must not be set when plaintext JWK and claims are enabled: %w", storage.ErrKeySize)
+			return postgres{}, fmt.Errorf("AES256 key must not be set when plaintext JWK and claims are enabled: %w", ErrKeySize)
 		}
 	}
 	return store, nil
 }
-func (p postgres) Begin(ctx context.Context) (storage.Tx, error) {
+func (p postgres) Begin(ctx context.Context) (Tx, error) {
 	tx, err := p.pool.Begin(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to being Postgres transaction: %w", err)
@@ -206,7 +205,7 @@ WHERE uuid = $1
 	err := tx.QueryRow(ctx, queryAud, u).Scan(&sa.APIKey, &sa.Aud, &sa.Admin)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return model.ServiceAccount{}, fmt.Errorf("failed to read service account audiences from Postgres using UUID: %w: %w", err, storage.ErrNotFound)
+			return model.ServiceAccount{}, fmt.Errorf("failed to read service account audiences from Postgres using UUID: %w: %w", err, ErrNotFound)
 		}
 		return model.ServiceAccount{}, fmt.Errorf("failed to read service account audiences from Postgres using UUID: %w", err)
 	}
@@ -228,14 +227,14 @@ WHERE api_key = $1
 	err := tx.QueryRow(ctx, queryAud, apiKey).Scan(&sa.UUID, &sa.Aud, &sa.Admin)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return model.ServiceAccount{}, fmt.Errorf("failed to read service account audiences from Postgres using API key: %w: %w", err, storage.ErrNotFound)
+			return model.ServiceAccount{}, fmt.Errorf("failed to read service account audiences from Postgres using API key: %w: %w", err, ErrNotFound)
 		}
 		return model.ServiceAccount{}, fmt.Errorf("failed to read service account audiences from Postgres using API key: %w", err)
 	}
 
 	return sa, nil
 }
-func (p postgres) ReadSigningKey(ctx context.Context, options storage.ReadSigningKeyOptions) (jwk jwkset.JWK, err error) {
+func (p postgres) ReadSigningKey(ctx context.Context, options ReadSigningKeyOptions) (jwk jwkset.JWK, err error) {
 	tx := ctx.Value(ctxkey.Tx).(*Transaction).Tx
 
 	//language=sql
@@ -261,7 +260,7 @@ ORDER BY created DESC
 	err = tx.QueryRow(ctx, query, args...).Scan(&assets)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return jwk, fmt.Errorf("failed to read signing key from Postgres: %w: %w", err, storage.ErrNotFound)
+			return jwk, fmt.Errorf("failed to read signing key from Postgres: %w: %w", err, ErrNotFound)
 		}
 		return jwk, fmt.Errorf("failed to read signing key from Postgres: %w", err)
 	}

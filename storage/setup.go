@@ -1,4 +1,4 @@
-package postgres
+package storage
 
 import (
 	"context"
@@ -11,7 +11,6 @@ import (
 	"golang.org/x/mod/semver"
 
 	"github.com/MicahParks/magiclinksdev/network/middleware/ctxkey"
-	"github.com/MicahParks/magiclinksdev/storage"
 )
 
 const (
@@ -31,7 +30,7 @@ type Setup struct {
 }
 
 // NewWithSetup creates a new Postgres storage and returns its connection pool. It also performs a setup check.
-func NewWithSetup(ctx context.Context, config Config, setupLogger *slog.Logger) (storage.Storage, *pgxpool.Pool, error) {
+func NewWithSetup(ctx context.Context, config Config, setupLogger *slog.Logger) (Storage, *pgxpool.Pool, error) {
 	post, p, err := New(ctx, config)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to create Postgres storage: %w", err)
@@ -74,7 +73,7 @@ func NewWithSetup(ctx context.Context, config Config, setupLogger *slog.Logger) 
 }
 
 // New creates a new Postgres storage and returns its connection pool.
-func New(ctx context.Context, config Config) (storage.Storage, *pgxpool.Pool, error) {
+func New(ctx context.Context, config Config) (Storage, *pgxpool.Pool, error) {
 	ctx, cancel := context.WithTimeout(ctx, config.InitialTimeout.Get())
 	defer cancel()
 	p, err := pool(ctx, config)

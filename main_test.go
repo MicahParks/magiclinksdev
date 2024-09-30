@@ -22,7 +22,6 @@ import (
 	"github.com/MicahParks/magiclinksdev/network/middleware/ctxkey"
 	"github.com/MicahParks/magiclinksdev/setup"
 	"github.com/MicahParks/magiclinksdev/storage"
-	"github.com/MicahParks/magiclinksdev/storage/postgres"
 )
 
 var (
@@ -122,8 +121,8 @@ func createKeyIfNotExists(ctx context.Context, store storage.Storage, logger *lo
 	return keys
 }
 
-func truncateDatabase(ctx context.Context, config postgres.Config, logger *log.Logger) {
-	store, _, err := postgres.NewWithSetup(ctx, config, slog.New(slog.NewJSONHandler(io.Discard, nil)))
+func truncateDatabase(ctx context.Context, config storage.Config, logger *log.Logger) {
+	store, _, err := storage.NewWithSetup(ctx, config, slog.New(slog.NewJSONHandler(io.Discard, nil)))
 	if err != nil {
 		logger.Fatalf(mld.LogFmt, "Failed to create storage.", err)
 	}

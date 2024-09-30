@@ -9,7 +9,7 @@ import (
 
 	mld "github.com/MicahParks/magiclinksdev"
 	"github.com/MicahParks/magiclinksdev/setup"
-	"github.com/MicahParks/magiclinksdev/storage/postgres"
+	"github.com/MicahParks/magiclinksdev/storage"
 )
 
 func main() {
@@ -23,7 +23,7 @@ func main() {
 
 	logger := setup.CreateLogger(conf.Server)
 
-	_, pool, err := postgres.New(ctx, conf.Storage)
+	_, pool, err := storage.New(ctx, conf.Storage)
 	if err != nil {
 		logger.ErrorContext(ctx, "Failed to create postgres pool.",
 			mld.LogErr, err,
@@ -31,18 +31,18 @@ func main() {
 		os.Exit(1)
 	}
 
-	k, err := postgres.DecodeAES256Base64(conf.Storage.AES256KeyBase64)
+	k, err := storage.DecodeAES256Base64(conf.Storage.AES256KeyBase64)
 	if err != nil {
 		logger.ErrorContext(ctx, "Failed to decode AES256 key.",
 			mld.LogErr, err,
 		)
 		os.Exit(1)
 	}
-	options := postgres.MigratorOptions{
+	options := storage.MigratorOptions{
 		EncryptionKey: k,
 		Logger:        logger,
 	}
-	migrator, err := postgres.NewMigrator(pool, options)
+	migrator, err := storage.NewMigrator(pool, options)
 	if err != nil {
 		logger.ErrorContext(ctx, "Failed to create migrator.",
 			mld.LogErr, err,
