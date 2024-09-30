@@ -323,9 +323,9 @@ VALUES ($2, $3, $4, $5, $6, $7, $8, (SELECT id FROM sa))
 
 	return s.String(), nil
 }
-func (p postgres) ReadLink(ctx context.Context, secret string) (magiclink.ReadResponse[storage.MagicLinkCustomReadResponse], error) {
+func (p postgres) ReadLink(ctx context.Context, secret string) (magiclink.ReadResponse, error) {
 	tx := ctx.Value(ctxkey.Tx).(*Transaction).Tx
-	var response magiclink.ReadResponse[storage.MagicLinkCustomReadResponse]
+	var response magiclink.ReadResponse
 
 	u, err := uuid.Parse(secret)
 	if err != nil {
@@ -372,7 +372,7 @@ RETURNING updated.expires, updated.jwt_claims, updated.jwt_key_id, updated.jwt_s
 	}
 
 	response.CreateArgs = args
-	response.Custom.Visited = visited
+	response.Visited = visited
 	return response, nil
 }
 

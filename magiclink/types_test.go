@@ -25,13 +25,13 @@ func TestCreateArgs_Valid(t *testing.T) {
 }
 
 func TestArgs_Valid(t *testing.T) {
-	p := magiclink.Config[any]{}
+	p := magiclink.Config{}
 	err := p.Valid()
 	if !errors.Is(err, magiclink.ErrArgs) {
 		t.Errorf("expected error %s, got %s", magiclink.ErrArgs, err)
 	}
 
-	p = magiclink.Config[any]{
+	p = magiclink.Config{
 		ServiceURL: new(url.URL),
 	}
 	err = p.Valid()

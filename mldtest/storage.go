@@ -173,8 +173,8 @@ func (t *testStorage) MarshalWithOptions(ctx context.Context, marshalOptions jwk
 func (t *testStorage) CreateLink(_ context.Context, _ magiclink.CreateArgs) (secret string, err error) {
 	return uuid.New().String(), nil
 }
-func (t *testStorage) ReadLink(_ context.Context, _ string) (magiclink.ReadResponse[storage.MagicLinkCustomReadResponse], error) {
-	return magiclink.ReadResponse[storage.MagicLinkCustomReadResponse]{}, nil
+func (t *testStorage) ReadLink(_ context.Context, _ string) (magiclink.ReadResponse, error) {
+	return magiclink.ReadResponse{}, nil
 }
 
 // ErrorStorage is a storage.Storage implementation that always returns an error.
@@ -222,6 +222,6 @@ func (e ErrorStorage) WriteKey(_ context.Context, _ jwkset.JWK) error {
 func (e ErrorStorage) CreateLink(_ context.Context, _ magiclink.CreateArgs) (secret string, err error) {
 	return "", ErrMLDTest
 }
-func (e ErrorStorage) ReadLink(_ context.Context, _ string) (magiclink.ReadResponse[storage.MagicLinkCustomReadResponse], error) {
-	return magiclink.ReadResponse[storage.MagicLinkCustomReadResponse]{}, ErrMLDTest
+func (e ErrorStorage) ReadLink(_ context.Context, _ string) (magiclink.ReadResponse, error) {
+	return magiclink.ReadResponse{}, ErrMLDTest
 }

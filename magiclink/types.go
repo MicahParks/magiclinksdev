@@ -56,11 +56,11 @@ func (p CreateArgs) Valid() error {
 }
 
 // ReadResponse is the response after a magic link has been read.
-type ReadResponse[CustomReadResponse any] struct {
-	// Custom is additional data or metadata for your use case.
-	Custom CustomReadResponse
+type ReadResponse struct {
 	// CreateArgs are the parameters used to create the magic link.
 	CreateArgs CreateArgs
+	// Visited is the first time the magic link was visited. This is nil if the magic link has not been visited.
+	Visited *time.Time
 }
 
 // CreateResponse is the response after a magic link has been created.
@@ -113,17 +113,17 @@ func (f ErrorHandlerFunc) Handle(args ErrorHandlerArgs) {
 }
 
 // Config contains the required assets to create a MagicLink service.
-type Config[CustomReadResponse any] struct {
+type Config struct {
 	ErrorHandler     ErrorHandler
 	JWKS             JWKSArgs
-	CustomRedirector Redirector[CustomReadResponse]
+	CustomRedirector Redirector
 	ServiceURL       *url.URL
 	SecretQueryKey   string
-	Store            Storage[CustomReadResponse]
+	Store            Storage
 }
 
 // Valid confirms the Config is valid.
-func (c Config[CustomReadResponse]) Valid() error {
+func (c Config) Valid() error {
 	if c.ServiceURL == nil {
 		return fmt.Errorf("%w: include a service URL, this is used to build magic links", ErrArgs)
 	}

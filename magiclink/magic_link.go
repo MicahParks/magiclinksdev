@@ -26,9 +26,9 @@ const (
 )
 
 // MagicLink holds the necessary assets for the magic link service.
-type MagicLink[CustomReadResponse any] struct {
-	Store             Storage[CustomReadResponse]
-	customRedirector  Redirector[CustomReadResponse]
+type MagicLink struct {
+	Store             Storage
+	customRedirector  Redirector
 	errorHandler      ErrorHandler
 	jwks              *jwksCache
 	reCAPTCHAV3Config ReCAPTCHAV3Config
@@ -37,8 +37,8 @@ type MagicLink[CustomReadResponse any] struct {
 }
 
 // NewMagicLink creates a new MagicLink. The given setupCtx is only used during the creation of the MagicLink.
-func NewMagicLink[CustomReadResponse any](setupCtx context.Context, config Config[CustomReadResponse]) (MagicLink[CustomReadResponse], error) {
-	var m MagicLink[CustomReadResponse]
+func NewMagicLink(setupCtx context.Context, config Config) (MagicLink, error) {
+	var m MagicLink
 
 	err := config.Valid()
 	if err != nil {
@@ -55,13 +55,13 @@ func NewMagicLink[CustomReadResponse any](setupCtx context.Context, config Confi
 		secretQueryKey = DefaultSecretQueryKey
 	}
 
-	var store Storage[CustomReadResponse]
+	var store Storage
 	store = config.Store
 	if store == nil {
-		store = NewMemoryStorage[CustomReadResponse]()
+		store = NewMemoryStorage()
 	}
 
-	m = MagicLink[CustomReadResponse]{
+	m = MagicLink{
 		Store:             store,
 		customRedirector:  config.CustomRedirector,
 		errorHandler:      config.ErrorHandler,
@@ -75,7 +75,7 @@ func NewMagicLink[CustomReadResponse any](setupCtx context.Context, config Confi
 }
 
 // JWKSHandler is an HTTP handler that responds to requests with the JWK Set as JSON.
-func (m MagicLink[CustomReadResponse]) JWKSHandler() http.Handler {
+func (m MagicLink) JWKSHandler() http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		body, err := m.jwks.get(request.Context())
 		if err != nil {
@@ -89,12 +89,12 @@ func (m MagicLink[CustomReadResponse]) JWKSHandler() http.Handler {
 }
 
 // JWKSet is a getter method to return the underlying JWK Set.
-func (m MagicLink[CustomReadResponse]) JWKSet() jwkset.Storage {
+func (m MagicLink) JWKSet() jwkset.Storage {
 	return m.jwks.jwks
 }
 
 // NewLink creates a magic link with the given parameters.
-func (m MagicLink[CustomReadResponse]) NewLink(ctx context.Context, args CreateArgs) (CreateResponse, error) {
+func (m MagicLink) NewLink(ctx context.Context, args CreateArgs) (CreateResponse, error) {
 	err := args.Valid()
 	if err != nil {
 		return CreateResponse{}, fmt.Errorf("failed to validate args: %w", err)
@@ -120,7 +120,7 @@ func (m MagicLink[CustomReadResponse]) NewLink(ctx context.Context, args CreateA
 
 // MagicLinkHandler is an HTTP handler that accepts HTTP requests with magic link secrets, then redirects to the given
 // URL with the JWT as a query parameter.
-func (m MagicLink[CustomReadResponse]) MagicLinkHandler() http.Handler {
+func (m MagicLink) MagicLinkHandler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
@@ -131,7 +131,7 @@ func (m MagicLink[CustomReadResponse]) MagicLinkHandler() http.Handler {
 		}
 
 		if m.customRedirector != nil {
-			args := RedirectorArgs[CustomReadResponse]{
+			args := RedirectorArgs{
 				ReadAndExpireLink: m.HandleMagicLink,
 				Request:           r,
 				Secret:            secret,
@@ -156,7 +156,7 @@ func (m MagicLink[CustomReadResponse]) MagicLinkHandler() http.Handler {
 }
 
 // HandleMagicLink is a method that accepts a magic link secret, then returns the signed JWT.
-func (m MagicLink[CustomReadResponse]) HandleMagicLink(ctx context.Context, secret string) (jwtB64 string, response ReadResponse[CustomReadResponse], err error) {
+func (m MagicLink) HandleMagicLink(ctx context.Context, secret string) (jwtB64 string, response ReadResponse, err error) {
 	response, err = m.Store.ReadLink(ctx, secret)
 	if err != nil {
 		if errors.Is(err, ErrLinkNotFound) {
@@ -197,7 +197,7 @@ func (m MagicLink[CustomReadResponse]) HandleMagicLink(ctx context.Context, secr
 	return jwtB64, response, nil
 }
 
-func (m MagicLink[CustomReadResponse]) handleError(err error, suggestedResponseCode int, request *http.Request, writer http.ResponseWriter) {
+func (m MagicLink) handleError(err error, suggestedResponseCode int, request *http.Request, writer http.ResponseWriter) {
 	args := ErrorHandlerArgs{
 		Err:                   err,
 		Request:               request,
@@ -235,7 +235,7 @@ func BestSigningMethod(key any) jwt.SigningMethod {
 	return signingMethod
 }
 
-func redirectURLFromResponse[CustomReadResponse any](response ReadResponse[CustomReadResponse], jwtB64 string) *url.URL {
+func redirectURLFromResponse(response ReadResponse, jwtB64 string) *url.URL {
 	u := copyURL(response.CreateArgs.RedirectURL)
 	query := u.Query()
 	queryKey := response.CreateArgs.RedirectQueryKey

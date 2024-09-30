@@ -76,7 +76,7 @@ func TestTable(t *testing.T) {
 }
 
 func testCreateCases(ctx context.Context, t *testing.T, appServer *httptest.Server, createArgs []createArg, redirectChan <-chan url.Values, sParam setupArgs) {
-	m, magicServer := magiclinkSetup[any](ctx, t, sParam)
+	m, magicServer := magiclinkSetup(ctx, t, sParam)
 	defer magicServer.Close()
 
 	redirectURL, err := url.Parse(appServer.URL)
@@ -151,7 +151,7 @@ func testCreateCases(ctx context.Context, t *testing.T, appServer *httptest.Serv
 	}
 }
 
-func magiclinkSetup[CustomReadResponse any](ctx context.Context, t *testing.T, args setupArgs) (magiclink.MagicLink[CustomReadResponse], *httptest.Server) {
+func magiclinkSetup(ctx context.Context, t *testing.T, args setupArgs) (magiclink.MagicLink, *httptest.Server) {
 	dH := &dynamicHandler{}
 	server := httptest.NewServer(dH)
 	serviceURL, err := url.Parse(server.URL)
@@ -163,7 +163,7 @@ func magiclinkSetup[CustomReadResponse any](ctx context.Context, t *testing.T, a
 		t.Fatalf("Failed to parse magic link path: %s", err)
 	}
 
-	config := magiclink.Config[CustomReadResponse]{
+	config := magiclink.Config{
 		ErrorHandler:   args.errorHandler,
 		ServiceURL:     serviceURL,
 		SecretQueryKey: args.secretQueryKey,

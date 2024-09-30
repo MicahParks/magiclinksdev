@@ -317,13 +317,13 @@ func CreateServer(ctx context.Context, conf config.Config, options ServerOptions
 		return nil, fmt.Errorf("failed to parse magic link service URL: %w", err)
 	}
 
-	var customRedirector magiclink.Redirector[storage.MagicLinkCustomReadResponse]
+	var customRedirector magiclink.Redirector
 	switch conf.PreventRobots.Method {
 	case config.PreventRobotsReCAPTCHAV3:
-		customRedirector = magiclink.NewReCAPTCHAV3Redirector[storage.MagicLinkCustomReadResponse](conf.PreventRobots.ReCAPTCHAV3)
+		customRedirector = magiclink.NewReCAPTCHAV3Redirector(conf.PreventRobots.ReCAPTCHAV3)
 	}
 
-	magicLinkConfig := magiclink.Config[storage.MagicLinkCustomReadResponse]{
+	magicLinkConfig := magiclink.Config{
 		ErrorHandler: MagicLinkErrorHandler(options.MagicLinkErrorHandler),
 		JWKS: magiclink.JWKSArgs{
 			CacheRefresh: time.Second,
