@@ -19,7 +19,7 @@ var (
 // CreateArgs are the arguments for creating a magic link.
 type CreateArgs struct {
 	// Expires is the time the magic link will expire. Use of this field is REQUIRED for all use cases.
-	Expires time.Time // TODO This isn't used in this package, it's only used in storage?
+	Expires time.Time // TODO Move to another type. It's not used in this package.
 
 	// JWTClaims is a data structure that can marshal to JSON as the JWT Claims. Make sure to embed AND populate
 	// jwt.RegisteredClaims if your use case supports standard claims. If you shadow the .Valid() method of the
