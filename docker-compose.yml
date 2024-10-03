@@ -13,4 +13,4 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - "./storage/postgres/startup.sql:/docker-entrypoint-initdb.d/startup.sql"
+      - "./storage/startup.sql:/docker-entrypoint-initdb.d/startup.sql"
