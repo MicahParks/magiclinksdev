@@ -15,6 +15,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 
 	"github.com/MicahParks/magiclinksdev/magiclink"
+	"github.com/MicahParks/magiclinksdev/mldtest"
 )
 
 const (
@@ -112,6 +113,7 @@ func testCreateCases(ctx context.Context, t *testing.T, appServer *httptest.Serv
 			cParam.RedirectQueryKey = magiclink.DefaultRedirectQueryKey
 		}
 		cP := magiclink.CreateArgs{
+			Expires:          time.Now().Add(mldtest.LinksExpireAfter),
 			JWTClaims:        claims,
 			JWTKeyID:         cParam.JWTKeyID,
 			JWTSigningMethod: cParam.JWTSigningMethod,

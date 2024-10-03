@@ -4,8 +4,11 @@ import (
 	"context"
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/google/uuid"
+
+	mld "github.com/MicahParks/magiclinksdev"
 )
 
 // Storage represents the underlying storage for the MagicLink service.
@@ -14,7 +17,7 @@ type Storage interface {
 	CreateLink(ctx context.Context, args CreateArgs) (secret string, err error)
 	// ReadLink finds the creation parameters for the given secret. ErrLinkNotFound is returned if the secret is not
 	// found or was deleted/expired. This will automatically expire the link.
-	ReadLink(ctx context.Context, secret string) (ReadResponse, error)
+	ReadLink(ctx context.Context, secret string) (ReadResponse, error) // TODO Use visited and expiration.
 }
 
 var _ Storage = &memoryMagicLink{}
@@ -47,10 +50,12 @@ func (m *memoryMagicLink) CreateLink(_ context.Context, args CreateArgs) (secret
 func (m *memoryMagicLink) ReadLink(_ context.Context, secret string) (ReadResponse, error) {
 	m.mux.Lock()
 	defer m.mux.Unlock()
-	args, ok := m.links[secret]
-	if !ok {
-		return args, ErrLinkNotFound
+	now := time.Now()
+	readResp, ok := m.links[secret]
+	if !ok || readResp.Visited != nil || readResp.CreateArgs.Expires.Before(now) {
+		return readResp, ErrLinkNotFound
 	}
-	delete(m.links, secret)
-	return args, nil
+	readResp.Visited = mld.Ptr(now)
+	m.links[secret] = readResp
+	return readResp, nil
 }

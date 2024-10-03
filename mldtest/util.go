@@ -2,6 +2,7 @@ package mldtest
 
 import (
 	"errors"
+	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
@@ -18,6 +19,8 @@ const (
 	ServiceName = "Example service"
 	// LogoClickURL is the test service URL for the service.
 	LogoClickURL = "http://example.com"
+	// LinksExpireAfter is the amount of time links expire after for tests.
+	LinksExpireAfter = 24 * 30 * time.Hour
 )
 
 var (

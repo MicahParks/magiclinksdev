@@ -9,10 +9,12 @@ import (
 	"net/url"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/MicahParks/recaptcha"
 
 	"github.com/MicahParks/magiclinksdev/magiclink"
+	"github.com/MicahParks/magiclinksdev/mldtest"
 )
 
 func TestReCAPTCHAV3Redirector_Redirect(t *testing.T) {
@@ -103,6 +105,7 @@ func TestReCAPTCHAV3Redirector_Redirect(t *testing.T) {
 				ReadAndExpireLink: func(ctx context.Context, secret string) (jwtB64 string, response magiclink.ReadResponse, err error) {
 					return jwtB64FromBackend, magiclink.ReadResponse{
 						CreateArgs: magiclink.CreateArgs{
+							Expires:          time.Now().Add(mldtest.LinksExpireAfter),
 							RedirectQueryKey: magiclink.DefaultRedirectQueryKey,
 							RedirectURL:      must(url.Parse(magicLinkTarget)),
 						},

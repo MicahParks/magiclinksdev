@@ -19,7 +19,7 @@ var (
 // CreateArgs are the arguments for creating a magic link.
 type CreateArgs struct {
 	// Expires is the time the magic link will expire. Use of this field is REQUIRED for all use cases.
-	Expires time.Time // TODO Move to another type. It's not used in this package.
+	Expires time.Time
 
 	// JWTClaims is a data structure that can marshal to JSON as the JWT Claims. Make sure to embed AND populate
 	// jwt.RegisteredClaims if your use case supports standard claims. If you shadow the .Valid() method of the
@@ -49,6 +49,9 @@ type CreateArgs struct {
 
 // Valid confirms the CreateArgs are valid.
 func (p CreateArgs) Valid() error {
+	if p.Expires.IsZero() {
+		return fmt.Errorf("%w: Expires is required", ErrArgs)
+	}
 	if p.RedirectURL == nil {
 		return fmt.Errorf("%w: RedirectURL is required", ErrArgs)
 	}
@@ -60,7 +63,7 @@ type ReadResponse struct {
 	// CreateArgs are the parameters used to create the magic link.
 	CreateArgs CreateArgs
 	// Visited is the first time the magic link was visited. This is nil if the magic link has not been visited.
-	Visited *time.Time // TODO Move to a type outside this package. It isn't used here.
+	Visited *time.Time
 }
 
 // CreateResponse is the response after a magic link has been created.
