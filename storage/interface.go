@@ -29,6 +29,7 @@ type Storage interface {
 	ReadSA(ctx context.Context, u uuid.UUID) (model.ServiceAccount, error)
 	ReadSAFromAPIKey(ctx context.Context, apiKey uuid.UUID) (model.ServiceAccount, error)
 	ReadSigningKey(ctx context.Context, options ReadSigningKeyOptions) (jwk jwkset.JWK, err error)
+	ReadDefaultSigningKey(ctx context.Context) (jwk jwkset.JWK, err error)
 	UpdateDefaultSigningKey(ctx context.Context, keyID string) error
 
 	jwkset.Storage

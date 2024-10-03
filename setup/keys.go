@@ -24,25 +24,28 @@ func CreateKeysIfNotExists(ctx context.Context, store storage.Storage) (keys []j
 		return nil, false, fmt.Errorf("failed to read all JWKs: %w", err)
 	}
 	if len(allKeys) > 0 {
-		// defaultEdDSA := false
-		// haveEdDSA := false
-		// haveRS256 := false
+		haveEdDSA := false
+		haveRS256 := false
 		existingKeys := make([]jwkset.JWK, len(allKeys))
 		for i, jwk := range allKeys {
-			// 	switch jwk.Marshal().ALG {
-			// 	case jwkset.AlgEdDSA:
-			// 		haveEdDSA = true
-			// 		if jwk.Custom.SigningDefault { // TODO Check for signing default.
-			// 			defaultEdDSA = true
-			// 		}
-			// 	case jwkset.AlgRS256:
-			// 		haveRS256 = true
-			// 	}
+			switch jwk.Marshal().ALG {
+			case jwkset.AlgEdDSA:
+				haveEdDSA = true
+			case jwkset.AlgRS256:
+				haveRS256 = true
+			}
 			existingKeys[i] = jwk
 		}
-		// if !(defaultEdDSA && haveEdDSA && haveRS256) {
-		// 	return nil, false, fmt.Errorf("%w: expected to have an EdDSA key as the default and an RS256 key", ErrJWKSet)
-		// }
+		if !(haveEdDSA && haveRS256) {
+			return nil, false, fmt.Errorf("%w: expected to have an EdDSA and an RS256 key", ErrJWKSet)
+		}
+		jwk, err := store.ReadDefaultSigningKey(ctx)
+		if err != nil {
+			return nil, false, fmt.Errorf("failed to read default signing key: %w", err)
+		}
+		if jwk.Marshal().ALG != jwkset.AlgEdDSA {
+			return nil, false, fmt.Errorf("%w: expected the default signing key to be EdDSA", ErrJWKSet)
+		}
 		return existingKeys, true, nil
 	}
 
@@ -72,6 +75,11 @@ func CreateKeysIfNotExists(ctx context.Context, store storage.Storage) (keys []j
 		return nil, false, fmt.Errorf("failed to write EdDSA JWK: %w", err)
 	}
 
+	err = store.UpdateDefaultSigningKey(ctx, jwk.Marshal().KID)
+	if err != nil {
+		return nil, false, fmt.Errorf("failed to update default signing key: %w", err)
+	}
+
 	jwkOptions.Metadata.ALG = jwkset.AlgRS256
 	jwkOptions.Metadata.KID = uuid.New().String()
 	jwk, err = jwkset.NewJWKFromKey(rsaPrivate, jwkOptions)
@@ -82,8 +90,6 @@ func CreateKeysIfNotExists(ctx context.Context, store storage.Storage) (keys []j
 	if err != nil {
 		return nil, false, fmt.Errorf("failed to write RSA JWK: %w", err)
 	}
-
-	// TODO Signing default and update signing default.
 
 	return keys, false, nil
 }

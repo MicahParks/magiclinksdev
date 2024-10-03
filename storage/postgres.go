@@ -272,6 +272,31 @@ ORDER BY created DESC
 
 	return jwk, nil
 }
+func (p postgres) ReadDefaultSigningKey(ctx context.Context) (jwk jwkset.JWK, err error) {
+	tx := ctx.Value(ctxkey.Tx).(*Transaction).Tx
+
+	//language=sql
+	const query = `
+SELECT assets
+FROM mld.jwk
+WHERE signing_default = TRUE
+`
+	assets := make([]byte, 0)
+	err = tx.QueryRow(ctx, query).Scan(&assets)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return jwk, fmt.Errorf("failed to read default signing key from Postgres: %w: %w", err, ErrNotFound)
+		}
+		return jwk, fmt.Errorf("failed to read default signing key from Postgres: %w", err)
+	}
+
+	jwk, err = p.jwkUnmarshalAssets(assets)
+	if err != nil {
+		return jwk, fmt.Errorf("failed to unmarshal default signing key JWK assets from Postgres: %w", err)
+	}
+
+	return jwk, nil
+}
 func (p postgres) UpdateDefaultSigningKey(ctx context.Context, keyID string) error {
 	tx := ctx.Value(ctxkey.Tx).(*Transaction).Tx
 
@@ -443,7 +468,6 @@ FROM mld.jwk
 		if err != nil {
 			return nil, fmt.Errorf("failed to unmarshal JWK assets from Postgres: %w", err)
 		}
-		// jwk.Custom.SigningDefault = signingDefault // TODO Assign signing default to JWK.
 
 		keys = append(keys, jwk)
 	}

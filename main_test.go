@@ -16,6 +16,7 @@ import (
 	"github.com/MicahParks/jwkset"
 
 	mld "github.com/MicahParks/magiclinksdev"
+	"github.com/MicahParks/magiclinksdev/handle"
 	"github.com/MicahParks/magiclinksdev/mldtest"
 	"github.com/MicahParks/magiclinksdev/model"
 	"github.com/MicahParks/magiclinksdev/network"
@@ -26,6 +27,7 @@ import (
 
 var (
 	assets *testAssets
+	server *handle.Server
 	//go:embed config.test.json
 	testConfig []byte
 )
@@ -64,7 +66,7 @@ func TestMain(m *testing.M) {
 
 	truncateDatabase(ctx, conf.Storage, logger)
 
-	server, err := setup.CreateTestingProvider(ctx, conf, setup.ServerOptions{
+	server, err = setup.CreateTestingProvider(ctx, conf, setup.ServerOptions{
 		Logger: slog.New(slog.NewJSONHandler(io.Discard, nil)),
 	})
 	if err != nil {

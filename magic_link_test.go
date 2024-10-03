@@ -2,6 +2,8 @@ package magiclinksdev_test
 
 import (
 	"bytes"
+	"context"
+	"crypto/ed25519"
 	"crypto/rsa"
 	"encoding/json"
 	"fmt"
@@ -19,6 +21,7 @@ import (
 	"github.com/MicahParks/magiclinksdev/model"
 	"github.com/MicahParks/magiclinksdev/network"
 	"github.com/MicahParks/magiclinksdev/network/middleware"
+	"github.com/MicahParks/magiclinksdev/network/middleware/ctxkey"
 )
 
 type testClaims struct {
@@ -36,33 +39,43 @@ func TestMagicLink(t *testing.T) {
 	const customRedirectQueryKey = "customRedirectQueryKey"
 
 	for _, tc := range []testCase{
-		// { // TODO Add test back.
-		// 	name: "Default signing key",
-		// 	keyfunc: func(token *jwt.Token) (any, error) {
-		// 		for _, key := range assets.keys {
-		// 			if key.Custom.SigningDefault {
-		// 				switch k := key.Key().(type) {
-		// 				case ed25519.PrivateKey:
-		// 					return k.Public(), nil
-		// 				default:
-		// 					panic("unexpected default signing key")
-		// 				}
-		// 			}
-		// 		}
-		// 		panic("no default signing key")
-		// 	},
-		// 	reqBody: model.LinkCreateRequest{
-		// 		LinkArgs: model.LinkCreateArgs{
-		// 			JWTCreateArgs: model.JWTCreateArgs{
-		// 				JWTClaims:          map[string]string{"foo": "bar"},
-		// 				JWTLifespanSeconds: 0,
-		// 			},
-		// 			LinkLifespan:     0,
-		// 			RedirectQueryKey: customRedirectQueryKey,
-		// 			RedirectURL:      "https://github.com/MicahParks/magiclinksdev",
-		// 		},
-		// 	},
-		// },
+		{
+			name: "Default signing key",
+			keyfunc: func(token *jwt.Token) (any, error) {
+				ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+				defer cancel()
+				tx, err := server.Store.Begin(ctx)
+				if err != nil {
+					panic(fmt.Sprintf("failed to begin transaction: %v", err))
+				}
+				defer tx.Rollback(ctx)
+				ctx = context.WithValue(ctx, ctxkey.Tx, tx)
+				defaultKey, err := server.Store.ReadDefaultSigningKey(ctx)
+				if err != nil {
+					panic(fmt.Sprintf("failed to read default signing key: %v", err))
+				}
+				ed, ok := defaultKey.Key().(ed25519.PrivateKey)
+				if !ok {
+					panic("default signing key is not EdDSA private key")
+				}
+				err = tx.Commit(ctx)
+				if err != nil {
+					panic(fmt.Sprintf("failed to commit transaction: %v", err))
+				}
+				return ed.Public(), nil
+			},
+			reqBody: model.LinkCreateRequest{
+				LinkArgs: model.LinkCreateArgs{
+					JWTCreateArgs: model.JWTCreateArgs{
+						JWTClaims:          map[string]string{"foo": "bar"},
+						JWTLifespanSeconds: 0,
+					},
+					LinkLifespan:     0,
+					RedirectQueryKey: customRedirectQueryKey,
+					RedirectURL:      "https://github.com/MicahParks/magiclinksdev",
+				},
+			},
+		},
 		{
 			name: "RSA signing key",
 			keyfunc: func(token *jwt.Token) (any, error) {

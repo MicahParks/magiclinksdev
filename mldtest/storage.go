@@ -113,6 +113,9 @@ func (t *testStorage) ReadSAFromAPIKey(_ context.Context, apiKey uuid.UUID) (mod
 func (t *testStorage) ReadSigningKey(_ context.Context, _ storage.ReadSigningKeyOptions) (meta jwkset.JWK, err error) {
 	return t.jwk, nil
 }
+func (t *testStorage) ReadDefaultSigningKey(_ context.Context) (jwk jwkset.JWK, err error) {
+	return t.jwk, nil
+}
 func (t *testStorage) UpdateDefaultSigningKey(_ context.Context, _ string) error {
 	return nil
 }
