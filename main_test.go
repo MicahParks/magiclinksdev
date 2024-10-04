@@ -16,24 +16,25 @@ import (
 	"github.com/MicahParks/jwkset"
 
 	mld "github.com/MicahParks/magiclinksdev"
+	"github.com/MicahParks/magiclinksdev/handle"
 	"github.com/MicahParks/magiclinksdev/mldtest"
 	"github.com/MicahParks/magiclinksdev/model"
 	"github.com/MicahParks/magiclinksdev/network"
 	"github.com/MicahParks/magiclinksdev/network/middleware/ctxkey"
 	"github.com/MicahParks/magiclinksdev/setup"
 	"github.com/MicahParks/magiclinksdev/storage"
-	"github.com/MicahParks/magiclinksdev/storage/postgres"
 )
 
 var (
 	assets *testAssets
+	server *handle.Server
 	//go:embed config.test.json
 	testConfig []byte
 )
 
 type testAssets struct {
 	conf setup.TestConfig
-	keys []jwkset.KeyWithMeta[storage.JWKSetCustomKeyMeta]
+	keys []jwkset.JWK
 	mux  *http.ServeMux
 	sa   model.ServiceAccount
 }
@@ -65,7 +66,7 @@ func TestMain(m *testing.M) {
 
 	truncateDatabase(ctx, conf.Storage, logger)
 
-	server, err := setup.CreateTestingProvider(ctx, conf, setup.ServerOptions{
+	server, err = setup.CreateTestingProvider(ctx, conf, setup.ServerOptions{
 		Logger: slog.New(slog.NewJSONHandler(io.Discard, nil)),
 	})
 	if err != nil {
@@ -96,7 +97,7 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-func createKeyIfNotExists(ctx context.Context, store storage.Storage, logger *log.Logger) []jwkset.KeyWithMeta[storage.JWKSetCustomKeyMeta] {
+func createKeyIfNotExists(ctx context.Context, store storage.Storage, logger *log.Logger) []jwkset.JWK {
 	tx, err := store.Begin(ctx)
 	if err != nil {
 		logger.Fatalf(mld.LogFmt, "Failed to begin transaction.", err)
@@ -122,8 +123,8 @@ func createKeyIfNotExists(ctx context.Context, store storage.Storage, logger *lo
 	return keys
 }
 
-func truncateDatabase(ctx context.Context, config postgres.Config, logger *log.Logger) {
-	store, _, err := postgres.NewWithSetup(ctx, config, slog.New(slog.NewJSONHandler(io.Discard, nil)))
+func truncateDatabase(ctx context.Context, config storage.Config, logger *log.Logger) {
+	store, _, err := storage.NewWithSetup(ctx, config, slog.New(slog.NewJSONHandler(io.Discard, nil)))
 	if err != nil {
 		logger.Fatalf(mld.LogFmt, "Failed to create storage.", err)
 	}

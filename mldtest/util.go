@@ -2,7 +2,9 @@ package mldtest
 
 import (
 	"errors"
+	"time"
 
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 )
 
@@ -17,6 +19,8 @@ const (
 	ServiceName = "Example service"
 	// LogoClickURL is the test service URL for the service.
 	LogoClickURL = "http://example.com"
+	// LinksExpireAfter is the amount of time links expire after for tests.
+	LinksExpireAfter = 24 * 30 * time.Hour
 )
 
 var (
@@ -37,12 +41,26 @@ type TestClaims struct {
 	Foo string `json:"foo"`
 }
 
+func (t TestClaims) GetExpirationTime() (*jwt.NumericDate, error) {
+	return nil, nil
+}
+func (t TestClaims) GetIssuedAt() (*jwt.NumericDate, error) {
+	return nil, nil
+}
+func (t TestClaims) GetNotBefore() (*jwt.NumericDate, error) {
+	return nil, nil
+}
+func (t TestClaims) GetIssuer() (string, error) {
+	return "", nil
+}
+func (t TestClaims) GetSubject() (string, error) {
+	return "", nil
+}
+func (t TestClaims) GetAudience() (jwt.ClaimStrings, error) {
+	return nil, nil
+}
+
 // Equal returns true if the two claims are equal.
 func (t TestClaims) Equal(c TestClaims) bool {
 	return t.Foo == c.Foo
-}
-
-// Valid implements the jwt.Claims interface.
-func (t TestClaims) Valid() error {
-	return nil
 }

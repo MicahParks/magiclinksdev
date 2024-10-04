@@ -11,7 +11,7 @@ import (
 	mld "github.com/MicahParks/magiclinksdev"
 	"github.com/MicahParks/magiclinksdev/network/middleware/ctxkey"
 	"github.com/MicahParks/magiclinksdev/setup"
-	"github.com/MicahParks/magiclinksdev/storage/postgres"
+	"github.com/MicahParks/magiclinksdev/storage"
 )
 
 func main() {
@@ -28,7 +28,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	store, _, err := postgres.NewWithSetup(ctx, conf.Storage, logger.With("postgresSetup", true))
+	store, _, err := storage.NewWithSetup(ctx, conf.Storage, logger.With("postgresSetup", true))
 	if err != nil {
 		logger.ErrorContext(ctx, "Failed to create storage.",
 			mld.LogErr, err,

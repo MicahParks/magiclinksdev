@@ -16,8 +16,8 @@ import (
 
 	jt "github.com/MicahParks/jsontype"
 	"github.com/MicahParks/jwkset"
-	"github.com/MicahParks/keyfunc"
-	"github.com/golang-jwt/jwt/v4"
+	"github.com/MicahParks/keyfunc/v3"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 
 	mld "github.com/MicahParks/magiclinksdev"
@@ -77,12 +77,6 @@ func TestNew(t *testing.T) {
 			baseURL:         "",
 			disabledKeyfunc: true,
 			errIs:           ErrClientConfig,
-		},
-		{
-			name:        "Invalid JWK Set URL",
-			baseURL:     "http://localhost:999999999",
-			keyfuncOpts: &keyfunc.Options{},
-			errAs:       &url.Error{},
 		},
 	}
 
@@ -314,7 +308,7 @@ func jwtCreateHelper(ctx context.Context, t *testing.T, c Client) string {
 	}
 
 	claims := mldtest.TestClaims{}
-	token, err := jwt.ParseWithClaims(resp.JWTCreateResults.JWT, &claims, c.jwks.Keyfunc)
+	token, err := jwt.ParseWithClaims(resp.JWTCreateResults.JWT, &claims, c.keyf.Keyfunc)
 	if err != nil {
 		t.Fatalf("Failed to parse JWT: %v.", err)
 	}

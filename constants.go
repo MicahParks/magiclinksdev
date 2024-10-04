@@ -22,3 +22,7 @@ const (
 	// ResponseUnauthorized is the response for unauthorized requests.
 	ResponseUnauthorized = "Unauthorized."
 )
+
+func Ptr[T any](v T) *T {
+	return &v
+}

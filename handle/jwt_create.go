@@ -8,11 +8,12 @@ import (
 	"time"
 
 	"github.com/MicahParks/jwkset"
-	"github.com/golang-jwt/jwt/v4"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/tidwall/gjson"
 	"github.com/tidwall/sjson"
 
+	"github.com/MicahParks/magiclinksdev"
 	"github.com/MicahParks/magiclinksdev/magiclink"
 	"github.com/MicahParks/magiclinksdev/model"
 	"github.com/MicahParks/magiclinksdev/network/middleware/ctxkey"
@@ -38,21 +39,21 @@ func (s *Server) HandleJWTCreate(ctx context.Context, req model.ValidJWTCreateRe
 	options := storage.ReadSigningKeyOptions{
 		JWTAlg: jwtCreateArgs.JWTAlg,
 	}
-	meta, err := s.Store.ReadSigningKey(ctx, options)
+	jwk, err := s.Store.ReadSigningKey(ctx, options)
 	if err != nil {
 		if errors.Is(err, storage.ErrNotFound) {
 			return model.JWTCreateResponse{}, fmt.Errorf("could not fing signing key with specified JWT alg: %w", ErrJWTAlgNotFound)
 		}
 		return model.JWTCreateResponse{}, fmt.Errorf("failed to get JWT signing key: %w", err)
 	}
-	method := magiclink.BestSigningMethod(meta.Key)
+	method := magiclink.BestSigningMethod(jwk.Key())
 
-	bytesClaims := SigningBytesClaims{
+	bytesClaims := magiclinksdev.SigningBytesClaims{
 		Claims: edited,
 	}
 	token := jwt.NewWithClaims(method, bytesClaims)
-	token.Header[jwkset.HeaderKID] = meta.KeyID
-	signed, err := token.SignedString(meta.Key)
+	token.Header[jwkset.HeaderKID] = jwk.Marshal().KID
+	signed, err := token.SignedString(jwk.Key())
 	if err != nil {
 		return model.JWTCreateResponse{}, fmt.Errorf("%w: %w", magiclink.ErrJWTSign, err)
 	}
@@ -67,25 +68,6 @@ func (s *Server) HandleJWTCreate(ctx context.Context, req model.ValidJWTCreateRe
 	}
 
 	return response, nil
-}
-
-// SigningBytesClaims is a JWT claims type that allows for signing claims represented in bytes.
-type SigningBytesClaims struct {
-	Claims json.RawMessage
-}
-
-// Valid helps implement the jwt.Claims interface.
-func (s SigningBytesClaims) Valid() error {
-	valid := json.Valid(s.Claims)
-	if !valid {
-		return fmt.Errorf("%w: invalid JSON for JWT claims", model.ErrInvalidModel)
-	}
-	return nil
-}
-
-// MarshalJSON helps implement the json.Marshaler interface.
-func (s SigningBytesClaims) MarshalJSON() ([]byte, error) {
-	return s.Claims, nil
 }
 
 func (s *Server) addRegisteredClaims(ctx context.Context, args model.ValidJWTCreateArgs) (json.RawMessage, error) {
@@ -122,13 +104,13 @@ func (s *Server) addRegisteredClaims(ctx context.Context, args model.ValidJWTCre
 
 	// https://tools.ietf.org/html/rfc7519#section-4.1
 	rfc5119 := []string{
-		"iss",
-		"sub",
-		"aud",
-		"exp",
-		"nbf",
-		"iat",
-		"jti",
+		magiclinksdev.AttrIss,
+		magiclinksdev.AttrSub,
+		magiclinksdev.AttrAud,
+		magiclinksdev.AttrExp,
+		magiclinksdev.AttrNbf,
+		magiclinksdev.AttrIat,
+		magiclinksdev.AttrJti,
 	}
 
 	edited := make(json.RawMessage, len(args.JWTClaims))
@@ -154,22 +136,22 @@ func (s *Server) addRegisteredClaims(ctx context.Context, args model.ValidJWTCre
 	return edited, nil
 }
 
-func (s *Server) createLinkArgs(ctx context.Context, args model.ValidLinkCreateArgs) (magiclink.CreateArgs[storage.MagicLinkCustomCreateArgs], error) {
-	var createArgs magiclink.CreateArgs[storage.MagicLinkCustomCreateArgs]
+func (s *Server) createLinkArgs(ctx context.Context, args model.ValidLinkCreateArgs) (magiclink.CreateArgs, error) {
+	var createArgs magiclink.CreateArgs
 
 	edited, err := s.addRegisteredClaims(ctx, args.JWTCreateArgs)
 	if err != nil {
 		return createArgs, fmt.Errorf("failed to add registered claims to JWT claims: %w", err)
 	}
 
-	claims := SigningBytesClaims{
+	claims := magiclinksdev.SigningBytesClaims{
 		Claims: edited,
 	}
 
 	options := storage.ReadSigningKeyOptions{
 		JWTAlg: args.JWTCreateArgs.JWTAlg,
 	}
-	meta, err := s.Store.ReadSigningKey(ctx, options)
+	jwk, err := s.Store.ReadSigningKey(ctx, options)
 	if err != nil {
 		if errors.Is(err, storage.ErrNotFound) {
 			return createArgs, fmt.Errorf("could not fing signing key with specified JWT alg: %w", ErrJWTAlgNotFound)
@@ -177,12 +159,11 @@ func (s *Server) createLinkArgs(ctx context.Context, args model.ValidLinkCreateA
 		return createArgs, fmt.Errorf("failed to get JWT signing key: %w", err)
 	}
 
-	createArgs = magiclink.CreateArgs[storage.MagicLinkCustomCreateArgs]{
-		Custom: storage.MagicLinkCustomCreateArgs{
-			Expires: time.Now().Add(args.LinkLifespan),
-		},
+	kID := jwk.Marshal().KID
+	createArgs = magiclink.CreateArgs{
+		Expires:          time.Now().Add(args.LinkLifespan),
 		JWTClaims:        claims,
-		JWTKeyID:         &meta.KeyID,
+		JWTKeyID:         &kID,
 		RedirectQueryKey: args.RedirectQueryKey,
 		RedirectURL:      args.RedirectURL,
 	}

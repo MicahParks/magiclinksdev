@@ -2,6 +2,7 @@ package magiclinksdev_test
 
 import (
 	"bytes"
+	"context"
 	"crypto/ed25519"
 	"crypto/rsa"
 	"encoding/json"
@@ -13,13 +14,14 @@ import (
 	"time"
 
 	"github.com/MicahParks/jwkset"
-	"github.com/golang-jwt/jwt/v4"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 
 	mld "github.com/MicahParks/magiclinksdev"
 	"github.com/MicahParks/magiclinksdev/model"
 	"github.com/MicahParks/magiclinksdev/network"
 	"github.com/MicahParks/magiclinksdev/network/middleware"
+	"github.com/MicahParks/magiclinksdev/network/middleware/ctxkey"
 )
 
 type testClaims struct {
@@ -39,18 +41,28 @@ func TestMagicLink(t *testing.T) {
 	for _, tc := range []testCase{
 		{
 			name: "Default signing key",
-			keyfunc: func(token *jwt.Token) (interface{}, error) {
-				for _, key := range assets.keys {
-					if key.Custom.SigningDefault {
-						switch k := key.Key.(type) {
-						case ed25519.PrivateKey:
-							return k.Public(), nil
-						default:
-							panic("unexpected default signing key")
-						}
-					}
+			keyfunc: func(token *jwt.Token) (any, error) {
+				ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+				defer cancel()
+				tx, err := server.Store.Begin(ctx)
+				if err != nil {
+					panic(fmt.Sprintf("failed to begin transaction: %v", err))
 				}
-				panic("no default signing key")
+				defer tx.Rollback(ctx)
+				ctx = context.WithValue(ctx, ctxkey.Tx, tx)
+				defaultKey, err := server.Store.ReadDefaultSigningKey(ctx)
+				if err != nil {
+					panic(fmt.Sprintf("failed to read default signing key: %v", err))
+				}
+				ed, ok := defaultKey.Key().(ed25519.PrivateKey)
+				if !ok {
+					panic("default signing key is not EdDSA private key")
+				}
+				err = tx.Commit(ctx)
+				if err != nil {
+					panic(fmt.Sprintf("failed to commit transaction: %v", err))
+				}
+				return ed.Public(), nil
 			},
 			reqBody: model.LinkCreateRequest{
 				LinkArgs: model.LinkCreateArgs{
@@ -66,12 +78,12 @@ func TestMagicLink(t *testing.T) {
 		},
 		{
 			name: "RSA signing key",
-			keyfunc: func(token *jwt.Token) (interface{}, error) {
+			keyfunc: func(token *jwt.Token) (any, error) {
 				if token.Header["alg"] != jwkset.AlgRS256.String() {
 					panic(fmt.Sprintf("unexpected alg: %s", token.Header["alg"]))
 				}
 				for _, key := range assets.keys {
-					k, ok := key.Key.(*rsa.PrivateKey)
+					k, ok := key.Key().(*rsa.PrivateKey)
 					if ok {
 						return k.Public(), nil
 					}

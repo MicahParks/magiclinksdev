@@ -16,18 +16,18 @@ import (
 // DefaultJWKSCacheRefresh is the default time to wait before refreshing the JWKS cache.
 const DefaultJWKSCacheRefresh = 5 * time.Minute
 
-type jwksCache[CustomKeyMeta any] struct {
+type jwksCache struct {
 	cached      json.RawMessage
-	jwks        jwkset.JWKSet[CustomKeyMeta]
+	jwks        jwkset.Storage
 	lastRefresh time.Time
 	refresh     time.Duration
 	mux         sync.RWMutex
 }
 
-func newJWKSCache[CustomKeyMeta any](ctx context.Context, config JWKSArgs[CustomKeyMeta]) (*jwksCache[CustomKeyMeta], error) {
+func newJWKSCache(ctx context.Context, config JWKSArgs) (*jwksCache, error) {
 	store := config.Store
 	if store == nil {
-		store = jwkset.NewMemoryStorage[CustomKeyMeta]()
+		store = jwkset.NewMemoryStorage()
 		_, private, err := ed25519.GenerateKey(rand.Reader)
 		if err != nil {
 			return nil, fmt.Errorf("failed to generate ed25519 key for empty JWKS: %w", err)
@@ -36,18 +36,26 @@ func newJWKSCache[CustomKeyMeta any](ctx context.Context, config JWKSArgs[Custom
 		if err != nil {
 			return nil, fmt.Errorf("failed to generate UUID for generated RSA key: %w", err)
 		}
-		meta := jwkset.NewKey[CustomKeyMeta](private, u.String())
-		err = store.WriteKey(ctx, meta)
+		options := jwkset.JWKOptions{
+			Marshal: jwkset.JWKMarshalOptions{
+				Private: true,
+			},
+			Metadata: jwkset.JWKMetadataOptions{
+				ALG: jwkset.AlgEdDSA,
+				KID: u.String(),
+			},
+		}
+		jwk, err := jwkset.NewJWKFromKey(private, options)
 		if err != nil {
-			return nil, fmt.Errorf("failed to store generated RSA key: %w", err)
+			return nil, fmt.Errorf("failed to create JWK from generated EdDSA key: %w", err)
+		}
+		err = store.KeyWrite(ctx, jwk)
+		if err != nil {
+			return nil, fmt.Errorf("failed to write generated EdDSA key to storage: %w", err)
 		}
 	}
 
-	jwkSet := jwkset.JWKSet[CustomKeyMeta]{
-		Store: store,
-	}
-
-	initialCache, err := jwkSet.JSONPublic(ctx)
+	initialCache, err := store.JSONPublic(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get initial JWK Set as JSON: %w", err)
 	}
@@ -57,9 +65,9 @@ func newJWKSCache[CustomKeyMeta any](ctx context.Context, config JWKSArgs[Custom
 		cacheRefresh = DefaultJWKSCacheRefresh
 	}
 
-	jCache := &jwksCache[CustomKeyMeta]{
+	jCache := &jwksCache{
 		cached:      initialCache,
-		jwks:        jwkSet,
+		jwks:        store,
 		lastRefresh: time.Now(),
 		refresh:     cacheRefresh,
 	}
@@ -67,7 +75,7 @@ func newJWKSCache[CustomKeyMeta any](ctx context.Context, config JWKSArgs[Custom
 	return jCache, nil
 }
 
-func (j *jwksCache[CustomKeyMeta]) get(ctx context.Context) (json.RawMessage, error) {
+func (j *jwksCache) get(ctx context.Context) (json.RawMessage, error) {
 	j.mux.RLock()
 	since := time.Since(j.lastRefresh)
 	if since <= j.refresh {

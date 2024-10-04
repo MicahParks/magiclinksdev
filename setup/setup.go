@@ -25,14 +25,13 @@ import (
 	"github.com/MicahParks/magiclinksdev/handle"
 	"github.com/MicahParks/magiclinksdev/network/middleware/ctxkey"
 	"github.com/MicahParks/magiclinksdev/storage"
-	"github.com/MicahParks/magiclinksdev/storage/postgres"
 )
 
 // NopConfig is the configuration for a no-operation email provider magiclinksdev server.
 type NopConfig struct {
-	Server      config.Config   `json:"server"`
-	Storage     postgres.Config `json:"storage"`
-	RateLimiter rlimit.Config   `json:"rateLimiter"`
+	Server      config.Config  `json:"server"`
+	Storage     storage.Config `json:"storage"`
+	RateLimiter rlimit.Config  `json:"rateLimiter"`
 }
 
 // DefaultsAndValidate implements the jsontype.Config interface.
@@ -59,7 +58,7 @@ type MultiConfig struct {
 	SES         ses.Config      `json:"ses"`
 	SendGrid    sendgrid.Config `json:"sendgrid"`
 	Server      config.Config   `json:"server"`
-	Storage     postgres.Config `json:"storage"`
+	Storage     storage.Config  `json:"storage"`
 	RateLimiter rlimit.Config   `json:"rateLimiter"`
 }
 
@@ -92,10 +91,10 @@ func (m MultiConfig) DefaultsAndValidate() (MultiConfig, error) {
 
 // SESConfig is the configuration for a single email provider magiclinksdev server.
 type SESConfig struct {
-	SES         ses.Config      `json:"ses"`
-	Server      config.Config   `json:"server"`
-	Storage     postgres.Config `json:"storage"`
-	RateLimiter rlimit.Config   `json:"rateLimiter"`
+	SES         ses.Config     `json:"ses"`
+	Server      config.Config  `json:"server"`
+	Storage     storage.Config `json:"storage"`
+	RateLimiter rlimit.Config  `json:"rateLimiter"`
 }
 
 // DefaultsAndValidate implements the jsontype.Config interface.
@@ -125,7 +124,7 @@ func (s SESConfig) DefaultsAndValidate() (SESConfig, error) {
 type SendGridConfig struct {
 	SendGrid    sendgrid.Config `json:"sendgrid"`
 	Server      config.Config   `json:"server"`
-	Storage     postgres.Config `json:"storage"`
+	Storage     storage.Config  `json:"storage"`
 	RateLimiter rlimit.Config   `json:"rateLimiter"`
 }
 
@@ -154,9 +153,9 @@ func (m SendGridConfig) DefaultsAndValidate() (SendGridConfig, error) {
 
 // TestConfig is the configuration for a test magiclinksdev server.
 type TestConfig struct {
-	Server      config.Config   `json:"server"`
-	Storage     postgres.Config `json:"storage"`
-	RateLimiter rlimit.Config   `json:"rateLimiter"`
+	Server      config.Config  `json:"server"`
+	Storage     storage.Config `json:"storage"`
+	RateLimiter rlimit.Config  `json:"rateLimiter"`
 }
 
 // DefaultsAndValidate implements the jsontype.Config interface.
@@ -210,7 +209,7 @@ func (o ServerOptions) ApplyDefaults() ServerOptions {
 // CreateNopProviderServer creates a new magiclinksdev server with a no-operation email provider.
 func CreateNopProviderServer(ctx context.Context, conf NopConfig, options ServerOptions) (*handle.Server, error) {
 	rateLimiter := rlimit.NewMemory(conf.RateLimiter)
-	store, _, err := postgres.NewWithSetup(ctx, conf.Storage, options.Logger.With("postgresSetup", true))
+	store, _, err := storage.NewWithSetup(ctx, conf.Storage, options.Logger.With("postgresSetup", true))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create storage: %w", err)
 	}
@@ -241,7 +240,7 @@ func CreateMultiProviderServer(ctx context.Context, conf MultiConfig, options Se
 		return nil, fmt.Errorf("failed to create email provider: %w", err)
 	}
 	rateLimiter := rlimit.NewMemory(conf.RateLimiter)
-	store, _, err := postgres.NewWithSetup(ctx, conf.Storage, options.Logger.With("postgresSetup", true))
+	store, _, err := storage.NewWithSetup(ctx, conf.Storage, options.Logger.With("postgresSetup", true))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create storage: %w", err)
 	}
@@ -260,7 +259,7 @@ func CreateSESProvider(ctx context.Context, conf SESConfig, options ServerOption
 		return nil, fmt.Errorf("failed to create email provider: %w", err)
 	}
 	rateLimiter := rlimit.NewMemory(conf.RateLimiter)
-	store, _, err := postgres.NewWithSetup(ctx, conf.Storage, options.Logger.With("postgresSetup", true))
+	store, _, err := storage.NewWithSetup(ctx, conf.Storage, options.Logger.With("postgresSetup", true))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create storage: %w", err)
 	}
@@ -279,7 +278,7 @@ func CreateSendGridProvider(ctx context.Context, conf SendGridConfig, options Se
 		return nil, fmt.Errorf("failed to create email provider: %w", err)
 	}
 	rateLimiter := rlimit.NewMemory(conf.RateLimiter)
-	store, _, err := postgres.NewWithSetup(ctx, conf.Storage, options.Logger.With("postgresSetup", true))
+	store, _, err := storage.NewWithSetup(ctx, conf.Storage, options.Logger.With("postgresSetup", true))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create storage: %w", err)
 	}
@@ -295,7 +294,7 @@ func CreateSendGridProvider(ctx context.Context, conf SendGridConfig, options Se
 func CreateTestingProvider(ctx context.Context, conf TestConfig, options ServerOptions) (*handle.Server, error) {
 	provider := mldtest.NopProvider{}
 	rateLimiter := rlimit.NewMemory(conf.RateLimiter)
-	store, _, err := postgres.NewWithSetup(ctx, conf.Storage, options.Logger.With("postgresSetup", true))
+	store, _, err := storage.NewWithSetup(ctx, conf.Storage, options.Logger.With("postgresSetup", true))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create storage: %w", err)
 	}
@@ -317,15 +316,15 @@ func CreateServer(ctx context.Context, conf config.Config, options ServerOptions
 		return nil, fmt.Errorf("failed to parse magic link service URL: %w", err)
 	}
 
-	var customRedirector magiclink.Redirector[storage.MagicLinkCustomCreateArgs, storage.MagicLinkCustomReadResponse, storage.JWKSetCustomKeyMeta]
+	var customRedirector magiclink.Redirector
 	switch conf.PreventRobots.Method {
 	case config.PreventRobotsReCAPTCHAV3:
-		customRedirector = magiclink.NewReCAPTCHAV3Redirector[storage.MagicLinkCustomCreateArgs, storage.MagicLinkCustomReadResponse, storage.JWKSetCustomKeyMeta](conf.PreventRobots.ReCAPTCHAV3)
+		customRedirector = magiclink.NewReCAPTCHAV3Redirector(conf.PreventRobots.ReCAPTCHAV3)
 	}
 
-	magicLinkConfig := magiclink.Config[storage.MagicLinkCustomCreateArgs, storage.MagicLinkCustomReadResponse, storage.JWKSetCustomKeyMeta]{
+	magicLinkConfig := magiclink.Config{
 		ErrorHandler: MagicLinkErrorHandler(options.MagicLinkErrorHandler),
-		JWKS: magiclink.JWKSArgs[storage.JWKSetCustomKeyMeta]{
+		JWKS: magiclink.JWKSArgs{
 			CacheRefresh: time.Second,
 			Store:        interfaces.Store,
 		},

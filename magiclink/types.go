@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/MicahParks/jwkset"
-	"github.com/golang-jwt/jwt/v4"
+	"github.com/golang-jwt/jwt/v5"
 )
 
 var (
@@ -17,9 +17,9 @@ var (
 )
 
 // CreateArgs are the arguments for creating a magic link.
-type CreateArgs[CustomCreateArgs any] struct {
-	// Custom is additional data or metadata for your use case.
-	Custom CustomCreateArgs
+type CreateArgs struct {
+	// Expires is the time the magic link will expire. Use of this field is REQUIRED for all use cases.
+	Expires time.Time
 
 	// JWTClaims is a data structure that can marshal to JSON as the JWT Claims. Make sure to embed AND populate
 	// jwt.RegisteredClaims if your use case supports standard claims. If you shadow the .Valid() method of the
@@ -48,7 +48,10 @@ type CreateArgs[CustomCreateArgs any] struct {
 }
 
 // Valid confirms the CreateArgs are valid.
-func (p CreateArgs[CustomCreateArgs]) Valid() error {
+func (p CreateArgs) Valid() error {
+	if p.Expires.IsZero() {
+		return fmt.Errorf("%w: Expires is required", ErrArgs)
+	}
 	if p.RedirectURL == nil {
 		return fmt.Errorf("%w: RedirectURL is required", ErrArgs)
 	}
@@ -56,11 +59,11 @@ func (p CreateArgs[CustomCreateArgs]) Valid() error {
 }
 
 // ReadResponse is the response after a magic link has been read.
-type ReadResponse[CustomCreateArgs, CustomReadResponse any] struct {
-	// Custom is additional data or metadata for your use case.
-	Custom CustomReadResponse
+type ReadResponse struct {
 	// CreateArgs are the parameters used to create the magic link.
-	CreateArgs CreateArgs[CustomCreateArgs]
+	CreateArgs CreateArgs
+	// Visited is the first time the magic link was visited. This is nil if the magic link has not been visited.
+	Visited *time.Time
 }
 
 // CreateResponse is the response after a magic link has been created.
@@ -113,17 +116,17 @@ func (f ErrorHandlerFunc) Handle(args ErrorHandlerArgs) {
 }
 
 // Config contains the required assets to create a MagicLink service.
-type Config[CustomCreateArgs, CustomReadResponse, CustomKeyMeta any] struct {
+type Config struct {
 	ErrorHandler     ErrorHandler
-	JWKS             JWKSArgs[CustomKeyMeta]
-	CustomRedirector Redirector[CustomCreateArgs, CustomReadResponse, CustomKeyMeta]
+	JWKS             JWKSArgs
+	CustomRedirector Redirector
 	ServiceURL       *url.URL
 	SecretQueryKey   string
-	Store            Storage[CustomCreateArgs, CustomReadResponse, CustomKeyMeta]
+	Store            Storage
 }
 
 // Valid confirms the Config is valid.
-func (c Config[CustomCreateArgs, CustomReadResponse, CustomKeyMeta]) Valid() error {
+func (c Config) Valid() error {
 	if c.ServiceURL == nil {
 		return fmt.Errorf("%w: include a service URL, this is used to build magic links", ErrArgs)
 	}
@@ -131,7 +134,7 @@ func (c Config[CustomCreateArgs, CustomReadResponse, CustomKeyMeta]) Valid() err
 }
 
 // JWKSArgs are the parameters for the MagicLink service's JWK Set.
-type JWKSArgs[CustomKeyMeta any] struct {
+type JWKSArgs struct {
 	CacheRefresh time.Duration
-	Store        jwkset.Storage[CustomKeyMeta]
+	Store        jwkset.Storage
 }

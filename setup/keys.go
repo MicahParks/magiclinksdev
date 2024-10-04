@@ -18,32 +18,35 @@ import (
 var ErrJWKSet = errors.New("JWK Set did not align with setup expectations")
 
 // CreateKeysIfNotExists creates the keys if they do not exist.
-func CreateKeysIfNotExists(ctx context.Context, store storage.Storage) (keys []jwkset.KeyWithMeta[storage.JWKSetCustomKeyMeta], existed bool, err error) {
-	snapshot, err := store.SnapshotKeys(ctx)
+func CreateKeysIfNotExists(ctx context.Context, store storage.Storage) (keys []jwkset.JWK, existed bool, err error) {
+	allKeys, err := store.KeyReadAll(ctx)
 	if err != nil {
-		return nil, false, fmt.Errorf("failed to get snapshot of keys: %w", err)
+		return nil, false, fmt.Errorf("failed to read all JWKs: %w", err)
 	}
-	if len(snapshot) > 0 {
-		defaultEdDSA := false
+	if len(allKeys) > 0 {
 		haveEdDSA := false
 		haveRS256 := false
-		createdKeys := make([]jwkset.KeyWithMeta[storage.JWKSetCustomKeyMeta], len(snapshot))
-		for i, meta := range snapshot {
-			switch meta.ALG {
+		existingKeys := make([]jwkset.JWK, len(allKeys))
+		for i, jwk := range allKeys {
+			switch jwk.Marshal().ALG {
 			case jwkset.AlgEdDSA:
 				haveEdDSA = true
-				if meta.Custom.SigningDefault {
-					defaultEdDSA = true
-				}
 			case jwkset.AlgRS256:
 				haveRS256 = true
 			}
-			createdKeys[i] = meta
+			existingKeys[i] = jwk
 		}
-		if !(defaultEdDSA && haveEdDSA && haveRS256) {
-			return nil, false, fmt.Errorf("%w: expected to have an EdDSA key as the default and an RS256 key", ErrJWKSet)
+		if !(haveEdDSA && haveRS256) {
+			return nil, false, fmt.Errorf("%w: expected to have an EdDSA and an RS256 key", ErrJWKSet)
 		}
-		return createdKeys, true, nil
+		jwk, err := store.ReadDefaultSigningKey(ctx)
+		if err != nil {
+			return nil, false, fmt.Errorf("failed to read default signing key: %w", err)
+		}
+		if jwk.Marshal().ALG != jwkset.AlgEdDSA {
+			return nil, false, fmt.Errorf("%w: expected the default signing key to be EdDSA", ErrJWKSet)
+		}
+		return existingKeys, true, nil
 	}
 
 	_, edPrivate, err := ed25519.GenerateKey(rand.Reader)
@@ -56,36 +59,36 @@ func CreateKeysIfNotExists(ctx context.Context, store storage.Storage) (keys []j
 		return nil, false, fmt.Errorf("failed to generate RSA key: %w", err)
 	}
 
-	keys = []jwkset.KeyWithMeta[storage.JWKSetCustomKeyMeta]{
-		{
-			ALG: jwkset.AlgEdDSA,
-			Custom: storage.JWKSetCustomKeyMeta{
-				SigningDefault: true,
-			},
-			Key: edPrivate,
-		},
-		{
-			ALG: jwkset.AlgRS256,
-			Key: rsaPrivate,
+	jwkOptions := jwkset.JWKOptions{
+		Marshal: jwkset.JWKMarshalOptions{
+			Private: true,
 		},
 	}
-	for i, meta := range keys {
-		u, err := uuid.NewRandom()
-		if err != nil {
-			return nil, false, fmt.Errorf("failed to generate UUID: %w", err)
-		}
-		meta.KeyID = u.String()
-		err = store.WriteKey(ctx, meta)
-		if err != nil {
-			return nil, false, fmt.Errorf("failed to write key to storage: %w", err)
-		}
-		if meta.Custom.SigningDefault {
-			err = store.UpdateDefaultSigningKey(ctx, meta.KeyID)
-			if err != nil {
-				return nil, false, fmt.Errorf("failed to set signing default: %w", err)
-			}
-		}
-		keys[i] = meta
+	jwkOptions.Metadata.ALG = jwkset.AlgEdDSA
+	jwkOptions.Metadata.KID = uuid.New().String()
+	jwk, err := jwkset.NewJWKFromKey(edPrivate, jwkOptions)
+	if err != nil {
+		return nil, false, fmt.Errorf("failed to create EdDSA JWK: %w", err)
+	}
+	err = store.KeyWrite(ctx, jwk)
+	if err != nil {
+		return nil, false, fmt.Errorf("failed to write EdDSA JWK: %w", err)
+	}
+
+	err = store.UpdateDefaultSigningKey(ctx, jwk.Marshal().KID)
+	if err != nil {
+		return nil, false, fmt.Errorf("failed to update default signing key: %w", err)
+	}
+
+	jwkOptions.Metadata.ALG = jwkset.AlgRS256
+	jwkOptions.Metadata.KID = uuid.New().String()
+	jwk, err = jwkset.NewJWKFromKey(rsaPrivate, jwkOptions)
+	if err != nil {
+		return nil, false, fmt.Errorf("failed to create RSA JWK: %w", err)
+	}
+	err = store.KeyWrite(ctx, jwk)
+	if err != nil {
+		return nil, false, fmt.Errorf("failed to write RSA JWK: %w", err)
 	}
 
 	return keys, false, nil

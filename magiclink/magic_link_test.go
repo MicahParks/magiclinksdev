@@ -2,9 +2,7 @@ package magiclink_test
 
 import (
 	"context"
-	"crypto/ecdsa"
-	"crypto/ed25519"
-	"crypto/rsa"
+	"crypto"
 	"errors"
 	"io"
 	"net/http"
@@ -14,9 +12,10 @@ import (
 	"time"
 
 	"github.com/MicahParks/jwkset"
-	"github.com/golang-jwt/jwt/v4"
+	"github.com/golang-jwt/jwt/v5"
 
 	"github.com/MicahParks/magiclinksdev/magiclink"
+	"github.com/MicahParks/magiclinksdev/mldtest"
 )
 
 const (
@@ -38,12 +37,12 @@ type jwtClaims struct {
 	jwt.RegisteredClaims
 }
 
-type setupArgs[CustomKeyMeta any] struct {
+type setupArgs struct {
 	errorHandler     magiclink.ErrorHandler
 	jwksGet          bool
 	jwksGetDelay     time.Duration
 	jwksCacheRefresh time.Duration
-	jwksStore        jwkset.Storage[CustomKeyMeta]
+	jwksStore        jwkset.Storage
 	secretQueryKey   string
 }
 
@@ -53,9 +52,9 @@ type createArg struct {
 	RedirectQueryKey string
 }
 
-type testCase[CustomKeyMeta any] struct {
+type testCase struct {
 	createArgs []createArg
-	setupParam setupArgs[CustomKeyMeta]
+	setupParam setupArgs
 	name       string
 }
 
@@ -70,15 +69,15 @@ func TestTable(t *testing.T) {
 	}))
 	defer appServer.Close()
 
-	for _, tc := range makeCases[any](t) {
+	for _, tc := range makeCases(t) {
 		t.Run(tc.name, func(t *testing.T) {
 			testCreateCases(ctx, t, appServer, tc.createArgs, redirectChan, tc.setupParam)
 		})
 	}
 }
 
-func testCreateCases[CustomKeyMeta any](ctx context.Context, t *testing.T, appServer *httptest.Server, createArgs []createArg, redirectChan <-chan url.Values, sParam setupArgs[CustomKeyMeta]) {
-	m, magicServer := magiclinkSetup[any, any](ctx, t, sParam)
+func testCreateCases(ctx context.Context, t *testing.T, appServer *httptest.Server, createArgs []createArg, redirectChan <-chan url.Values, sParam setupArgs) {
+	m, magicServer := magiclinkSetup(ctx, t, sParam)
 	defer magicServer.Close()
 
 	redirectURL, err := url.Parse(appServer.URL)
@@ -113,7 +112,8 @@ func testCreateCases[CustomKeyMeta any](ctx context.Context, t *testing.T, appSe
 		if cParam.RedirectQueryKey == "" {
 			cParam.RedirectQueryKey = magiclink.DefaultRedirectQueryKey
 		}
-		cP := magiclink.CreateArgs[any]{
+		cP := magiclink.CreateArgs{
+			Expires:          time.Now().Add(mldtest.LinksExpireAfter),
 			JWTClaims:        claims,
 			JWTKeyID:         cParam.JWTKeyID,
 			JWTSigningMethod: cParam.JWTSigningMethod,
@@ -140,7 +140,7 @@ func testCreateCases[CustomKeyMeta any](ctx context.Context, t *testing.T, appSe
 		}
 
 		resultClaims := jwtClaims{}
-		token, err := jwt.ParseWithClaims(jwtB64, &resultClaims, keyfunc(ctx, m.JWKSet().Store))
+		token, err := jwt.ParseWithClaims(jwtB64, &resultClaims, keyfunc(ctx, m.JWKSet()))
 		if err != nil {
 			t.Fatalf("Failed to parse JWT: %s", err)
 		}
@@ -153,7 +153,7 @@ func testCreateCases[CustomKeyMeta any](ctx context.Context, t *testing.T, appSe
 	}
 }
 
-func magiclinkSetup[CustomCreateArgs, CustomReadResponse, CustomKeyMeta any](ctx context.Context, t *testing.T, args setupArgs[CustomKeyMeta]) (magiclink.MagicLink[CustomCreateArgs, CustomReadResponse, CustomKeyMeta], *httptest.Server) {
+func magiclinkSetup(ctx context.Context, t *testing.T, args setupArgs) (magiclink.MagicLink, *httptest.Server) {
 	dH := &dynamicHandler{}
 	server := httptest.NewServer(dH)
 	serviceURL, err := url.Parse(server.URL)
@@ -165,12 +165,12 @@ func magiclinkSetup[CustomCreateArgs, CustomReadResponse, CustomKeyMeta any](ctx
 		t.Fatalf("Failed to parse magic link path: %s", err)
 	}
 
-	config := magiclink.Config[CustomCreateArgs, CustomReadResponse, CustomKeyMeta]{
+	config := magiclink.Config{
 		ErrorHandler:   args.errorHandler,
 		ServiceURL:     serviceURL,
 		SecretQueryKey: args.secretQueryKey,
 		Store:          nil,
-		JWKS: magiclink.JWKSArgs[CustomKeyMeta]{
+		JWKS: magiclink.JWKSArgs{
 			CacheRefresh: args.jwksCacheRefresh,
 			Store:        args.jwksStore,
 		},
@@ -195,24 +195,24 @@ func magiclinkSetup[CustomCreateArgs, CustomReadResponse, CustomKeyMeta any](ctx
 	return m, server
 }
 
-func keyfunc[CustomKeyMeta any](ctx context.Context, store jwkset.Storage[CustomKeyMeta]) jwt.Keyfunc {
-	return func(token *jwt.Token) (interface{}, error) {
+func keyfunc(ctx context.Context, store jwkset.Storage) jwt.Keyfunc {
+	return func(token *jwt.Token) (any, error) {
 		kid, ok := token.Header[jwkset.HeaderKID].(string)
 		if !ok {
 			return nil, errors.New("failed to parse kid from token header")
 		}
-		key, err := store.ReadKey(ctx, kid)
+		jwk, err := store.KeyRead(ctx, kid)
 		if err != nil {
 			return nil, err
 		}
-		switch key.Key.(type) {
-		case *ecdsa.PrivateKey:
-			return key.Key.(*ecdsa.PrivateKey).Public(), nil
-		case ed25519.PrivateKey:
-			return key.Key.(ed25519.PrivateKey).Public(), nil
-		case *rsa.PrivateKey:
-			return key.Key.(*rsa.PrivateKey).Public(), nil
+		type publicKeyer interface {
+			Public() crypto.PublicKey
 		}
-		return key.Key, nil
+		key := jwk.Key()
+		pk, ok := key.(publicKeyer)
+		if ok {
+			return pk.Public(), nil
+		}
+		return key, nil
 	}
 }

@@ -20,9 +20,9 @@ type Server struct {
 	Ctx            context.Context
 	EmailProvider  email.Provider
 	HTTPMux        *http.ServeMux
-	JWKS           jwkset.JWKSet[storage.JWKSetCustomKeyMeta]
+	JWKS           jwkset.Storage
 	Limiter        rlimit.RateLimiter
-	MagicLink      magiclink.MagicLink[storage.MagicLinkCustomCreateArgs, storage.MagicLinkCustomReadResponse, storage.JWKSetCustomKeyMeta]
+	MagicLink      magiclink.MagicLink
 	Store          storage.Storage
 	Logger         *slog.Logger
 	MiddlewareHook MiddlewareHook
