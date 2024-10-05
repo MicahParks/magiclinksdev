@@ -44,8 +44,12 @@
     grecaptcha.execute('{{.SiteKey}}', {action: 'submit'}).then(function (token) {
       let xmlHttp = new XMLHttpRequest();
       xmlHttp.onreadystatechange = function () {
-        if (xmlHttp.readyState === 4 && xmlHttp.status === 200) {
-          window.location.replace(xmlHttp.responseText);
+        if (xmlHttp.readyState === 4) {
+          if (xmlHttp.status === 200) {
+            window.location.replace(xmlHttp.responseText);
+          } else {
+            // TODO Display error to user.
+          }
         }
       };
       let u = new URL(window.location.href);
