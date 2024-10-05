@@ -8,12 +8,12 @@ import (
 const (
 	// MSOButtonStop is the HTML to stop MSO button spacing.
 	MSOButtonStop = `<!--[if mso]>
-                          <i style="letter-spacing: 24px">&#8202;</i>
-                        <![endif]-->`
+      <i hidden style="mso-font-width: 150%;">&emsp;&#8203;</i>
+    <![endif]-->`
 	// MSOButtonStart is the HTML to start MSO button spacing.
 	MSOButtonStart = `<!--[if mso]>
-                        <i style="mso-text-raise: 30px; letter-spacing: 24px">&#8202;</i>
-                      <![endif]-->`
+      <i style="mso-font-width: 150%; mso-text-raise: 30px" hidden>&emsp;</i>
+    <![endif]-->`
 	// MSOHead is the HTML to start MSO head.
 	MSOHead = `<!--[if mso]>
   <noscript>
