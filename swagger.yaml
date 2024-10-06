@@ -328,7 +328,7 @@ definitions:
       jwtCreateArgs:
         description: "The parameters used to create the JWT to pass upon redirection."
         $ref: "#/definitions/JWTCreateArgs"
-      linkExpires:
+      linkLifespan:
         description: "The number of seconds the link should be active for after the request has been processed. It
         defaults to 1 hour. The minimum value is 5 and the maximum value is 2,592,000."
         type: "integer"
