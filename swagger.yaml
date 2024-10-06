@@ -12,10 +12,10 @@ info:
   \n
   The optional SaaS platform's landing page is: https://magiclinks.dev
   "
-  version: "1.0.0"
+  version: "2.0.0"
 
 host: "magiclinks.dev"
-basePath: "/api/v1"
+basePath: "/api/v2"
 
 schemes:
   - "https"
@@ -112,12 +112,12 @@ paths:
           schema:
             $ref: "#/definitions/Error"
 
-  /link/create:
+  /magic-link/create:
     post:
       summary: "Create a magic link."
       description: "Create a magic link that, when clicked, will create a JWT with the given claims and include that JWT
       in the URL query key of a redirect."
-      operationId: "linkCreate"
+      operationId: "magicLinkCreate"
       parameters:
         - in: "body"
           name: "body"
@@ -134,11 +134,11 @@ paths:
           schema:
             $ref: "#/definitions/Error"
 
-  /email-link/create:
+  /email-magic-link/create:
     post:
       summary: "Send a magic link via email."
       description: "Create and send a magic link via email."
-      operationId: "emailLinkCreate"
+      operationId: "emailMagicLinkCreate"
       parameters:
         - in: "body"
           name: "body"

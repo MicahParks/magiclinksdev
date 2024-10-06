@@ -9,16 +9,16 @@ import (
 )
 
 const (
-	// PathEmailLinkCreate is the path to the email link creation endpoint.
-	PathEmailLinkCreate = "email-link/create"
+	// PathEmailMagicLinkCreate is the path to the email link creation endpoint.
+	PathEmailMagicLinkCreate = "email-magic-link/create"
 	// PathJWKS is the path to the JWKS endpoint.
 	PathJWKS = "jwks.json"
 	// PathJWTCreate is the path to the JWT creation endpoint.
 	PathJWTCreate = "jwt/create"
 	// PathJWTValidate is the path to the JWT validation endpoint.
 	PathJWTValidate = "jwt/validate"
-	// PathLinkCreate is the path to the link creation endpoint.
-	PathLinkCreate = "link/create"
+	// PathMagicLinkCreate is the path to the link creation endpoint.
+	PathMagicLinkCreate = "magic-link/create"
 	// PathReady is the path to the ready endpoint.
 	PathReady = "ready"
 	// PathServiceAccountCreate is the path to the service account creation endpoint.
@@ -38,7 +38,7 @@ func CreateHTTPHandlers(server *handle.Server) (*http.ServeMux, error) {
 		},
 		{
 			Handler: HTTPEmailLinkCreate(server),
-			Path:    PathEmailLinkCreate,
+			Path:    PathEmailMagicLinkCreate,
 			Toggle: handle.MiddlewareToggle{
 				Authn:     true,
 				RateLimit: true,
@@ -69,7 +69,7 @@ func CreateHTTPHandlers(server *handle.Server) (*http.ServeMux, error) {
 		},
 		{
 			Handler: HTTPLinkCreate(server),
-			Path:    PathLinkCreate,
+			Path:    PathMagicLinkCreate,
 			Toggle: handle.MiddlewareToggle{
 				Authn:     true,
 				RateLimit: true,

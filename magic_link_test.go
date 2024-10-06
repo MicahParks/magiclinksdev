@@ -111,7 +111,7 @@ func TestMagicLink(t *testing.T) {
 			}
 
 			recorder := httptest.NewRecorder()
-			u, err := assets.conf.Server.BaseURL.Get().Parse(network.PathLinkCreate)
+			u, err := assets.conf.Server.BaseURL.Get().Parse(network.PathMagicLinkCreate)
 			if err != nil {
 				t.Fatalf("Failed to parse URL: %v", err)
 			}
