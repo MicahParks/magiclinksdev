@@ -1,14 +1,14 @@
 openapi: 3.0.1
 info:
   title: magiclinks.dev
-  description: "The API specification for the magiclinksdev project. \n\n The default\
+  description: "The v2 API specification for the magiclinksdev project. \n\n The default\
     \ JWK Set relative URL path is `/api/v1/jwks.json`. \n\n The documentation site\
     \ is at https://docs.magiclinks.dev \n This is an Apache License 2.0 project:\
     \ https://github.com/MicahParks/magiclinksdev \n The optional SaaS platform's\
     \ landing page is: https://magiclinks.dev "
-  version: 1.0.0
+  version: 2.0.0
 servers:
-  - url: https://magiclinks.dev/api/v1
+  - url: https://magiclinks.dev/api/v2
 security:
   - apiKey: []
 tags:
@@ -18,7 +18,6 @@ paths:
   /ready:
     get:
       summary: Check if the service is running and ready to accept requests.
-      description: Check if the service is running and ready to accept requests.
       operationId: ready
       responses:
         "200":
@@ -31,11 +30,9 @@ paths:
     post:
       tags:
         - admin
-      summary: Create a new service account
-      description: Create a new service account with the parameters.
+      summary: Create a new service account.
       operationId: serviceAccountCreate
       requestBody:
-        description: Service account object that needs to be added.
         content:
           application/json:
             schema:
@@ -43,7 +40,7 @@ paths:
         required: true
       responses:
         "201":
-          description: successful operation
+          description: The service account has been created.
           content:
             application/json:
               schema:
@@ -58,11 +55,8 @@ paths:
   /jwt/create:
     post:
       summary: "Create a JWT, typically for a JWT refresh."
-      description: Create a JWT with the parameters. The intended use case is to refresh
-        an authentic and valid JWT.
       operationId: jwtCreate
       requestBody:
-        description: The JWT payload.
         content:
           application/json:
             schema:
@@ -70,7 +64,7 @@ paths:
         required: true
       responses:
         "201":
-          description: The JWT was created successfully.
+          description: The JWT was created.
           content:
             application/json:
               schema:
@@ -85,14 +79,8 @@ paths:
   /jwt/validate:
     post:
       summary: Validate a JWT.
-      description: "Validate a JWT and return the payload. Ideally the client would\
-        \ cache a copy of the JWK Set and validate JWTs locally. This endpoint is\
-        \ for use cases where the native language does not have an adequate JWK Set\
-        \ client. Consider deploying an instance of the JWK Set Client Proxy (JCP)\
-        \ if you need this in production: https://github.com/MicahParks/jcp"
       operationId: jwtValidate
       requestBody:
-        description: The JWT to validate.
         content:
           application/json:
             schema:
@@ -118,25 +106,23 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
       x-codegen-request-body-name: body
-  /link/create:
+  /magic-link/create:
     post:
       summary: Create a magic link.
-      description: "Create a magic link that, when clicked, will create a JWT with\
-        \ the given claims and include that JWT in the URL query key of a redirect."
-      operationId: linkCreate
+      operationId: magicLinkCreate
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/LinkCreateRequest'
+              $ref: '#/components/schemas/MagicLinkCreateRequest'
         required: true
       responses:
         "201":
-          description: The magic link was created successfully.
+          description: The magic link was created.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/LinkCreateResponse'
+                $ref: '#/components/schemas/MagicLinkCreateResponse'
         default:
           description: An unexpected error occurred.
           content:
@@ -144,24 +130,122 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
       x-codegen-request-body-name: body
-  /email-link/create:
+  /magic-link-email/create:
     post:
-      summary: Send a magic link via email.
-      description: Create and send a magic link via email.
-      operationId: emailLinkCreate
+      summary: Create a magic link and send it via email.
+      operationId: magicLinkEmailCreate
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/EmailLinkCreateRequest'
+              $ref: '#/components/schemas/MagicLinkEmailCreateRequest'
         required: true
       responses:
         "201":
-          description: The request has been accepted by the email provider.
+          description: The magic link has been created and the email request has been
+            accepted by the provider.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/EmailLinkCreateResponse'
+                $ref: '#/components/schemas/MagicLinkEmailCreateResponse'
+        default:
+          description: An unexpected error occurred.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      x-codegen-request-body-name: body
+  /otp/create:
+    post:
+      summary: Create a One-Time Password (OTP).
+      operationId: otpCreate
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OTPCreateRequest'
+        required: true
+      responses:
+        "201":
+          description: The OTP was created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OTPCreateResponse'
+        default:
+          description: An unexpected error occurred.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      x-codegen-request-body-name: body
+  /otp-email/create:
+    post:
+      summary: Create a One-Time Password (OTP) and sent it via email.
+      operationId: otpEmailCreate
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OTPEmailCreateRequest'
+        required: true
+      responses:
+        "201":
+          description: The OTP has been created and the email request has been accepted
+            by the provider.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OTPEmailCreateResponse'
+        default:
+          description: An unexpected error occurred.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      x-codegen-request-body-name: body
+  /permanent-magic-link/create:
+    post:
+      summary: Create a permanent magic link.
+      operationId: permanentMagicLinkCreate
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PermanentMagicLinkCreateRequest'
+        required: true
+      responses:
+        "201":
+          description: The permanent magic link was created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PermanentMagicLinkCreateResponse'
+        default:
+          description: An unexpected error occurred.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      x-codegen-request-body-name: body
+  /permanent-magic-link-email/create:
+    post:
+      summary: Create a permanent magic link and send it via email.
+      operationId: permanentMagicLinkEmailCreate
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PermanentMagicLinkEmailCreateRequest'
+        required: true
+      responses:
+        "201":
+          description: The permanent magic link has been created and the email request
+            has been accepted by the provider.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PermanentMagicLinkEmailCreateResponse'
         default:
           description: An unexpected error occurred.
           content:
@@ -190,62 +274,18 @@ components:
           type: string
           description: A UUID that uniquely identifies the request.
           format: uuid
-    APIKey:
-      type: object
-      properties:
-        apiKey:
-          type: string
-          description: The API key.
-    Audience:
-      type: object
-      properties:
-        apiKeys:
-          type: array
-          description: API keys for this audience.
-          items:
-            $ref: '#/components/schemas/APIKey'
-        aud:
-          type: string
-          description: The audience of JWTs created for this service account context.
-        serviceLogo:
-          type: string
-          description: The URL of the service account's service logo.
-        serviceName:
-          type: string
-          description: The name of the service account's service.
-        serviceURL:
-          type: string
-          description: The URL of the landing page for the service account's service.
-    ServiceAccountMeta:
-      type: object
-      properties:
-        admin:
-          type: boolean
-          description: Whether the service account is an admin.
-        uuid:
-          type: string
-          description: The UUID of the service account.
-          format: uuid
     ServiceAccount:
       type: object
       properties:
-        audiences:
-          type: array
-          description: The audiences for this service account.
-          items:
-            $ref: '#/components/schemas/Audience'
-        meta:
-          $ref: '#/components/schemas/ServiceAccountMeta'
-    JWTClaims:
-      type: object
-      properties:
-        claims:
-          type: object
-          properties: {}
-          description: Any valid JSON object. Do not provide any JSON attributes mentioned
-            in RFC 7519 section 4.1 as this will cause an error. These are JWT "Registered
-            Claim Names".
-      description: Any valid JSON object.
+        uuid:
+          type: string
+          format: uuid
+        apiKey:
+          type: string
+        aud:
+          type: string
+        admin:
+          type: boolean
     JWTCreateRequest:
       required:
         - jwtCreateArgs
@@ -257,18 +297,23 @@ components:
     JWTCreateArgs:
       type: object
       properties:
-        jwtAlg:
+        alg:
           type: string
           description: The algorithm to use when signing the JWT. It defaults depends
             on the server's configuration. The default server configuration is "EdDSA".
             The default server options are "EdDSA" and "RS256".
-        jwtClaims:
-          $ref: '#/components/schemas/JWTClaims'
-        jwtLifespanSeconds:
+        claims:
+          type: object
+          properties: {}
+          description: Any valid JSON object. Do not provide any JSON attributes mentioned
+            in RFC 7519 section 4.1 as this will cause an error. These are JWT "Registered
+            Claim Names".
+        lifespanSeconds:
           type: integer
           description: "The lifespan of the JWT in seconds. The JWT's lifespan starts\
             \ after the magic link has been visited and the JWT is signed. It defaults\
-            \ to 5 minutes. The minimum value is 5 and the maximum value is 2,592,000."
+            \ to 5 minutes. The minimum value is 5 seconds and the maximum value is\
+            \ 7905600000 seconds, which is a bit over 250 years."
       description: Parameters used to create a JWT.
     JWTCreateResults:
       type: object
@@ -318,58 +363,65 @@ components:
         requestMetadata:
           $ref: '#/components/schemas/RequestMetadata'
       description: The response body for the /jwt/validate endpoint.
-    LinkCreateArgs:
+    MagicLinkLimits:
+      type: object
+      properties:
+        lifespanSeconds:
+          type: integer
+          description: "The number of seconds the magic link should be active for\
+            \ after the request has been processed. It defaults to 1 hour. The minimum\
+            \ value is 5 seconds and the maximum value is 7905600000 seconds, which\
+            \ is a bit over 250 years."
+        uses:
+          type: integer
+          description: The number of times the magic link can be used. It defaults
+            to 1. A value of 0 will be converted into 1.
+          format: int64
+          default: 1
+    MagicLinkCreateArgs:
       required:
         - redirectURL
       type: object
       properties:
         jwtCreateArgs:
           $ref: '#/components/schemas/JWTCreateArgs'
-        linkLifespan:
-          type: integer
-          description: "The number of seconds the link should be active for after\
-            \ the request has been processed. It defaults to 1 hour. The minimum value\
-            \ is 5 and the maximum value is 2,592,000."
         redirectQueryKey:
           type: string
           description: "The URL query key in the redirectURL to contain the signed\
             \ JWT when the magic link is used. By default, \"jwt\" is used."
         redirectURL:
           type: string
-          description: The URL to redirect to with the signed JWT when the link is
-            used.
-      description: Parameters to create any magic link.
-    LinkCreateRequest:
+          description: The URL to redirect to with the signed JWT when the magic link
+            is used.
+      description: Parameters to create a magic link.
+    MagicLinkCreateRequest:
       required:
-        - linkArgs
+        - magicLinkCreateArgs
       type: object
       properties:
-        linkArgs:
-          $ref: '#/components/schemas/LinkCreateArgs'
-      description: The request body for the /link/create endpoint.
-    LinkCreateResults:
+        magicLinkCreateArgs:
+          $ref: '#/components/schemas/MagicLinkCreateArgs'
+        magicLinkLimits:
+          $ref: '#/components/schemas/MagicLinkLimits'
+    MagicLinkCreateResults:
       type: object
       properties:
         magicLink:
           type: string
-          description: "The magic link that, when visited, will sign a JWT with the\
-            \ given information and pass it along in a redirect to the given URL.\
-            \ The link can only be used once. This link should as if it were the signed\
-            \ JWT."
+          description: "The URL that will act as a magic link. When this URL is visited,\
+            \ a new JWT will be created. A redirect wil be performed with this new\
+            \ JWT in the redirect URL's query parameter."
         secret:
           type: string
-          description: "The secret embedded in the magic link. It can only be used\
-            \ once, so using it will automatically expire the link."
-      description: The results for creating a magic link.
-    LinkCreateResponse:
+          description: The secret embedded in the magic link.
+    MagicLinkCreateResponse:
       type: object
       properties:
-        linkCreateResults:
-          $ref: '#/components/schemas/LinkCreateResults'
+        magicLinkCreateResults:
+          $ref: '#/components/schemas/MagicLinkCreateResults'
         requestMetadata:
           $ref: '#/components/schemas/RequestMetadata'
-      description: The response body for the /link/create endpoint.
-    EmailLinkCreateArgs:
+    MagicLinkEmailCreateArgs:
       required:
         - serviceName
         - subject
@@ -423,54 +475,166 @@ components:
           type: string
           description: The name of the recipient.
           example: Jane Doe
-      description: Parameters to create an email magic link.
-    EmailLinkCreateRequest:
+      description: Parameters to create a magic link email.
+    MagicLinkEmailCreateRequest:
       required:
-        - emailArgs
-        - linkArgs
+        - magicLinkCreateArgs
+        - magicLinkEmailCreateArgs
       type: object
       properties:
-        emailArgs:
-          $ref: '#/components/schemas/EmailLinkCreateArgs'
-        linkArgs:
-          $ref: '#/components/schemas/LinkCreateArgs'
-      description: The request body for the /email-link/create endpoint.
-    EmailLinkCreateResults:
+        magicLinkCreateArgs:
+          $ref: '#/components/schemas/MagicLinkCreateArgs'
+        magicLinkEmailCreateArgs:
+          $ref: '#/components/schemas/MagicLinkEmailCreateArgs'
+    MagicLinkEmailCreateResults:
       type: object
       properties:
-        linkCreateResults:
-          $ref: '#/components/schemas/LinkCreateResults'
-      description: The results for creating an email magic link.
-    EmailLinkCreateResponse:
+        magicLinkCreateResults:
+          $ref: '#/components/schemas/MagicLinkCreateResults'
+      description: The results for creating a magic link email.
+    MagicLinkEmailCreateResponse:
       type: object
       properties:
-        emailLinkCreateResults:
-          $ref: '#/components/schemas/EmailLinkCreateResults'
+        magicLinkEmailCreateResults:
+          $ref: '#/components/schemas/MagicLinkEmailCreateResults'
         requestMetadata:
           $ref: '#/components/schemas/RequestMetadata'
-      description: The response body from the /email-link/create endpoint.
-    ServiceAccountCreateArgs:
+    OTPCreateArgs:
       type: object
       properties:
-        serviceLogo:
+        lifespanSeconds:
+          type: integer
+          description: "The lifespan of the OTP in seconds. The OTP's lifespan starts\
+            \ after the magic link has been visited and the OTP is created. It defaults\
+            \ to 5 minutes. The minimum value is 5 seconds and the maximum value is\
+            \ 7905600000 seconds, which is a bit over 250 years."
+      description: Parameters to create a One-Time Password (OTP).
+    OTPCreateRequest:
+      required:
+        - otpCreateArgs
+      type: object
+      properties:
+        otpCreateArgs:
+          $ref: '#/components/schemas/OTPCreateArgs'
+    OTPCreateResults:
+      type: object
+      properties:
+        otp:
           type: string
-          description: The URL of the service account's service's logo.
-          format: uri
+          description: The One-Time Password.
+      description: The results for creating a One-Time Password (OTP).
+    OTPCreateResponse:
+      type: object
+      properties:
+        otpCreateResults:
+          $ref: '#/components/schemas/OTPCreateResults'
+        requestMetadata:
+          $ref: '#/components/schemas/RequestMetadata'
+    OTPEmailCreateArgs:
+      required:
+        - serviceName
+        - subject
+        - title
+        - toEmail
+      type: object
+      properties:
+        greeting:
+          type: string
+          description: The smaller text above the title.
+          example: "Hello Jane Doe,"
+        logoClickURL:
+          type: string
+          description: The URL to redirect to when the logo is clicked.
+          example: https://example.com
+        logoImageURL:
+          type: string
+          description: The URL to the logo image to display in the email.
+          example: https://example.com/logo.png
         serviceName:
           type: string
-          description: The name of the service account's service.
-        serviceURL:
+          description: The name of your service. This is used in invisible email metadata.
+          example: example.com
+        subject:
           type: string
-          description: The landing page URL for the service account's service.
-          format: uri
-      description: Parameters to create a service account.
-    ServiceAccountCreateRequest:
+          description: The subject of the email. It must be between 5 and 100 characters
+            inclusive. Make sure to include the name of your application.
+          example: Login to example.com
+        subTitle:
+          type: string
+          description: "The smaller text, right above the magic link button."
+          example: Login using the button below.
+        title:
+          type: string
+          description: "The larger text, right above the subtitle. It must be between\
+            \ 5 and 256 characters inclusive. Make sure to include the name of your\
+            \ application."
+          example: Login to example.com with a magic link
+        toEmail:
+          type: string
+          description: The email address to send the magic link to.
+          format: email
+          example: jane.doe@example.com
+        toName:
+          type: string
+          description: The name of the recipient.
+          example: Jane Doe
+      description: Parameters to create a One-Time Password (OTP) email.
+    OTPEmailCreateRequest:
       required:
-        - createServiceAccountArgs
+        - otpCreateArgs
+        - otpEmailCreateArgs
       type: object
       properties:
-        createServiceAccountArgs:
-          $ref: '#/components/schemas/ServiceAccountCreateArgs'
+        otpCreateArgs:
+          $ref: '#/components/schemas/OTPCreateArgs'
+        otpEmailCreateArgs:
+          $ref: '#/components/schemas/OTPEmailCreateArgs'
+    OTPEmailCreateResults:
+      type: object
+      properties:
+        otpCreateResults:
+          $ref: '#/components/schemas/OTPCreateResults'
+      description: The results for creating a One-Time Password (OTP) email.
+    OTPEmailCreateResponse:
+      type: object
+      properties:
+        otpEmailCreateResults:
+          $ref: '#/components/schemas/OTPEmailCreateResults'
+        requestMetadata:
+          $ref: '#/components/schemas/RequestMetadata'
+    PermanentMagicLinkCreateRequest:
+      required:
+        - magicLinkCreateArgs
+      type: object
+      properties:
+        magicLinkCreateArgs:
+          $ref: '#/components/schemas/MagicLinkCreateArgs'
+    PermanentMagicLinkCreateResponse:
+      type: object
+      properties:
+        magicLinkEmailCreateResults:
+          $ref: '#/components/schemas/MagicLinkCreateResults'
+        requestMetadata:
+          $ref: '#/components/schemas/RequestMetadata'
+    PermanentMagicLinkEmailCreateRequest:
+      required:
+        - magicLinkCreateArgs
+        - magicLinkEmailCreateArgs
+      type: object
+      properties:
+        magicLinkCreateArgs:
+          $ref: '#/components/schemas/MagicLinkEmailCreateArgs'
+        magicLinkEmailCreateArgs:
+          $ref: '#/components/schemas/MagicLinkCreateArgs'
+    PermanentMagicLinkEmailCreateResponse:
+      type: object
+      properties:
+        magicLinkEmailCreateResults:
+          $ref: '#/components/schemas/MagicLinkEmailCreateResults'
+        requestMetadata:
+          $ref: '#/components/schemas/RequestMetadata'
+    ServiceAccountCreateRequest:
+      type: object
       description: The request body for the /admin/service-account/create endpoint.
     ServiceAccountCreateResults:
       type: object

@@ -361,6 +361,7 @@ definitions:
         description: "The number of times the magic link can be used. It defaults to 1. A value of 0 will be converted
         into 1."
         type: "integer"
+        format: "int64"
         default: 1
 
   MagicLinkCreateArgs:
