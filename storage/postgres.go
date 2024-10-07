@@ -318,7 +318,7 @@ WHERE key_id = $1
   Magic link storage.
 */
 
-func (p postgres) CreateLink(ctx context.Context, args magiclink.CreateArgs) (secret string, err error) {
+func (p postgres) LinkCreate(ctx context.Context, args magiclink.CreateArgs) (secret string, err error) {
 	tx := ctx.Value(ctxkey.Tx).(*Transaction).Tx
 	sa := ctx.Value(ctxkey.ServiceAccount).(model.ServiceAccount)
 
@@ -347,7 +347,7 @@ VALUES ($2, $3, $4, $5, $6, $7, $8, (SELECT id FROM sa))
 
 	return s.String(), nil
 }
-func (p postgres) ReadLink(ctx context.Context, secret string) (magiclink.ReadResponse, error) {
+func (p postgres) LinkRead(ctx context.Context, secret string) (magiclink.ReadResponse, error) {
 	tx := ctx.Value(ctxkey.Tx).(*Transaction).Tx
 	var response magiclink.ReadResponse
 

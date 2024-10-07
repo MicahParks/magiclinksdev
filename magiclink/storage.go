@@ -13,11 +13,11 @@ import (
 
 // Storage represents the underlying storage for the MagicLink service.
 type Storage interface {
-	// CreateLink creates a secret for the given parameters and stores the pair. The secret is returned to the caller.
-	CreateLink(ctx context.Context, args CreateArgs) (secret string, err error)
-	// ReadLink finds the creation parameters for the given secret. ErrLinkNotFound is returned if the secret is not
+	// LinkCreate creates a secret for the given parameters and stores the pair. The secret is returned to the caller.
+	LinkCreate(ctx context.Context, args CreateArgs) (secret string, err error)
+	// LinkRead finds the creation parameters for the given secret. ErrLinkNotFound is returned if the secret is not
 	// found or was deleted/expired. This will automatically expire the link.
-	ReadLink(ctx context.Context, secret string) (ReadResponse, error) // TODO Use visited and expiration.
+	LinkRead(ctx context.Context, secret string) (ReadResponse, error)
 }
 
 var _ Storage = &memoryMagicLink{}
@@ -33,7 +33,7 @@ func NewMemoryStorage() Storage {
 		links: map[string]ReadResponse{},
 	}
 }
-func (m *memoryMagicLink) CreateLink(_ context.Context, args CreateArgs) (secret string, err error) {
+func (m *memoryMagicLink) LinkCreate(_ context.Context, args CreateArgs) (secret string, err error) {
 	m.mux.Lock()
 	defer m.mux.Unlock()
 	u, err := uuid.NewRandom()
@@ -47,7 +47,7 @@ func (m *memoryMagicLink) CreateLink(_ context.Context, args CreateArgs) (secret
 	m.links[secret] = response
 	return secret, nil
 }
-func (m *memoryMagicLink) ReadLink(_ context.Context, secret string) (ReadResponse, error) {
+func (m *memoryMagicLink) LinkRead(_ context.Context, secret string) (ReadResponse, error) {
 	m.mux.Lock()
 	defer m.mux.Unlock()
 	now := time.Now()
