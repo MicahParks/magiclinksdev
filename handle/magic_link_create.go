@@ -12,17 +12,17 @@ import (
 	"github.com/MicahParks/magiclinksdev/network/middleware/ctxkey"
 )
 
-// HandleLinkCreate handles the link creation endpoint.
-func (s *Server) HandleLinkCreate(ctx context.Context, req model.ValidLinkCreateRequest) (response model.LinkCreateResponse, err error) {
-	linkArgs := req.LinkArgs
+// HandleMagicLinkCreate handles the link creation endpoint.
+func (s *Server) HandleMagicLinkCreate(ctx context.Context, req model.ValidMagicLinkCreateRequest) (response model.MagicLinkCreateResponse, err error) {
+	linkArgs := req.MagicLinkArgs
 
 	magicLinkResp, err := s.createLink(ctx, linkArgs)
 	if err != nil {
-		return model.LinkCreateResponse{}, fmt.Errorf("failed to create magic link: %w", err)
+		return model.MagicLinkCreateResponse{}, fmt.Errorf("failed to create magic link: %w", err)
 	}
 
-	resp := model.LinkCreateResponse{
-		LinkCreateResults: model.LinkCreateResults{
+	resp := model.MagicLinkCreateResponse{
+		MagicLinkCreateResults: model.MagicLinkCreateResults{
 			MagicLink: magicLinkResp.MagicLink.String(),
 			Secret:    magicLinkResp.Secret,
 		},
@@ -34,7 +34,7 @@ func (s *Server) HandleLinkCreate(ctx context.Context, req model.ValidLinkCreate
 	return resp, nil
 }
 
-func (s *Server) createLink(ctx context.Context, linkArgs model.ValidLinkCreateArgs) (magiclink.CreateResponse, error) {
+func (s *Server) createLink(ctx context.Context, linkArgs model.ValidMagicLinkCreateArgs) (magiclink.CreateResponse, error) {
 	magicLinkCreateArgs, err := s.createLinkArgs(ctx, linkArgs)
 	if err != nil {
 		return magiclink.CreateResponse{}, fmt.Errorf("failed to create magic link create args: %w", err)

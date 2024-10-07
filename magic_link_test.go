@@ -32,7 +32,7 @@ type testClaims struct {
 type testCase struct {
 	name    string
 	keyfunc jwt.Keyfunc
-	reqBody model.LinkCreateRequest
+	reqBody model.MagicLinkCreateRequest
 }
 
 func TestMagicLink(t *testing.T) {
@@ -64,13 +64,13 @@ func TestMagicLink(t *testing.T) {
 				}
 				return ed.Public(), nil
 			},
-			reqBody: model.LinkCreateRequest{
-				LinkArgs: model.LinkCreateArgs{
+			reqBody: model.MagicLinkCreateRequest{
+				MagicLinkCreateArgs: model.MagicLinkCreateArgs{
 					JWTCreateArgs: model.JWTCreateArgs{
-						JWTClaims:          map[string]string{"foo": "bar"},
-						JWTLifespanSeconds: 0,
+						Claims:          map[string]string{"foo": "bar"},
+						LifespanSeconds: 0,
 					},
-					LinkLifespan:     0,
+					LifespanSeconds:  0,
 					RedirectQueryKey: customRedirectQueryKey,
 					RedirectURL:      "https://github.com/MicahParks/magiclinksdev",
 				},
@@ -90,14 +90,14 @@ func TestMagicLink(t *testing.T) {
 				}
 				panic("no RSA signing key")
 			},
-			reqBody: model.LinkCreateRequest{
-				LinkArgs: model.LinkCreateArgs{
+			reqBody: model.MagicLinkCreateRequest{
+				MagicLinkCreateArgs: model.MagicLinkCreateArgs{
 					JWTCreateArgs: model.JWTCreateArgs{
-						JWTAlg:             jwkset.AlgRS256.String(),
-						JWTClaims:          map[string]string{"foo": "bar"},
-						JWTLifespanSeconds: 0,
+						Alg:             jwkset.AlgRS256.String(),
+						Claims:          map[string]string{"foo": "bar"},
+						LifespanSeconds: 0,
 					},
-					LinkLifespan:     0,
+					LifespanSeconds:  0,
 					RedirectQueryKey: customRedirectQueryKey,
 					RedirectURL:      "https://github.com/MicahParks/magiclinksdev",
 				},
@@ -127,14 +127,14 @@ func TestMagicLink(t *testing.T) {
 				t.Fatalf("Received non-JSON content type: %s", recorder.Header().Get(mld.HeaderContentType))
 			}
 
-			var linkCreateResponse model.LinkCreateResponse
+			var linkCreateResponse model.MagicLinkCreateResponse
 			err = json.Unmarshal(recorder.Body.Bytes(), &linkCreateResponse)
 			if err != nil {
 				t.Fatalf("Failed to unmarshal response body: %v", err)
 			}
 
 			recorder = httptest.NewRecorder()
-			req = httptest.NewRequest(http.MethodGet, linkCreateResponse.LinkCreateResults.MagicLink, nil)
+			req = httptest.NewRequest(http.MethodGet, linkCreateResponse.MagicLinkCreateResults.MagicLink, nil)
 			reqSent := time.Now()
 			assets.mux.ServeHTTP(recorder, req)
 
@@ -180,12 +180,12 @@ func TestMagicLink(t *testing.T) {
 			}
 
 			redirectURL.RawQuery = ""
-			if redirectURL.String() != tc.reqBody.LinkArgs.RedirectURL {
-				t.Fatalf("Expected redirect URL %q, got %q", tc.reqBody.LinkArgs.RedirectURL, redirectURL.String())
+			if redirectURL.String() != tc.reqBody.MagicLinkCreateArgs.RedirectURL {
+				t.Fatalf("Expected redirect URL %q, got %q", tc.reqBody.MagicLinkCreateArgs.RedirectURL, redirectURL.String())
 			}
 
 			recorder = httptest.NewRecorder()
-			req = httptest.NewRequest(http.MethodGet, linkCreateResponse.LinkCreateResults.MagicLink, nil)
+			req = httptest.NewRequest(http.MethodGet, linkCreateResponse.MagicLinkCreateResults.MagicLink, nil)
 			assets.mux.ServeHTTP(recorder, req)
 
 			if recorder.Code != http.StatusNotFound {

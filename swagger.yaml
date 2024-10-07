@@ -1,8 +1,12 @@
 swagger: "2.0" # https://stackoverflow.com/a/59749691/14797322
 
+# TODO Consistent use of periods
+# TODO Confirm every JSON attribute matches
+# TODO Proofread everything in the specification
+
 info:
   title: "magiclinks.dev"
-  description: "The API specification for the magiclinksdev project.
+  description: "The v2 API specification for the magiclinksdev project.
   \n\n
   The default JWK Set relative URL path is `/api/v1/jwks.json`.
   \n\n
@@ -29,7 +33,6 @@ paths:
   /ready:
     get:
       summary: "Check if the service is running and ready to accept requests."
-      description: "Check if the service is running and ready to accept requests."
       operationId: "ready"
       responses:
         200:
@@ -41,19 +44,17 @@ paths:
     post:
       tags:
         - "admin"
-      summary: "Create a new service account"
-      description: "Create a new service account with the parameters."
+      summary: "Create a new service account."
       operationId: "serviceAccountCreate"
       parameters:
         - in: "body"
           name: "body"
-          description: "Service account object that needs to be added."
           required: true
           schema:
             $ref: "#/definitions/ServiceAccountCreateRequest"
       responses:
         201:
-          description: "successful operation"
+          description: "The service account has been created."
           schema:
             $ref: "#/definitions/ServiceAccountCreateResponse"
         default:
@@ -64,18 +65,16 @@ paths:
   /jwt/create:
     post:
       summary: "Create a JWT, typically for a JWT refresh."
-      description: "Create a JWT with the parameters. The intended use case is to refresh an authentic and valid JWT."
       operationId: "jwtCreate"
       parameters:
         - name: "body"
           in: "body"
-          description: "The JWT payload."
           required: true
           schema:
             $ref: "#/definitions/JWTCreateRequest"
       responses:
         201:
-          description: "The JWT was created successfully."
+          description: "The JWT was created."
           schema:
             $ref: "#/definitions/JWTCreateResponse"
         default:
@@ -86,15 +85,10 @@ paths:
   /jwt/validate:
     post:
       summary: "Validate a JWT."
-      description: "Validate a JWT and return the payload. Ideally the client would cache a copy of the JWK Set and
-      validate JWTs locally. This endpoint is for use cases where the native language does not have an adequate JWK Set
-      client. Consider deploying an instance of the JWK Set Client Proxy (JCP) if you need this in production:
-      https://github.com/MicahParks/jcp"
       operationId: "jwtValidate"
       parameters:
         - in: "body"
           name: "body"
-          description: "The JWT to validate."
           required: true
           schema:
             $ref: "#/definitions/JWTValidateRequest"
@@ -115,41 +109,119 @@ paths:
   /magic-link/create:
     post:
       summary: "Create a magic link."
-      description: "Create a magic link that, when clicked, will create a JWT with the given claims and include that JWT
-      in the URL query key of a redirect."
       operationId: "magicLinkCreate"
       parameters:
         - in: "body"
           name: "body"
           required: true
           schema:
-            $ref: "#/definitions/LinkCreateRequest"
+            $ref: "#/definitions/MagicLinkCreateRequest"
       responses:
         201:
-          description: "The magic link was created successfully."
+          description: "The magic link was created."
           schema:
-            $ref: "#/definitions/LinkCreateResponse"
+            $ref: "#/definitions/MagicLinkCreateResponse"
         default:
           description: "An unexpected error occurred."
           schema:
             $ref: "#/definitions/Error"
 
-  /email-magic-link/create:
+  /magic-link-email/create:
     post:
-      summary: "Send a magic link via email."
-      description: "Create and send a magic link via email."
-      operationId: "emailMagicLinkCreate"
+      summary: "Create a magic link and send it via email."
+      operationId: "magicLinkEmailCreate"
       parameters:
         - in: "body"
           name: "body"
           required: true
           schema:
-            $ref: "#/definitions/EmailLinkCreateRequest"
+            $ref: "#/definitions/MagicLinkEmailCreateRequest"
       responses:
         201:
-          description: "The request has been accepted by the email provider."
+          description: "The magic link has been created and the email request has been accepted by the provider."
           schema:
-            $ref: "#/definitions/EmailLinkCreateResponse"
+            $ref: "#/definitions/MagicLinkEmailCreateResponse"
+        default:
+          description: "An unexpected error occurred."
+          schema:
+            $ref: "#/definitions/Error"
+
+  /otp/create: # TODO Add in Go code.
+    post:
+      summary: "Create a One-Time Password (OTP)."
+      operationId: "otpCreate"
+      parameters:
+        - in: "body"
+          name: "body"
+          required: true
+          schema:
+            $ref: "#/definitions/OTPCreateRequest"
+      responses:
+        201:
+          description: "The OTP was created."
+          schema:
+            $ref: "#/definitions/OTPCreateResponse"
+        default:
+          description: "An unexpected error occurred."
+          schema:
+            $ref: "#/definitions/Error"
+
+  /otp-email/create: # TODO Add in Go code.
+    post:
+      summary: "Create a One-Time Password (OTP) and sent it via email."
+      operationId: "otpEmailCreate"
+      parameters:
+        - in: "body"
+          name: "body"
+          required: true
+          schema:
+            $ref: "#/definitions/OTPEmailCreateRequest"
+      responses:
+        201:
+          description: "The OTP has been created and the email request has been accepted by the provider."
+          schema:
+            $ref: "#/definitions/OTPEmailCreateResponse"
+        default:
+          description: "An unexpected error occurred."
+          schema:
+            $ref: "#/definitions/Error"
+
+  /permanent-magic-link/create: # TODO Add in Go code.
+    post:
+      summary: "Create a permanent magic link."
+      operationId: "permanentMagicLinkCreate"
+      parameters:
+        - in: "body"
+          name: "body"
+          required: true
+          schema:
+            $ref: "#/definitions/PermanentMagicLinkCreateRequest"
+      responses:
+        201:
+          description: "The permanent magic link was created."
+          schema:
+            $ref: "#/definitions/PermanentMagicLinkCreateResponse"
+        default:
+          description: "An unexpected error occurred."
+          schema:
+            $ref: "#/definitions/Error"
+
+  /permanent-magic-link-email/create: # TODO Add in Go code.
+    post:
+      summary: "Create a permanent magic link and send it via email."
+      operationId: "permanentMagicLinkEmailCreate"
+      parameters:
+        - in: "body"
+          name: "body"
+          required: true
+          schema:
+            $ref: "#/definitions/PermanentMagicLinkEmailCreateRequest"
+      responses:
+        201:
+          description: "The permanent magic link has been created and the email request has been accepted by the
+          provider."
+          schema:
+            $ref: "#/definitions/PermanentMagicLinkEmailCreateResponse"
         default:
           description: "An unexpected error occurred."
           schema:
@@ -177,67 +249,18 @@ definitions:
         description: "A UUID that uniquely identifies the request."
         format: "uuid"
 
-  APIKey:
-    type: "object"
-    properties:
-      apiKey:
-        type: "string"
-        description: "The API key."
-
-  Audience:
-    type: "object"
-    properties:
-      apiKeys:
-        type: "array"
-        description: "API keys for this audience."
-        items:
-          $ref: "#/definitions/APIKey"
-      aud:
-        type: "string"
-        description: "The audience of JWTs created for this service account context."
-      serviceLogo:
-        type: "string"
-        description: "The URL of the service account's service logo."
-      serviceName:
-        type: "string"
-        description: "The name of the service account's service."
-      serviceURL:
-        type: "string"
-        description: "The URL of the landing page for the service account's service."
-
-  ServiceAccountMeta:
-    type: "object"
-    properties:
-      admin:
-        type: "boolean"
-        description: "Whether the service account is an admin."
-      uuid:
-        type: "string"
-        description: "The UUID of the service account."
-        format: "uuid"
-
   ServiceAccount:
     type: "object"
     properties:
-      audiences:
-        type: "array"
-        description: "The audiences for this service account."
-        items:
-          $ref: "#/definitions/Audience"
-      meta:
-        $ref: "#/definitions/ServiceAccountMeta"
-
-  JWTClaims:
-    description: "Any valid JSON object."
-    type: "object"
-    properties:
-      claims:
-        description: 'Any valid JSON object. Do not provide any JSON attributes mentioned in RFC 7519 section 4.1 as
-        this will cause an error. These are JWT "Registered Claim Names".'
-        type: "object"
-        externalDocs:
-          description: "RFC 7519 section 4.1"
-          url: "https://tools.ietf.org/html/rfc7519#section-4.1"
+      uuid:
+        type: "string"
+        format: "uuid"
+      apiKey:
+        type: "string"
+      aud:
+        type: "string"
+      admin:
+        type: "boolean"
 
   JWTCreateRequest:
     description: "The request body for the /jwt/create endpoint."
@@ -252,17 +275,21 @@ definitions:
     description: "Parameters used to create a JWT."
     type: "object"
     properties:
-      jwtAlg:
+      alg:
         description: "The algorithm to use when signing the JWT. It defaults depends on the server's configuration. The
         default server configuration is \"EdDSA\". The default server options are \"EdDSA\" and \"RS256\"."
         type: "string"
-      jwtClaims:
-        description: "The JWT claims used to create the signed JWT."
-        $ref: "#/definitions/JWTClaims"
-      jwtLifespanSeconds:
+      claims:
+        description: 'Any valid JSON object. Do not provide any JSON attributes mentioned in RFC 7519 section 4.1 as
+        this will cause an error. These are JWT "Registered Claim Names".'
+        type: "object"
+        externalDocs:
+          description: "RFC 7519 section 4.1"
+          url: "https://tools.ietf.org/html/rfc7519#section-4.1"
+      lifespanSeconds:
         description: "The lifespan of the JWT in seconds. The JWT's lifespan starts after the magic link has been
-        visited and the JWT is signed. It defaults to 5 minutes. The minimum value is 5 and the maximum value is
-        2,592,000."
+        visited and the JWT is signed. It defaults to 5 minutes. The minimum value is 5 seconds and the maximum value is
+        7905600000 seconds, which is a bit over 250 years."
         default: 300
         type: "integer"
 
@@ -321,61 +348,69 @@ definitions:
       requestMetadata:
         $ref: "#/definitions/RequestMetadata"
 
-  LinkCreateArgs:
-    description: "Parameters to create any magic link."
+  MagicLinkLimits:
+    type: "object"
+    properties:
+      lifespanSeconds:
+        description: "The number of seconds the magic link should be active for after the request has been processed. It
+        defaults to 1 hour. The minimum value is 5 seconds and the maximum value is 7905600000 seconds, which is a bit
+        over 250 years."
+        type: "integer"
+        default: 3600
+      maxUses: # TODO Add to Go code.
+        description: "The number of times the magic link can be used. It defaults to 1. A value of 0 will be converted
+        into 1."
+        type: "integer"
+        default: 1
+
+  MagicLinkCreateArgs:
+    description: "Parameters to create a magic link."
     type: "object"
     properties:
       jwtCreateArgs:
-        description: "The parameters used to create the JWT to pass upon redirection."
         $ref: "#/definitions/JWTCreateArgs"
-      linkLifespan:
-        description: "The number of seconds the link should be active for after the request has been processed. It
-        defaults to 1 hour. The minimum value is 5 and the maximum value is 2,592,000."
-        type: "integer"
-        default: 3600
       redirectQueryKey:
         description: 'The URL query key in the redirectURL to contain the signed JWT when the magic link is used. By
         default, "jwt" is used.'
         type: "string"
       redirectURL:
-        description: "The URL to redirect to with the signed JWT when the link is used."
+        description: "The URL to redirect to with the signed JWT when the magic link is used."
         type: "string"
     required:
       - "redirectURL"
 
-  LinkCreateRequest:
-    description: "The request body for the /link/create endpoint."
+  MagicLinkCreateRequest:
     type: "object"
     properties:
-      linkArgs:
-        $ref: "#/definitions/LinkCreateArgs"
+      magicLinkCreateArgs:
+        $ref: "#/definitions/MagicLinkCreateArgs"
+      magicLinkLimits:
+        $ref: "#/definitions/MagicLinkLimits"
     required:
-      - "linkArgs"
+      - "magicLinkCreateArgs"
+      - "magicLinkLimitations"
 
-  LinkCreateResults:
-    description: "The results for creating a magic link."
+  MagicLinkCreateResults:
     type: "object"
     properties:
       magicLink:
-        description: "The magic link that, when visited, will sign a JWT with the given information and pass it along in
-         a redirect to the given URL. The link can only be used once. This link should as if it were the signed JWT."
+        description: "The URL that will act as a magic link. When this URL is visited, a new JWT will be created. A
+        redirect wil be performed with this new JWT in the redirect URL's query parameter."
         type: "string"
       secret:
-        description: "The secret embedded in the magic link. It can only be used once, so using it will automatically
-        expire the link."
+        description: "The secret embedded in the magic link."
         type: "string"
 
-  LinkCreateResponse:
-    description: "The response body for the /link/create endpoint."
+  MagicLinkCreateResponse:
     type: "object"
     properties:
-      linkCreateResults:
-        $ref: "#/definitions/LinkCreateResults"
+      magicLinkCreateResults:
+        $ref: "#/definitions/MagicLinkCreateResults"
       requestMetadata:
         $ref: "#/definitions/RequestMetadata"
 
-  EmailLinkCreateArgs:
-    description: "Parameters to create an email magic link."
+  MagicLinkEmailCreateArgs:
+    description: "Parameters to create a magic link email."
     type: "object"
     properties:
       buttonText:
@@ -428,65 +463,186 @@ definitions:
       - "toEmail"
       - "serviceName"
 
-  EmailLinkCreateRequest:
-    description: "The request body for the /email-link/create endpoint."
+  MagicLinkEmailCreateRequest:
     type: "object"
     properties:
-      emailArgs:
-        $ref: "#/definitions/EmailLinkCreateArgs"
-      linkArgs:
-        $ref: "#/definitions/LinkCreateArgs"
+      magicLinkCreateArgs:
+        $ref: "#/definitions/MagicLinkCreateArgs"
+      magicLinkEmailCreateArgs:
+        $ref: "#/definitions/MagicLinkEmailCreateArgs"
     required:
-      - "emailArgs"
-      - "linkArgs"
+      - "magicLinkCreateArgs"
+      - "magicLinkEmailCreateArgs"
 
-  EmailLinkCreateResults:
-    description: "The results for creating an email magic link."
+  MagicLinkEmailCreateResults:
+    description: "The results for creating a magic link email."
     type: "object"
     properties:
-      linkCreateResults:
-        $ref: "#/definitions/LinkCreateResults"
+      magicLinkCreateResults:
+        $ref: "#/definitions/MagicLinkCreateResults"
 
-  EmailLinkCreateResponse:
-    description: "The response body from the /email-link/create endpoint."
+  MagicLinkEmailCreateResponse:
     type: "object"
     properties:
-      emailLinkCreateResults:
-        $ref: "#/definitions/EmailLinkCreateResults"
+      magicLinkEmailCreateResults:
+        $ref: "#/definitions/MagicLinkEmailCreateResults"
       requestMetadata:
         $ref: "#/definitions/RequestMetadata"
 
-  ServiceAccountCreateArgs:
-    description: "Parameters to create a service account."
+  OTPCreateArgs:
+    description: "Parameters to create a One-Time Password (OTP)."
     type: "object"
     properties:
-      serviceLogo:
-        description: "The URL of the service account's service's logo."
+      lifespanSeconds:
+        description: "The lifespan of the OTP in seconds. The OTP's lifespan starts after the magic link has been
+        visited and the OTP is created. It defaults to 5 minutes. The minimum value is 5 seconds and the maximum value is
+        7905600000 seconds, which is a bit over 250 years."
+        default: 300
+        type: "integer"
+
+  OTPCreateRequest:
+    type: "object"
+    properties:
+      otpCreateArgs:
+        $ref: "#/definitions/OTPCreateArgs"
+    required:
+      - "otpCreateArgs"
+
+  OTPCreateResults:
+    description: "The results for creating a One-Time Password (OTP)."
+    type: "object"
+    properties:
+      otp:
+        description: "The One-Time Password."
         type: "string"
-        format: "uri"
+
+  OTPCreateResponse:
+    type: "object"
+    properties:
+      otpCreateResults:
+        $ref: "#/definitions/OTPCreateResults"
+      requestMetadata:
+        $ref: "#/definitions/RequestMetadata"
+
+  OTPEmailCreateArgs:
+    description: "Parameters to create a One-Time Password (OTP) email."
+    type: "object"
+    properties:
+      greeting:
+        description: 'The smaller text above the title.'
+        type: "string"
+        example: "Hello Jane Doe,"
+      logoClickURL:
+        description: "The URL to redirect to when the logo is clicked."
+        type: "string"
+        example: "https://example.com"
+      logoImageURL:
+        description: "The URL to the logo image to display in the email."
+        type: "string"
+        example: "https://example.com/logo.png"
       serviceName:
-        description: "The name of the service account's service."
+        description: "The name of your service. This is used in invisible email metadata."
         type: "string"
-      serviceURL:
-        description: "The landing page URL for the service account's service."
+        example: "example.com"
+      subject:
+        description: 'The subject of the email. It must be between 5 and 100 characters inclusive. Make sure to include
+        the name of your application.'
         type: "string"
-        format: "uri"
+        example: "Login to example.com"
+      subTitle:
+        description: "The smaller text, right above the magic link button."
+        type: "string"
+        example: "Login using the button below."
+      title:
+        description: 'The larger text, right above the subtitle. It must be between 5 and 256 characters inclusive.
+        Make sure to include the name of your application.'
+        type: "string"
+        example: "Login to example.com with a magic link"
+      toEmail:
+        description: "The email address to send the magic link to."
+        type: "string"
+        format: "email"
+        example: "jane.doe@example.com"
+      toName:
+        description: "The name of the recipient."
+        type: "string"
+        example: "Jane Doe"
+    required:
+      - "subject"
+      - "title"
+      - "toEmail"
+      - "serviceName"
+
+  OTPEmailCreateRequest:
+    type: "object"
+    properties:
+      otpCreateArgs:
+        $ref: "#/definitions/OTPCreateArgs"
+      otpEmailCreateArgs:
+        $ref: "#/definitions/OTPEmailCreateArgs"
+    required:
+      - "otpCreateArgs"
+      - "otpEmailCreateArgs"
+
+  OTPEmailCreateResults:
+    description: "The results for creating a One-Time Password (OTP) email."
+    type: "object"
+    properties:
+      otpCreateResults:
+        $ref: "#/definitions/OTPCreateResults"
+
+  OTPEmailCreateResponse:
+    type: "object"
+    properties:
+      otpEmailCreateResults:
+        $ref: "#/definitions/OTPEmailCreateResults"
+      requestMetadata:
+        $ref: "#/definitions/RequestMetadata"
+
+  PermanentMagicLinkCreateRequest:
+    type: "object"
+    properties:
+      magicLinkCreateArgs:
+        $ref: "#/definitions/MagicLinkCreateArgs"
+    required:
+      - "magicLinkCreateArgs"
+
+  PermanentMagicLinkCreateResponse:
+    type: "object"
+    properties:
+      magicLinkEmailCreateResults:
+        $ref: "#/definitions/MagicLinkCreateResults"
+      requestMetadata:
+        $ref: "#/definitions/RequestMetadata"
+
+  PermanentMagicLinkEmailCreateRequest:
+    type: "object"
+    properties:
+      magicLinkCreateArgs:
+        $ref: "#/definitions/MagicLinkEmailCreateArgs"
+      magicLinkEmailCreateArgs:
+        $ref: "#/definitions/MagicLinkCreateArgs"
+    required:
+      - "magicLinkCreateArgs"
+      - "magicLinkEmailCreateArgs"
+
+  PermanentMagicLinkEmailCreateResponse:
+    type: "object"
+    properties:
+      magicLinkEmailCreateResults:
+        $ref: "#/definitions/MagicLinkEmailCreateResults"
+      requestMetadata:
+        $ref: "#/definitions/RequestMetadata"
 
   ServiceAccountCreateRequest:
     description: "The request body for the /admin/service-account/create endpoint."
     type: "object"
-    properties:
-      createServiceAccountArgs:
-        $ref: "#/definitions/ServiceAccountCreateArgs"
-    required:
-      - "createServiceAccountArgs"
 
   ServiceAccountCreateResults:
     description: "The results for creating a service account."
     type: "object"
     properties:
       serviceAccount:
-        description: "The service account that was created."
         $ref: "#/definitions/ServiceAccount"
 
   ServiceAccountCreateResponse:

@@ -36,8 +36,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	req := model.EmailLinkCreateRequest{
-		EmailArgs: model.EmailLinkCreateArgs{
+	req := model.MagicLinkEmailCreateRequest{
+		MagicLinkEmailCreateArgs: model.MagicLinkEmailCreateArgs{
 			ButtonText:   "Log in",
 			Greeting:     "Hello John Doe,",
 			LogoClickURL: "https://magiclinks.dev",
@@ -49,12 +49,12 @@ func main() {
 			ToEmail:      "johndoe@example.com",
 			ToName:       "John Doe",
 		},
-		LinkArgs: model.LinkCreateArgs{
+		MagicLinkCreateArgs: model.MagicLinkCreateArgs{
 			JWTCreateArgs: model.JWTCreateArgs{
-				JWTClaims:          claims,
-				JWTLifespanSeconds: 5,
+				Claims:          claims,
+				LifespanSeconds: 5,
 			},
-			LinkLifespan:     60 * 60,
+			LifespanSeconds:  60 * 60,
 			RedirectQueryKey: "",
 			RedirectURL:      "https://jwtdebug.micahparks.com",
 		},

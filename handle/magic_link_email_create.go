@@ -12,14 +12,14 @@ import (
 	"github.com/MicahParks/magiclinksdev/network/middleware/ctxkey"
 )
 
-// HandleEmailLinkCreate handles the email link creation endpoint.
-func (s *Server) HandleEmailLinkCreate(ctx context.Context, req model.ValidEmailLinkCreateRequest) (model.EmailLinkCreateResponse, error) {
-	emailArgs := req.EmailArgs
-	linkArgs := req.LinkArgs
+// HandleMagicLinkEmailCreate handles the email link creation endpoint.
+func (s *Server) HandleMagicLinkEmailCreate(ctx context.Context, req model.ValidMagicLinkEmailCreateRequest) (model.MagicLinkEmailCreateResponse, error) {
+	emailArgs := req.MagicLinkEmailCreateArgs
+	linkArgs := req.MagicLinkCreateArgs
 
 	magicLinkResp, err := s.createLink(ctx, linkArgs)
 	if err != nil {
-		return model.EmailLinkCreateResponse{}, fmt.Errorf("failed to create magic link: %w", err)
+		return model.MagicLinkEmailCreateResponse{}, fmt.Errorf("failed to create magic link: %w", err)
 	}
 
 	meta := email.TemplateMetadata{
@@ -49,16 +49,16 @@ func (s *Server) HandleEmailLinkCreate(ctx context.Context, req model.ValidEmail
 	}
 	err = s.EmailProvider.Send(ctx, e)
 	if err != nil {
-		return model.EmailLinkCreateResponse{}, fmt.Errorf("failed to send email: %w", err)
+		return model.MagicLinkEmailCreateResponse{}, fmt.Errorf("failed to send email: %w", err)
 	}
 
-	linkCreateResponse := model.LinkCreateResults{
+	linkCreateResponse := model.MagicLinkCreateResults{
 		MagicLink: magicLinkResp.MagicLink.String(),
 		Secret:    magicLinkResp.Secret,
 	}
-	resp := model.EmailLinkCreateResponse{
-		EmailLinkCreateResults: model.EmailLinkCreateResults{
-			LinkCreateResults: linkCreateResponse,
+	resp := model.MagicLinkEmailCreateResponse{
+		MagicLinkEmailCreateResults: model.MagicLinkEmailCreateResults{
+			MagicLinkCreateResults: linkCreateResponse,
 		},
 		RequestMetadata: model.RequestMetadata{
 			UUID: ctx.Value(ctxkey.RequestUUID).(uuid.UUID),

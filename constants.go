@@ -1,5 +1,9 @@
 package magiclinksdev
 
+import (
+	"time"
+)
+
 const (
 	// ContentTypeJSON is the content type for JSON.
 	ContentTypeJSON = "application/json"
@@ -15,6 +19,8 @@ const (
 	LogRequestBody = "requestBody"
 	// LogResponseBody is key for logging the response body.
 	LogResponseBody = "responseBody"
+	// Over250Years is the maximum duration for this project. Restriction derived from Golang's time.Duration.
+	Over250Years = 250 * 366 * 24 * time.Hour
 	// ResponseInternalServerError is the response for internal server errors.
 	ResponseInternalServerError = "Internal server error."
 	// ResponseTooManyRequests is the response for too many requests.

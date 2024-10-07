@@ -36,13 +36,13 @@ func main() {
 		os.Exit(1)
 	}
 
-	req := model.LinkCreateRequest{
-		LinkArgs: model.LinkCreateArgs{
+	req := model.MagicLinkCreateRequest{
+		MagicLinkCreateArgs: model.MagicLinkCreateArgs{
 			JWTCreateArgs: model.JWTCreateArgs{
-				JWTClaims:          claims,
-				JWTLifespanSeconds: 5,
+				Claims:          claims,
+				LifespanSeconds: 5,
 			},
-			LinkLifespan:     100,
+			LifespanSeconds:  100,
 			RedirectQueryKey: "",
 			RedirectURL:      "https://jwtdebug.micahparks.com",
 		},

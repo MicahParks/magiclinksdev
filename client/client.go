@@ -137,10 +137,10 @@ func (c Client) LocalJWTValidate(token string, claims jwt.Claims) (*jwt.Token, e
 }
 
 // EmailLinkCreate calls the /email-magic-link/create endpoint and returns the appropriate response.
-func (c Client) EmailLinkCreate(ctx context.Context, req model.EmailLinkCreateRequest) (model.EmailLinkCreateResponse, model.Error, error) {
-	resp, errResp, err := request[model.EmailLinkCreateRequest, model.EmailLinkCreateResponse](ctx, c, http.StatusCreated, network.PathEmailMagicLinkCreate, req)
+func (c Client) EmailLinkCreate(ctx context.Context, req model.MagicLinkEmailCreateRequest) (model.MagicLinkEmailCreateResponse, model.Error, error) {
+	resp, errResp, err := request[model.MagicLinkEmailCreateRequest, model.MagicLinkEmailCreateResponse](ctx, c, http.StatusCreated, network.PathMagicLinkEmailCreate, req)
 	if err != nil {
-		return model.EmailLinkCreateResponse{}, errResp, fmt.Errorf("failed to create email link: %w", err)
+		return model.MagicLinkEmailCreateResponse{}, errResp, fmt.Errorf("failed to create email link: %w", err)
 	}
 	return resp, errResp, nil
 }
@@ -166,10 +166,10 @@ func (c Client) JWTValidate(ctx context.Context, req model.JWTValidateRequest) (
 }
 
 // LinkCreate calls the /magic-link/create endpoint and returns the appropriate response.
-func (c Client) LinkCreate(ctx context.Context, req model.LinkCreateRequest) (model.LinkCreateResponse, model.Error, error) {
-	resp, errResp, err := request[model.LinkCreateRequest, model.LinkCreateResponse](ctx, c, http.StatusCreated, network.PathMagicLinkCreate, req)
+func (c Client) LinkCreate(ctx context.Context, req model.MagicLinkCreateRequest) (model.MagicLinkCreateResponse, model.Error, error) {
+	resp, errResp, err := request[model.MagicLinkCreateRequest, model.MagicLinkCreateResponse](ctx, c, http.StatusCreated, network.PathMagicLinkCreate, req)
 	if err != nil {
-		return model.LinkCreateResponse{}, errResp, fmt.Errorf("failed to create link: %w", err)
+		return model.MagicLinkCreateResponse{}, errResp, fmt.Errorf("failed to create link: %w", err)
 	}
 	return resp, errResp, nil
 }

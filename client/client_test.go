@@ -40,12 +40,12 @@ var (
 	redirectPath, _   = url.Parse(mld.DefaultRelativePathRedirect)
 
 	jwtCreateArgs = model.JWTCreateArgs{
-		JWTClaims:          mldtest.TClaims,
-		JWTLifespanSeconds: 5,
+		Claims:          mldtest.TClaims,
+		LifespanSeconds: 5,
 	}
-	linkArgs = model.LinkCreateArgs{
+	linkArgs = model.MagicLinkCreateArgs{
 		JWTCreateArgs:    jwtCreateArgs,
-		LinkLifespan:     5,
+		LifespanSeconds:  5,
 		RedirectQueryKey: magiclink.DefaultRedirectQueryKey,
 		RedirectURL:      "http://example.com",
 	}
@@ -102,8 +102,8 @@ func TestEmailLinkCreate(t *testing.T) {
 	ctx := createCtx(t)
 	c := newClient(ctx, t)
 
-	req := model.EmailLinkCreateRequest{
-		EmailArgs: model.EmailLinkCreateArgs{
+	req := model.MagicLinkEmailCreateRequest{
+		MagicLinkEmailCreateArgs: model.MagicLinkEmailCreateArgs{
 			ButtonText:   "Test button text",
 			Greeting:     "Test greeting",
 			LogoClickURL: mldtest.LogoClickURL,
@@ -115,7 +115,7 @@ func TestEmailLinkCreate(t *testing.T) {
 			ToEmail:      "customer@example.com",
 			ToName:       "Test name",
 		},
-		LinkArgs: linkArgs,
+		MagicLinkCreateArgs: linkArgs,
 	}
 	resp, mldErr, err := c.EmailLinkCreate(ctx, req)
 	if err != nil {
@@ -126,7 +126,7 @@ func TestEmailLinkCreate(t *testing.T) {
 	}
 
 	validateMetadata(t, resp.RequestMetadata)
-	validateLinkResults(t, resp.EmailLinkCreateResults.LinkCreateResults)
+	validateLinkResults(t, resp.MagicLinkEmailCreateResults.MagicLinkCreateResults)
 }
 
 func TestJWTCreate(t *testing.T) {
@@ -237,8 +237,8 @@ func TestLinkCreate(t *testing.T) {
 	ctx := createCtx(t)
 	c := newClient(ctx, t)
 
-	req := model.LinkCreateRequest{
-		LinkArgs: linkArgs,
+	req := model.MagicLinkCreateRequest{
+		MagicLinkCreateArgs: linkArgs,
 	}
 	resp, mldErr, err := c.LinkCreate(ctx, req)
 	if err != nil {
@@ -249,7 +249,7 @@ func TestLinkCreate(t *testing.T) {
 	}
 
 	validateMetadata(t, resp.RequestMetadata)
-	validateLinkResults(t, resp.LinkCreateResults)
+	validateLinkResults(t, resp.MagicLinkCreateResults)
 }
 
 func TestServiceAccountCreate(t *testing.T) {
@@ -257,7 +257,7 @@ func TestServiceAccountCreate(t *testing.T) {
 	c := newClient(ctx, t)
 
 	req := model.ServiceAccountCreateRequest{
-		CreateServiceAccountArgs: model.ServiceAccountCreateArgs{},
+		ServiceAccountCreateArgs: model.ServiceAccountCreateArgs{},
 	}
 	resp, mldErr, err := c.ServiceAccountCreate(ctx, req)
 	if err != nil {
@@ -269,16 +269,16 @@ func TestServiceAccountCreate(t *testing.T) {
 
 	validateMetadata(t, resp.RequestMetadata)
 
-	if resp.CreateServiceAccountResults.ServiceAccount.Admin {
+	if resp.ServiceAccountCreateResults.ServiceAccount.Admin {
 		t.Fatalf("Created service account should not be an admin.")
 	}
-	if resp.CreateServiceAccountResults.ServiceAccount.UUID == uuid.Nil {
+	if resp.ServiceAccountCreateResults.ServiceAccount.UUID == uuid.Nil {
 		t.Fatalf("Created service account should have non-nil UUID.")
 	}
-	if resp.CreateServiceAccountResults.ServiceAccount.Aud == uuid.Nil {
+	if resp.ServiceAccountCreateResults.ServiceAccount.Aud == uuid.Nil {
 		t.Fatalf("Created service account should have non-nil audience UUID.")
 	}
-	if resp.CreateServiceAccountResults.ServiceAccount.APIKey == uuid.Nil {
+	if resp.ServiceAccountCreateResults.ServiceAccount.APIKey == uuid.Nil {
 		t.Fatalf("Created service account should have non-nil API key.")
 	}
 }
@@ -407,7 +407,7 @@ func newClient(ctx context.Context, t *testing.T) Client {
 	return c
 }
 
-func validateLinkResults(t *testing.T, results model.LinkCreateResults) {
+func validateLinkResults(t *testing.T, results model.MagicLinkCreateResults) {
 	ml, err := url.Parse(results.MagicLink)
 	if err != nil {
 		t.Fatalf("Failed to parse magic link: %v.", err)

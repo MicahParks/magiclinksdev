@@ -8,8 +8,8 @@ import (
 type ServiceAccountCreateArgs struct{}
 
 // Validate implements the Validatable interface.
-func (n ServiceAccountCreateArgs) Validate(_ Validation) (ValidServiceAccountCreateArgs, error) {
-	return ValidServiceAccountCreateArgs(n), nil
+func (s ServiceAccountCreateArgs) Validate(_ Validation) (ValidServiceAccountCreateArgs, error) {
+	return ValidServiceAccountCreateArgs(s), nil
 }
 
 // ValidServiceAccountCreateArgs are the validated arguments to create a service account.
@@ -17,24 +17,24 @@ type ValidServiceAccountCreateArgs struct{}
 
 // ServiceAccountCreateRequest is the unvalidated request to create a service account.
 type ServiceAccountCreateRequest struct {
-	CreateServiceAccountArgs ServiceAccountCreateArgs `json:"createServiceAccountArgs"`
+	ServiceAccountCreateArgs ServiceAccountCreateArgs `json:"serviceAccountCreateArgs"`
 }
 
 // Validate implements the Validatable interface.
-func (b ServiceAccountCreateRequest) Validate(config Validation) (ValidServiceAccountCreateRequest, error) {
-	createServiceAccountArgs, err := b.CreateServiceAccountArgs.Validate(config)
+func (s ServiceAccountCreateRequest) Validate(config Validation) (ValidServiceAccountCreateRequest, error) {
+	serviceAccountCreateArgs, err := s.ServiceAccountCreateArgs.Validate(config)
 	if err != nil {
-		return ValidServiceAccountCreateRequest{}, fmt.Errorf("failed to validate create service account args: %w", err)
+		return ValidServiceAccountCreateRequest{}, fmt.Errorf("failed to validate service account create args: %w", err)
 	}
 	valid := ValidServiceAccountCreateRequest{
-		CreateServiceAccountArgs: createServiceAccountArgs,
+		ServiceAccountCreateArgs: serviceAccountCreateArgs,
 	}
 	return valid, nil
 }
 
 // ValidServiceAccountCreateRequest is the validated request to create a service account.
 type ValidServiceAccountCreateRequest struct {
-	CreateServiceAccountArgs ValidServiceAccountCreateArgs
+	ServiceAccountCreateArgs ValidServiceAccountCreateArgs
 }
 
 // ServiceAccountCreateResults are the results of creating a service account.
@@ -44,6 +44,6 @@ type ServiceAccountCreateResults struct {
 
 // ServiceAccountCreateResponse is the response to creating a service account.
 type ServiceAccountCreateResponse struct {
-	CreateServiceAccountResults ServiceAccountCreateResults `json:"createServiceAccountResults"`
+	ServiceAccountCreateResults ServiceAccountCreateResults `json:"serviceAccountCreateResults"`
 	RequestMetadata             RequestMetadata             `json:"requestMetadata"`
 }

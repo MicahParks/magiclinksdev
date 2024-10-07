@@ -37,7 +37,7 @@ func (s *Server) HandleJWTCreate(ctx context.Context, req model.ValidJWTCreateRe
 	}
 
 	options := storage.ReadSigningKeyOptions{
-		JWTAlg: jwtCreateArgs.JWTAlg,
+		JWTAlg: jwtCreateArgs.Alg,
 	}
 	jwk, err := s.Store.ReadSigningKey(ctx, options)
 	if err != nil {
@@ -76,7 +76,7 @@ func (s *Server) addRegisteredClaims(ctx context.Context, args model.ValidJWTCre
 		return nil, fmt.Errorf("%w: service account context not found", ctxkey.ErrCtxKey)
 	}
 
-	valid := json.Valid(args.JWTClaims)
+	valid := json.Valid(args.Claims)
 	if !valid {
 		return nil, fmt.Errorf("%w: invalid JSON for JWT claims", model.ErrInvalidModel)
 	}
@@ -91,7 +91,7 @@ func (s *Server) addRegisteredClaims(ctx context.Context, args model.ValidJWTCre
 		Issuer:    s.Config.Iss,
 		Subject:   "", // Don't set.
 		Audience:  jwt.ClaimStrings{sa.Aud.String()},
-		ExpiresAt: jwt.NewNumericDate(n.Add(args.JWTLifespan)),
+		ExpiresAt: jwt.NewNumericDate(n.Add(args.Lifespan)),
 		NotBefore: now,
 		IssuedAt:  now,
 		ID:        u.String(),
@@ -113,8 +113,8 @@ func (s *Server) addRegisteredClaims(ctx context.Context, args model.ValidJWTCre
 		magiclinksdev.AttrJti,
 	}
 
-	edited := make(json.RawMessage, len(args.JWTClaims))
-	copy(edited, args.JWTClaims)
+	edited := make(json.RawMessage, len(args.Claims))
+	copy(edited, args.Claims)
 	for _, attr := range rfc5119 {
 		if gjson.GetBytes(edited, attr).Exists() {
 			return nil, fmt.Errorf("%w: %s", ErrRegisteredClaimProvided, attr)
@@ -136,7 +136,7 @@ func (s *Server) addRegisteredClaims(ctx context.Context, args model.ValidJWTCre
 	return edited, nil
 }
 
-func (s *Server) createLinkArgs(ctx context.Context, args model.ValidLinkCreateArgs) (magiclink.CreateArgs, error) {
+func (s *Server) createLinkArgs(ctx context.Context, args model.ValidMagicLinkCreateArgs) (magiclink.CreateArgs, error) {
 	var createArgs magiclink.CreateArgs
 
 	edited, err := s.addRegisteredClaims(ctx, args.JWTCreateArgs)
@@ -149,7 +149,7 @@ func (s *Server) createLinkArgs(ctx context.Context, args model.ValidLinkCreateA
 	}
 
 	options := storage.ReadSigningKeyOptions{
-		JWTAlg: args.JWTCreateArgs.JWTAlg,
+		JWTAlg: args.JWTCreateArgs.Alg,
 	}
 	jwk, err := s.Store.ReadSigningKey(ctx, options)
 	if err != nil {

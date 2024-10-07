@@ -11,6 +11,7 @@ import (
 	jt "github.com/MicahParks/jsontype"
 	"github.com/google/uuid"
 
+	mld "github.com/MicahParks/magiclinksdev"
 	"github.com/MicahParks/magiclinksdev/network/middleware/ctxkey"
 )
 
@@ -51,7 +52,7 @@ type ServiceAccount struct {
 // Validation contains information on how to validate models.
 type Validation struct {
 	LinkLifespanDefault *jt.JSONType[time.Duration] `json:"linkLifespanDefault"`
-	LinkLifespanMax     *jt.JSONType[time.Duration] `json:"maxLinkLifespan"`
+	LifeSpanSeconds     *jt.JSONType[time.Duration] `json:"maxLinkLifespan"`
 	JWTClaimsMaxBytes   uint                        `json:"maxJWTClaimsBytes"`
 	JWTLifespanDefault  *jt.JSONType[time.Duration] `json:"jwtLifespanDefault"`
 	JWTLifespanMax      *jt.JSONType[time.Duration] `json:"maxJWTLifespan"`
@@ -65,8 +66,8 @@ func (v Validation) DefaultsAndValidate() (Validation, error) {
 	if v.LinkLifespanDefault.Get() == 0 {
 		v.LinkLifespanDefault = jt.New(time.Hour)
 	}
-	if v.LinkLifespanMax.Get() == 0 {
-		v.LinkLifespanMax = jt.New(24 * 30 * time.Hour) // 30 days.
+	if v.LifeSpanSeconds.Get() == 0 {
+		v.LifeSpanSeconds = jt.New(mld.Over250Years)
 	}
 	if v.JWTClaimsMaxBytes == 0 {
 		v.JWTClaimsMaxBytes = 4096
@@ -75,7 +76,7 @@ func (v Validation) DefaultsAndValidate() (Validation, error) {
 		v.JWTLifespanDefault = jt.New(5 * time.Minute)
 	}
 	if v.JWTLifespanMax.Get() == 0 {
-		v.JWTLifespanMax = jt.New(24 * 30 * time.Hour) // 30 days.
+		v.JWTLifespanMax = jt.New(mld.Over250Years)
 	}
 	if v.ServiceNameMinUTF8 == 0 {
 		v.ServiceNameMinUTF8 = 5
