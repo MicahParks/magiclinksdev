@@ -357,7 +357,7 @@ definitions:
         over 250 years."
         type: "integer"
         default: 3600
-      maxUses: # TODO Add to Go code.
+      uses: # TODO Add to Go code.
         description: "The number of times the magic link can be used. It defaults to 1. A value of 0 will be converted
         into 1."
         type: "integer"
