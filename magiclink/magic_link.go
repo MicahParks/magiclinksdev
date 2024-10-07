@@ -90,7 +90,7 @@ func (m MagicLink) JWKSHandler() http.Handler {
 
 // JWKSet is a getter method to return the underlying JWK Set.
 func (m MagicLink) JWKSet() jwkset.Storage {
-	return m.jwks.jwks
+	return m.jwks.storage
 }
 
 // NewLink creates a magic link with the given parameters.
@@ -167,19 +167,19 @@ func (m MagicLink) HandleMagicLink(ctx context.Context, secret string) (jwtB64 s
 
 	var jwk jwkset.JWK
 	if response.CreateArgs.JWTKeyID != nil {
-		jwk, err = m.jwks.jwks.KeyRead(ctx, *response.CreateArgs.JWTKeyID)
+		jwk, err = m.jwks.storage.KeyRead(ctx, *response.CreateArgs.JWTKeyID)
 		if err != nil {
 			return "", response, fmt.Errorf("%w: %s", ErrJWKSReadGivenKID, err)
 		}
 	} else {
-		allKeys, err := m.jwks.jwks.KeyReadAll(ctx)
+		allKeys, err := m.jwks.storage.KeyReadAll(ctx)
 		if err != nil {
 			return "", response, fmt.Errorf("%w: %s", ErrJWKSSnapshot, err)
 		}
 		if len(allKeys) == 0 {
 			return "", response, ErrJWKSEmpty
 		}
-		jwk = allKeys[0]
+		jwk = allKeys[0] // TODO Why the first key? Should this be the signing default? If so, update docs and implementations.
 	}
 
 	signingMethod := jwt.GetSigningMethod(response.CreateArgs.JWTSigningMethod)
