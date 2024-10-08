@@ -8,10 +8,10 @@ import (
 	"strings"
 )
 
-const (
-	alphaLower = "abcdefghijklmnopqrstuvwxyz"
-	alphaUpper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-	numeric    = "0123456789"
+var (
+	alphaLower = []rune("abcdefghijklmnopqrstuvwxyz")
+	alphaUpper = []rune("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+	numeric    = []rune("0123456789")
 )
 
 var (
@@ -28,13 +28,13 @@ type OTPArgs struct { // TODO Rename?
 func generateOTP(args OTPArgs) (string, error) {
 	charSet := make([]rune, 0)
 	if args.CharSetAlphaLower {
-		charSet = append(charSet, []rune(alphaLower)...)
+		charSet = append(charSet, alphaLower...)
 	}
 	if args.CharSetAlphaUpper {
-		charSet = append(charSet, []rune(alphaUpper)...)
+		charSet = append(charSet, alphaUpper...)
 	}
 	if args.CharSetNumeric {
-		charSet = append(charSet, []rune(numeric)...)
+		charSet = append(charSet, numeric...)
 	}
 	if len(charSet) == 0 {
 		return "", fmt.Errorf("must include at least one character set: %w", ErrInvalidArgs)
