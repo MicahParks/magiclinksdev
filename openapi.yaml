@@ -372,12 +372,6 @@ components:
             \ after the request has been processed. It defaults to 1 hour. The minimum\
             \ value is 5 seconds and the maximum value is 7905600000 seconds, which\
             \ is a bit over 250 years."
-        uses:
-          type: integer
-          description: The number of times the magic link can be used. It defaults
-            to 1. A value of 0 will be converted into 1.
-          format: int64
-          default: 1
     MagicLinkCreateArgs:
       required:
         - redirectURL
