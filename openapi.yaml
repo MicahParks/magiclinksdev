@@ -204,55 +204,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
       x-codegen-request-body-name: body
-  /permanent-magic-link/create:
-    post:
-      summary: Create a permanent magic link.
-      operationId: permanentMagicLinkCreate
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PermanentMagicLinkCreateRequest'
-        required: true
-      responses:
-        "201":
-          description: The permanent magic link was created.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PermanentMagicLinkCreateResponse'
-        default:
-          description: An unexpected error occurred.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-      x-codegen-request-body-name: body
-  /permanent-magic-link-email/create:
-    post:
-      summary: Create a permanent magic link and send it via email.
-      operationId: permanentMagicLinkEmailCreate
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PermanentMagicLinkEmailCreateRequest'
-        required: true
-      responses:
-        "201":
-          description: The permanent magic link has been created and the email request
-            has been accepted by the provider.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PermanentMagicLinkEmailCreateResponse'
-        default:
-          description: An unexpected error occurred.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-      x-codegen-request-body-name: body
 components:
   schemas:
     Error:
@@ -594,37 +545,6 @@ components:
       properties:
         otpEmailCreateResults:
           $ref: '#/components/schemas/OTPEmailCreateResults'
-        requestMetadata:
-          $ref: '#/components/schemas/RequestMetadata'
-    PermanentMagicLinkCreateRequest:
-      required:
-        - magicLinkCreateArgs
-      type: object
-      properties:
-        magicLinkCreateArgs:
-          $ref: '#/components/schemas/MagicLinkCreateArgs'
-    PermanentMagicLinkCreateResponse:
-      type: object
-      properties:
-        magicLinkEmailCreateResults:
-          $ref: '#/components/schemas/MagicLinkCreateResults'
-        requestMetadata:
-          $ref: '#/components/schemas/RequestMetadata'
-    PermanentMagicLinkEmailCreateRequest:
-      required:
-        - magicLinkCreateArgs
-        - magicLinkEmailCreateArgs
-      type: object
-      properties:
-        magicLinkCreateArgs:
-          $ref: '#/components/schemas/MagicLinkEmailCreateArgs'
-        magicLinkEmailCreateArgs:
-          $ref: '#/components/schemas/MagicLinkCreateArgs'
-    PermanentMagicLinkEmailCreateResponse:
-      type: object
-      properties:
-        magicLinkEmailCreateResults:
-          $ref: '#/components/schemas/MagicLinkEmailCreateResults'
         requestMetadata:
           $ref: '#/components/schemas/RequestMetadata'
     ServiceAccountCreateRequest:
