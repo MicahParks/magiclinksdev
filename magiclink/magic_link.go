@@ -100,7 +100,7 @@ func (m MagicLink) NewLink(ctx context.Context, args CreateArgs) (CreateResponse
 		return CreateResponse{}, fmt.Errorf("failed to validate args: %w", err)
 	}
 
-	secret, err := m.Store.LinkCreate(ctx, args)
+	secret, err := m.Store.Create(ctx, args)
 	if err != nil {
 		return CreateResponse{}, fmt.Errorf("failed to create link: %w", err)
 	}
@@ -157,7 +157,7 @@ func (m MagicLink) MagicLinkHandler() http.Handler {
 
 // HandleMagicLink is a method that accepts a magic link secret, then returns the signed JWT.
 func (m MagicLink) HandleMagicLink(ctx context.Context, secret string) (jwtB64 string, response ReadResponse, err error) {
-	response, err = m.Store.LinkRead(ctx, secret)
+	response, err = m.Store.Read(ctx, secret)
 	if err != nil {
 		if errors.Is(err, ErrLinkNotFound) {
 			return "", response, err

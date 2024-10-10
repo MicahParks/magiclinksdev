@@ -173,10 +173,10 @@ func (t *testStorage) MarshalWithOptions(ctx context.Context, marshalOptions jwk
 	}
 	return m.MarshalWithOptions(ctx, marshalOptions, validationOptions)
 }
-func (t *testStorage) LinkCreate(_ context.Context, _ magiclink.CreateArgs) (secret string, err error) {
+func (t *testStorage) Create(_ context.Context, _ magiclink.CreateArgs) (secret string, err error) {
 	return uuid.New().String(), nil
 }
-func (t *testStorage) LinkRead(_ context.Context, _ string) (magiclink.ReadResponse, error) {
+func (t *testStorage) Read(_ context.Context, _ string) (magiclink.ReadResponse, error) {
 	return magiclink.ReadResponse{}, nil
 }
 
@@ -222,9 +222,9 @@ func (e ErrorStorage) SnapshotKeys(_ context.Context) ([]jwkset.JWK, error) {
 func (e ErrorStorage) WriteKey(_ context.Context, _ jwkset.JWK) error {
 	return ErrMLDTest
 }
-func (e ErrorStorage) LinkCreate(_ context.Context, _ magiclink.CreateArgs) (secret string, err error) {
+func (e ErrorStorage) Create(_ context.Context, _ magiclink.CreateArgs) (secret string, err error) {
 	return "", ErrMLDTest
 }
-func (e ErrorStorage) LinkRead(_ context.Context, _ string) (magiclink.ReadResponse, error) {
+func (e ErrorStorage) Read(_ context.Context, _ string) (magiclink.ReadResponse, error) {
 	return magiclink.ReadResponse{}, ErrMLDTest
 }
