@@ -65,8 +65,8 @@ func TestMagicLink(t *testing.T) {
 				return ed.Public(), nil
 			},
 			reqBody: model.MagicLinkCreateRequest{
-				MagicLinkCreateArgs: model.MagicLinkCreateArgs{
-					JWTCreateArgs: model.JWTCreateArgs{
+				MagicLinkCreateParams: model.MagicLinkCreateParams{
+					JWTCreateParams: model.JWTCreateParams{
 						Claims:          map[string]string{"foo": "bar"},
 						LifespanSeconds: 0,
 					},
@@ -91,8 +91,8 @@ func TestMagicLink(t *testing.T) {
 				panic("no RSA signing key")
 			},
 			reqBody: model.MagicLinkCreateRequest{
-				MagicLinkCreateArgs: model.MagicLinkCreateArgs{
-					JWTCreateArgs: model.JWTCreateArgs{
+				MagicLinkCreateParams: model.MagicLinkCreateParams{
+					JWTCreateParams: model.JWTCreateParams{
 						Alg:             jwkset.AlgRS256.String(),
 						Claims:          map[string]string{"foo": "bar"},
 						LifespanSeconds: 0,
@@ -180,8 +180,8 @@ func TestMagicLink(t *testing.T) {
 			}
 
 			redirectURL.RawQuery = ""
-			if redirectURL.String() != tc.reqBody.MagicLinkCreateArgs.RedirectURL {
-				t.Fatalf("Expected redirect URL %q, got %q", tc.reqBody.MagicLinkCreateArgs.RedirectURL, redirectURL.String())
+			if redirectURL.String() != tc.reqBody.MagicLinkCreateParams.RedirectURL {
+				t.Fatalf("Expected redirect URL %q, got %q", tc.reqBody.MagicLinkCreateParams.RedirectURL, redirectURL.String())
 			}
 
 			recorder = httptest.NewRecorder()

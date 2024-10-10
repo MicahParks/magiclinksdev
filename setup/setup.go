@@ -324,7 +324,7 @@ func CreateServer(ctx context.Context, conf config.Config, options ServerOptions
 
 	magicLinkConfig := magiclink.Config{
 		ErrorHandler: MagicLinkErrorHandler(options.MagicLinkErrorHandler),
-		JWKS: magiclink.JWKSArgs{
+		JWKS: magiclink.JWKSParams{
 			CacheRefresh: time.Second,
 			Store:        interfaces.Store,
 		},
@@ -406,7 +406,7 @@ func CreateServer(ctx context.Context, conf config.Config, options ServerOptions
 
 // MagicLinkErrorHandler is a wrapper for magiclink.ErrorHandlerFunc.
 func MagicLinkErrorHandler(h magiclink.ErrorHandler) magiclink.ErrorHandler {
-	return magiclink.ErrorHandlerFunc(func(args magiclink.ErrorHandlerArgs) {
+	return magiclink.ErrorHandlerFunc(func(args magiclink.ErrorHandlerParams) {
 		ctx := args.Request.Context()
 		logger := ctx.Value(ctxkey.Logger).(*slog.Logger)
 		logger.ErrorContext(ctx, "Failed to handle magic link.",

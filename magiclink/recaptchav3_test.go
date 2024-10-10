@@ -101,10 +101,10 @@ func TestReCAPTCHAV3Redirector_Redirect(t *testing.T) {
 				t.Fatalf("Failed to create request: %v.", err)
 			}
 			recorder := httptest.NewRecorder()
-			args := magiclink.RedirectorArgs{
-				ReadAndExpireLink: func(ctx context.Context, secret string) (jwtB64 string, response magiclink.ReadResponse, err error) {
-					return jwtB64FromBackend, magiclink.ReadResponse{
-						CreateArgs: magiclink.CreateArgs{
+			args := magiclink.RedirectorParams{
+				ReadAndExpireLink: func(ctx context.Context, secret string) (jwtB64 string, response magiclink.ReadResult, err error) {
+					return jwtB64FromBackend, magiclink.ReadResult{
+						CreateParams: magiclink.CreateParams{
 							Expires:          time.Now().Add(mldtest.LinksExpireAfter),
 							RedirectQueryKey: magiclink.DefaultRedirectQueryKey,
 							RedirectURL:      must(url.Parse(magicLinkTarget)),

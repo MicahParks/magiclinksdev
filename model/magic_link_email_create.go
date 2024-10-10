@@ -6,8 +6,8 @@ import (
 	"unicode/utf8"
 )
 
-// MagicLinkEmailCreateArgs are the unvalidated arguments for creating a magic link email.
-type MagicLinkEmailCreateArgs struct {
+// MagicLinkEmailCreateParams are the unvalidated parameters for creating a magic link email.
+type MagicLinkEmailCreateParams struct {
 	ButtonText   string `json:"buttonText"`
 	Greeting     string `json:"greeting"`
 	LogoClickURL string `json:"logoClickURL"`
@@ -21,19 +21,19 @@ type MagicLinkEmailCreateArgs struct {
 }
 
 // Validate implements the Validatable interface.
-func (p MagicLinkEmailCreateArgs) Validate(config Validation) (ValidMagicLinkEmailCreateArgs, error) {
+func (p MagicLinkEmailCreateParams) Validate(config Validation) (ValidMagicLinkEmailCreateParams, error) {
 	if p.ButtonText == "" {
 		p.ButtonText = "Magic link"
 	}
 	if p.LogoImageURL != "" {
 		u, err := httpURL(config, p.LogoClickURL)
 		if err != nil {
-			return ValidMagicLinkEmailCreateArgs{}, fmt.Errorf("failed to parse logo click URL: %w", err)
+			return ValidMagicLinkEmailCreateParams{}, fmt.Errorf("failed to parse logo click URL: %w", err)
 		}
 		p.LogoClickURL = u.String()
 		u, err = httpURL(config, p.LogoImageURL)
 		if err != nil {
-			return ValidMagicLinkEmailCreateArgs{}, fmt.Errorf("failed to parse logo image URL: %w", err)
+			return ValidMagicLinkEmailCreateParams{}, fmt.Errorf("failed to parse logo image URL: %w", err)
 		}
 		p.LogoImageURL = u.String()
 	} else {
@@ -41,20 +41,20 @@ func (p MagicLinkEmailCreateArgs) Validate(config Validation) (ValidMagicLinkEma
 	}
 	runeCount := uint(utf8.RuneCountInString(p.ServiceName))
 	if runeCount < config.ServiceNameMinUTF8 || runeCount > config.ServiceNameMaxUTF8 {
-		return ValidMagicLinkEmailCreateArgs{}, fmt.Errorf("%w: service name must be between %d and %d UTF8 runes", ErrInvalidModel, config.ServiceNameMinUTF8, config.ServiceNameMaxUTF8)
+		return ValidMagicLinkEmailCreateParams{}, fmt.Errorf("%w: service name must be between %d and %d UTF8 runes", ErrInvalidModel, config.ServiceNameMinUTF8, config.ServiceNameMaxUTF8)
 	}
 	if len(p.Subject) < 5 || len(p.Subject) > 100 {
-		return ValidMagicLinkEmailCreateArgs{}, fmt.Errorf("%w: subject must be between 5 and 100 characters", ErrInvalidModel)
+		return ValidMagicLinkEmailCreateParams{}, fmt.Errorf("%w: subject must be between 5 and 100 characters", ErrInvalidModel)
 	}
 	if len(p.Title) < 5 || len(p.Title) > 256 {
-		return ValidMagicLinkEmailCreateArgs{}, fmt.Errorf("%w: title must be between 5 and 256 characters", ErrInvalidModel)
+		return ValidMagicLinkEmailCreateParams{}, fmt.Errorf("%w: title must be between 5 and 256 characters", ErrInvalidModel)
 	}
 	address, err := mail.ParseAddress(p.ToEmail)
 	if err != nil {
-		return ValidMagicLinkEmailCreateArgs{}, fmt.Errorf("failed to parse email address: %w", err)
+		return ValidMagicLinkEmailCreateParams{}, fmt.Errorf("failed to parse email address: %w", err)
 	}
 	address.Name = p.ToName
-	valid := ValidMagicLinkEmailCreateArgs{
+	valid := ValidMagicLinkEmailCreateParams{
 		ButtonText:   p.ButtonText,
 		Greeting:     p.Greeting,
 		LogoClickURL: p.LogoClickURL,
@@ -68,8 +68,8 @@ func (p MagicLinkEmailCreateArgs) Validate(config Validation) (ValidMagicLinkEma
 	return valid, nil
 }
 
-// ValidMagicLinkEmailCreateArgs are the validated arguments for creating a magic link email.
-type ValidMagicLinkEmailCreateArgs struct {
+// ValidMagicLinkEmailCreateParams are the validated parameters for creating a magic link email.
+type ValidMagicLinkEmailCreateParams struct {
 	ButtonText   string
 	Greeting     string
 	LogoClickURL string
@@ -83,31 +83,31 @@ type ValidMagicLinkEmailCreateArgs struct {
 
 // MagicLinkEmailCreateRequest is the unvalidated request to create a magic link email.
 type MagicLinkEmailCreateRequest struct {
-	MagicLinkEmailCreateArgs MagicLinkEmailCreateArgs `json:"magicLinkEmailCreateArgs"`
-	MagicLinkCreateArgs      MagicLinkCreateArgs      `json:"magicLinkCreateArgs"`
+	MagicLinkEmailCreateParams MagicLinkEmailCreateParams `json:"magicLinkEmailCreateParams"`
+	MagicLinkCreateParams      MagicLinkCreateParams      `json:"magicLinkCreateParams"`
 }
 
 // Validate implements the Validatable interface.
 func (b MagicLinkEmailCreateRequest) Validate(config Validation) (ValidMagicLinkEmailCreateRequest, error) {
-	magicLinkEmailCreateArgs, err := b.MagicLinkEmailCreateArgs.Validate(config)
+	magicLinkEmailCreateParams, err := b.MagicLinkEmailCreateParams.Validate(config)
 	if err != nil {
-		return ValidMagicLinkEmailCreateRequest{}, fmt.Errorf("failed to validate email args: %w", err)
+		return ValidMagicLinkEmailCreateRequest{}, fmt.Errorf("failed to validate email params: %w", err)
 	}
-	magicLinkCreateArgs, err := b.MagicLinkCreateArgs.Validate(config)
+	magicLinkCreateParams, err := b.MagicLinkCreateParams.Validate(config)
 	if err != nil {
-		return ValidMagicLinkEmailCreateRequest{}, fmt.Errorf("failed to validate link args: %w", err)
+		return ValidMagicLinkEmailCreateRequest{}, fmt.Errorf("failed to validate link params: %w", err)
 	}
 	valid := ValidMagicLinkEmailCreateRequest{
-		MagicLinkEmailCreateArgs: magicLinkEmailCreateArgs,
-		MagicLinkCreateArgs:      magicLinkCreateArgs,
+		MagicLinkEmailCreateParams: magicLinkEmailCreateParams,
+		MagicLinkCreateParams:      magicLinkCreateParams,
 	}
 	return valid, nil
 }
 
 // ValidMagicLinkEmailCreateRequest is the validated request to create an email link.
 type ValidMagicLinkEmailCreateRequest struct {
-	MagicLinkEmailCreateArgs ValidMagicLinkEmailCreateArgs
-	MagicLinkCreateArgs      ValidMagicLinkCreateArgs
+	MagicLinkEmailCreateParams ValidMagicLinkEmailCreateParams
+	MagicLinkCreateParams      ValidMagicLinkCreateParams
 }
 
 // MagicLinkEmailCreateResults are the results of creating an email link.

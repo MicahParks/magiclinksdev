@@ -150,7 +150,7 @@ TRUNCATE TABLE mld.jwk, mld.link, mld.service_account
 	return nil
 }
 
-func (p postgres) CreateAdminSA(ctx context.Context, args model.ValidAdminCreateArgs) error {
+func (p postgres) CreateAdminSA(ctx context.Context, args model.ValidAdminCreateParams) error {
 	tx := ctx.Value(ctxkey.Tx).(*Transaction).Tx
 
 	_, err := tx.Exec(ctx, createServiceAccountQuery, args.UUID, args.APIKey, args.Aud, true)
@@ -160,7 +160,7 @@ func (p postgres) CreateAdminSA(ctx context.Context, args model.ValidAdminCreate
 
 	return nil
 }
-func (p postgres) CreateSA(ctx context.Context, _ model.ValidServiceAccountCreateArgs) (model.ServiceAccount, error) {
+func (p postgres) CreateSA(ctx context.Context, _ model.ValidServiceAccountCreateParams) (model.ServiceAccount, error) {
 	tx := ctx.Value(ctxkey.Tx).(*Transaction).Tx
 
 	apiKey, err := uuid.NewRandom()
@@ -318,7 +318,7 @@ WHERE key_id = $1
   Magic link storage.
 */
 
-func (p postgres) Create(ctx context.Context, args magiclink.CreateArgs) (secret string, err error) {
+func (p postgres) Create(ctx context.Context, args magiclink.CreateParams) (secret string, err error) {
 	tx := ctx.Value(ctxkey.Tx).(*Transaction).Tx
 	sa := ctx.Value(ctxkey.ServiceAccount).(model.ServiceAccount)
 
@@ -347,9 +347,9 @@ VALUES ($2, $3, $4, $5, $6, $7, $8, (SELECT id FROM sa))
 
 	return s.String(), nil
 }
-func (p postgres) Read(ctx context.Context, secret string) (magiclink.ReadResponse, error) {
+func (p postgres) Read(ctx context.Context, secret string) (magiclink.ReadResult, error) {
 	tx := ctx.Value(ctxkey.Tx).(*Transaction).Tx
-	var response magiclink.ReadResponse
+	var response magiclink.ReadResult
 
 	u, err := uuid.Parse(secret)
 	if err != nil {
@@ -366,7 +366,7 @@ WHERE older.id = updated.id
 RETURNING updated.expires, updated.jwt_claims, updated.jwt_key_id, updated.jwt_signing_method, updated.redirect_query_key, updated.redirect_url, older.visited
 `
 	claims := make([]byte, 0)
-	var args magiclink.CreateArgs
+	var args magiclink.CreateParams
 	var visited *time.Time
 	var redirectURL string
 	err = tx.QueryRow(ctx, query, u.String()).Scan(&args.Expires, &claims, &args.JWTKeyID, &args.JWTSigningMethod, &args.RedirectQueryKey, &redirectURL, &visited)
@@ -395,7 +395,7 @@ RETURNING updated.expires, updated.jwt_claims, updated.jwt_key_id, updated.jwt_s
 		return response, fmt.Errorf("failed to parse redirect URL from Postgres: %w", err)
 	}
 
-	response.CreateArgs = args
+	response.CreateParams = args
 	response.Visited = visited
 	return response, nil
 }

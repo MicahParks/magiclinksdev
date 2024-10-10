@@ -75,7 +75,7 @@ func NewReCAPTCHAV3Redirector(config ReCAPTCHAV3Config) Redirector {
 }
 
 // Redirect implements the Redirector interface.
-func (r ReCAPTCHAV3Redirector) Redirect(args RedirectorArgs) {
+func (r ReCAPTCHAV3Redirector) Redirect(args RedirectorParams) {
 	ctx := args.Request.Context()
 
 	token := args.Request.URL.Query().Get("token")

@@ -37,7 +37,7 @@ type jwtClaims struct {
 	jwt.RegisteredClaims
 }
 
-type setupArgs struct {
+type setupParams struct {
 	errorHandler     magiclink.ErrorHandler
 	jwksGet          bool
 	jwksGetDelay     time.Duration
@@ -46,16 +46,16 @@ type setupArgs struct {
 	secretQueryKey   string
 }
 
-type createArg struct {
+type createParams struct {
 	JWTKeyID         *string
 	JWTSigningMethod string
 	RedirectQueryKey string
 }
 
 type testCase struct {
-	createArgs []createArg
-	setupParam setupArgs
-	name       string
+	createParams []createParams
+	setupParam   setupParams
+	name         string
 }
 
 func TestTable(t *testing.T) {
@@ -71,12 +71,12 @@ func TestTable(t *testing.T) {
 
 	for _, tc := range makeCases(t) {
 		t.Run(tc.name, func(t *testing.T) {
-			testCreateCases(ctx, t, appServer, tc.createArgs, redirectChan, tc.setupParam)
+			testCreateCases(ctx, t, appServer, tc.createParams, redirectChan, tc.setupParam)
 		})
 	}
 }
 
-func testCreateCases(ctx context.Context, t *testing.T, appServer *httptest.Server, createArgs []createArg, redirectChan <-chan url.Values, sParam setupArgs) {
+func testCreateCases(ctx context.Context, t *testing.T, appServer *httptest.Server, createParams []createParams, redirectChan <-chan url.Values, sParam setupParams) {
 	m, magicServer := magiclinkSetup(ctx, t, sParam)
 	defer magicServer.Close()
 
@@ -108,11 +108,11 @@ func testCreateCases(ctx context.Context, t *testing.T, appServer *httptest.Serv
 		_ = resp.Body.Close()
 	}
 
-	for _, cParam := range createArgs {
+	for _, cParam := range createParams {
 		if cParam.RedirectQueryKey == "" {
 			cParam.RedirectQueryKey = magiclink.DefaultRedirectQueryKey
 		}
-		cP := magiclink.CreateArgs{
+		cP := magiclink.CreateParams{
 			Expires:          time.Now().Add(mldtest.LinksExpireAfter),
 			JWTClaims:        claims,
 			JWTKeyID:         cParam.JWTKeyID,
@@ -153,7 +153,7 @@ func testCreateCases(ctx context.Context, t *testing.T, appServer *httptest.Serv
 	}
 }
 
-func magiclinkSetup(ctx context.Context, t *testing.T, args setupArgs) (magiclink.MagicLink, *httptest.Server) {
+func magiclinkSetup(ctx context.Context, t *testing.T, args setupParams) (magiclink.MagicLink, *httptest.Server) {
 	dH := &dynamicHandler{}
 	server := httptest.NewServer(dH)
 	serviceURL, err := url.Parse(server.URL)
@@ -170,7 +170,7 @@ func magiclinkSetup(ctx context.Context, t *testing.T, args setupArgs) (magiclin
 		ServiceURL:     serviceURL,
 		SecretQueryKey: args.secretQueryKey,
 		Store:          nil,
-		JWKS: magiclink.JWKSArgs{
+		JWKS: magiclink.JWKSParams{
 			CacheRefresh: args.jwksCacheRefresh,
 			Store:        args.jwksStore,
 		},

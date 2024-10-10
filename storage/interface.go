@@ -24,8 +24,8 @@ type Storage interface {
 	Close(ctx context.Context) error
 	TestingTruncate(ctx context.Context) error
 
-	CreateAdminSA(ctx context.Context, args model.ValidAdminCreateArgs) error
-	CreateSA(ctx context.Context, args model.ValidServiceAccountCreateArgs) (model.ServiceAccount, error)
+	CreateAdminSA(ctx context.Context, args model.ValidAdminCreateParams) error
+	CreateSA(ctx context.Context, args model.ValidServiceAccountCreateParams) (model.ServiceAccount, error)
 	ReadSA(ctx context.Context, u uuid.UUID) (model.ServiceAccount, error)
 	ReadSAFromAPIKey(ctx context.Context, apiKey uuid.UUID) (model.ServiceAccount, error)
 	ReadSigningKey(ctx context.Context, options ReadSigningKeyOptions) (jwk jwkset.JWK, err error)

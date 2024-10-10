@@ -225,12 +225,12 @@ definitions:
     description: "The request body for the /jwt/create endpoint."
     type: "object"
     properties:
-      jwtCreateArgs:
-        $ref: "#/definitions/JWTCreateArgs"
+      jwtCreateParams:
+        $ref: "#/definitions/JWTCreateParams"
     required:
-      - "jwtCreateArgs"
+      - "jwtCreateParams"
 
-  JWTCreateArgs:
+  JWTCreateParams:
     description: "Parameters used to create a JWT."
     type: "object"
     properties:
@@ -273,12 +273,12 @@ definitions:
     description: "The request body for the /jwt/validate endpoint."
     type: "object"
     properties:
-      jwtValidateArgs:
-        $ref: "#/definitions/JWTValidateArgs"
+      jwtValidateParams:
+        $ref: "#/definitions/JWTValidateParams"
     required:
-      - "jwtValidateArgs"
+      - "jwtValidateParams"
 
-  JWTValidateArgs:
+  JWTValidateParams:
     description: "Parameters used to validate a JWT."
     type: "object"
     properties:
@@ -317,12 +317,12 @@ definitions:
         type: "integer"
         default: 3600
 
-  MagicLinkCreateArgs:
+  MagicLinkCreateParams:
     description: "Parameters to create a magic link."
     type: "object"
     properties:
-      jwtCreateArgs:
-        $ref: "#/definitions/JWTCreateArgs"
+      jwtCreateParams:
+        $ref: "#/definitions/JWTCreateParams"
       redirectQueryKey:
         description: 'The URL query key in the redirectURL to contain the signed JWT when the magic link is used. By
         default, "jwt" is used.'
@@ -336,12 +336,12 @@ definitions:
   MagicLinkCreateRequest:
     type: "object"
     properties:
-      magicLinkCreateArgs:
-        $ref: "#/definitions/MagicLinkCreateArgs"
+      magicLinkCreateParams:
+        $ref: "#/definitions/MagicLinkCreateParams"
       magicLinkLimits:
         $ref: "#/definitions/MagicLinkLimits"
     required:
-      - "magicLinkCreateArgs"
+      - "magicLinkCreateParams"
       - "magicLinkLimitations"
 
   MagicLinkCreateResults:
@@ -363,7 +363,7 @@ definitions:
       requestMetadata:
         $ref: "#/definitions/RequestMetadata"
 
-  MagicLinkEmailCreateArgs:
+  MagicLinkEmailCreateParams:
     description: "Parameters to create a magic link email."
     type: "object"
     properties:
@@ -420,13 +420,13 @@ definitions:
   MagicLinkEmailCreateRequest:
     type: "object"
     properties:
-      magicLinkCreateArgs:
-        $ref: "#/definitions/MagicLinkCreateArgs"
-      magicLinkEmailCreateArgs:
-        $ref: "#/definitions/MagicLinkEmailCreateArgs"
+      magicLinkCreateParams:
+        $ref: "#/definitions/MagicLinkCreateParams"
+      magicLinkEmailCreateParams:
+        $ref: "#/definitions/MagicLinkEmailCreateParams"
     required:
-      - "magicLinkCreateArgs"
-      - "magicLinkEmailCreateArgs"
+      - "magicLinkCreateParams"
+      - "magicLinkEmailCreateParams"
 
   MagicLinkEmailCreateResults:
     description: "The results for creating a magic link email."
@@ -443,7 +443,7 @@ definitions:
       requestMetadata:
         $ref: "#/definitions/RequestMetadata"
 
-  OTPCreateArgs:
+  OTPCreateParams:
     description: "Parameters to create a One-Time Password (OTP)."
     type: "object"
     properties:
@@ -457,10 +457,10 @@ definitions:
   OTPCreateRequest:
     type: "object"
     properties:
-      otpCreateArgs:
-        $ref: "#/definitions/OTPCreateArgs"
+      otpCreateParams:
+        $ref: "#/definitions/OTPCreateParams"
     required:
-      - "otpCreateArgs"
+      - "otpCreateParams"
 
   OTPCreateResults:
     description: "The results for creating a One-Time Password (OTP)."
@@ -478,7 +478,7 @@ definitions:
       requestMetadata:
         $ref: "#/definitions/RequestMetadata"
 
-  OTPEmailCreateArgs:
+  OTPEmailCreateParams:
     description: "Parameters to create a One-Time Password (OTP) email."
     type: "object"
     properties:
@@ -530,13 +530,13 @@ definitions:
   OTPEmailCreateRequest:
     type: "object"
     properties:
-      otpCreateArgs:
-        $ref: "#/definitions/OTPCreateArgs"
-      otpEmailCreateArgs:
-        $ref: "#/definitions/OTPEmailCreateArgs"
+      otpCreateParams:
+        $ref: "#/definitions/OTPCreateParams"
+      otpEmailCreateParams:
+        $ref: "#/definitions/OTPEmailCreateParams"
     required:
-      - "otpCreateArgs"
-      - "otpEmailCreateArgs"
+      - "otpCreateParams"
+      - "otpEmailCreateParams"
 
   OTPEmailCreateResults:
     description: "The results for creating a One-Time Password (OTP) email."

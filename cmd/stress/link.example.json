@@ -1,6 +1,6 @@
 {
-  "linkArgs": {
-    "jwtCreateArgs": {
+  "linkParams": {
+    "jwtCreateParams": {
       "jwtClaims": {
         "foo": "bar"
       },

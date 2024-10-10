@@ -94,7 +94,7 @@ func (m MagicLink) JWKSet() jwkset.Storage {
 }
 
 // NewLink creates a magic link with the given parameters.
-func (m MagicLink) NewLink(ctx context.Context, args CreateArgs) (CreateResponse, error) {
+func (m MagicLink) NewLink(ctx context.Context, args CreateParams) (CreateResponse, error) {
 	err := args.Valid()
 	if err != nil {
 		return CreateResponse{}, fmt.Errorf("failed to validate args: %w", err)
@@ -131,7 +131,7 @@ func (m MagicLink) MagicLinkHandler() http.Handler {
 		}
 
 		if m.customRedirector != nil {
-			args := RedirectorArgs{
+			args := RedirectorParams{
 				ReadAndExpireLink: m.HandleMagicLink,
 				Request:           r,
 				Secret:            secret,
@@ -156,7 +156,7 @@ func (m MagicLink) MagicLinkHandler() http.Handler {
 }
 
 // HandleMagicLink is a method that accepts a magic link secret, then returns the signed JWT.
-func (m MagicLink) HandleMagicLink(ctx context.Context, secret string) (jwtB64 string, response ReadResponse, err error) {
+func (m MagicLink) HandleMagicLink(ctx context.Context, secret string) (jwtB64 string, response ReadResult, err error) {
 	response, err = m.Store.Read(ctx, secret)
 	if err != nil {
 		if errors.Is(err, ErrLinkNotFound) {
@@ -166,8 +166,8 @@ func (m MagicLink) HandleMagicLink(ctx context.Context, secret string) (jwtB64 s
 	}
 
 	var jwk jwkset.JWK
-	if response.CreateArgs.JWTKeyID != nil {
-		jwk, err = m.jwks.storage.KeyRead(ctx, *response.CreateArgs.JWTKeyID)
+	if response.CreateParams.JWTKeyID != nil {
+		jwk, err = m.jwks.storage.KeyRead(ctx, *response.CreateParams.JWTKeyID)
 		if err != nil {
 			return "", response, fmt.Errorf("%w: %s", ErrJWKSReadGivenKID, err)
 		}
@@ -182,12 +182,12 @@ func (m MagicLink) HandleMagicLink(ctx context.Context, secret string) (jwtB64 s
 		jwk = allKeys[0] // TODO Why the first key? Should this be the signing default? If so, update docs and implementations.
 	}
 
-	signingMethod := jwt.GetSigningMethod(response.CreateArgs.JWTSigningMethod)
+	signingMethod := jwt.GetSigningMethod(response.CreateParams.JWTSigningMethod)
 	if signingMethod == nil {
 		signingMethod = BestSigningMethod(jwk.Key())
 	}
 
-	token := jwt.NewWithClaims(signingMethod, response.CreateArgs.JWTClaims)
+	token := jwt.NewWithClaims(signingMethod, response.CreateParams.JWTClaims)
 	token.Header[jwkset.HeaderKID] = jwk.Marshal().KID
 	jwtB64, err = token.SignedString(jwk.Key())
 	if err != nil {
@@ -198,7 +198,7 @@ func (m MagicLink) HandleMagicLink(ctx context.Context, secret string) (jwtB64 s
 }
 
 func (m MagicLink) handleError(err error, suggestedResponseCode int, request *http.Request, writer http.ResponseWriter) {
-	args := ErrorHandlerArgs{
+	args := ErrorHandlerParams{
 		Err:                   err,
 		Request:               request,
 		SuggestedResponseCode: suggestedResponseCode,
@@ -235,10 +235,10 @@ func BestSigningMethod(key any) jwt.SigningMethod {
 	return signingMethod
 }
 
-func redirectURLFromResponse(response ReadResponse, jwtB64 string) *url.URL {
-	u := copyURL(response.CreateArgs.RedirectURL)
+func redirectURLFromResponse(response ReadResult, jwtB64 string) *url.URL {
+	u := copyURL(response.CreateParams.RedirectURL)
 	query := u.Query()
-	queryKey := response.CreateArgs.RedirectQueryKey
+	queryKey := response.CreateParams.RedirectQueryKey
 	if queryKey == "" {
 		queryKey = DefaultRedirectQueryKey
 	}

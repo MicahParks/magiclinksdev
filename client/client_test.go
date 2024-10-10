@@ -39,12 +39,12 @@ var (
 	_, attackerKey, _ = ed25519.GenerateKey(nil)
 	redirectPath, _   = url.Parse(mld.DefaultRelativePathRedirect)
 
-	jwtCreateArgs = model.JWTCreateArgs{
+	jwtCreateParams = model.JWTCreateParams{
 		Claims:          mldtest.TClaims,
 		LifespanSeconds: 5,
 	}
-	linkArgs = model.MagicLinkCreateArgs{
-		JWTCreateArgs:    jwtCreateArgs,
+	linkParams = model.MagicLinkCreateParams{
+		JWTCreateParams:  jwtCreateParams,
 		LifespanSeconds:  5,
 		RedirectQueryKey: magiclink.DefaultRedirectQueryKey,
 		RedirectURL:      "http://example.com",
@@ -103,7 +103,7 @@ func TestEmailLinkCreate(t *testing.T) {
 	c := newClient(ctx, t)
 
 	req := model.MagicLinkEmailCreateRequest{
-		MagicLinkEmailCreateArgs: model.MagicLinkEmailCreateArgs{
+		MagicLinkEmailCreateParams: model.MagicLinkEmailCreateParams{
 			ButtonText:   "Test button text",
 			Greeting:     "Test greeting",
 			LogoClickURL: mldtest.LogoClickURL,
@@ -115,7 +115,7 @@ func TestEmailLinkCreate(t *testing.T) {
 			ToEmail:      "customer@example.com",
 			ToName:       "Test name",
 		},
-		MagicLinkCreateArgs: linkArgs,
+		MagicLinkCreateParams: linkParams,
 	}
 	resp, mldErr, err := c.EmailLinkCreate(ctx, req)
 	if err != nil {
@@ -179,7 +179,7 @@ func TestJWTValidate(t *testing.T) {
 	raw := jwtCreateHelper(ctx, t, c)
 
 	req := model.JWTValidateRequest{
-		JWTValidateArgs: model.JWTValidateArgs{
+		JWTValidateParams: model.JWTValidateParams{
 			JWT: raw,
 		},
 	}
@@ -217,7 +217,7 @@ func TestJWTValidateForged(t *testing.T) {
 	}
 
 	req := model.JWTValidateRequest{
-		JWTValidateArgs: model.JWTValidateArgs{
+		JWTValidateParams: model.JWTValidateParams{
 			JWT: raw,
 		},
 	}
@@ -238,7 +238,7 @@ func TestLinkCreate(t *testing.T) {
 	c := newClient(ctx, t)
 
 	req := model.MagicLinkCreateRequest{
-		MagicLinkCreateArgs: linkArgs,
+		MagicLinkCreateParams: linkParams,
 	}
 	resp, mldErr, err := c.LinkCreate(ctx, req)
 	if err != nil {
@@ -257,7 +257,7 @@ func TestServiceAccountCreate(t *testing.T) {
 	c := newClient(ctx, t)
 
 	req := model.ServiceAccountCreateRequest{
-		ServiceAccountCreateArgs: model.ServiceAccountCreateArgs{},
+		ServiceAccountCreateParams: model.ServiceAccountCreateParams{},
 	}
 	resp, mldErr, err := c.ServiceAccountCreate(ctx, req)
 	if err != nil {
@@ -291,7 +291,7 @@ func createCtx(t *testing.T) context.Context {
 
 func jwtCreateHelper(ctx context.Context, t *testing.T, c Client) string {
 	req := model.JWTCreateRequest{
-		JWTCreateArgs: jwtCreateArgs,
+		JWTCreateParams: jwtCreateParams,
 	}
 	resp, mldErr, err := c.JWTCreate(ctx, req)
 	if err != nil {
@@ -324,12 +324,12 @@ func jwtCreateHelper(ctx context.Context, t *testing.T, c Client) string {
 
 func newClient(ctx context.Context, t *testing.T) Client {
 	conf := config.Config{
-		AdminConfig: []model.AdminCreateArgs{
+		AdminConfig: []model.AdminCreateParams{
 			{
-				APIKey:                   mldtest.APIKey,
-				Aud:                      mldtest.Aud,
-				UUID:                     mldtest.SAUUID,
-				ServiceAccountCreateArgs: model.ServiceAccountCreateArgs{},
+				APIKey:                     mldtest.APIKey,
+				Aud:                        mldtest.Aud,
+				UUID:                       mldtest.SAUUID,
+				ServiceAccountCreateParams: model.ServiceAccountCreateParams{},
 			},
 		},
 		BaseURL: jt.New(baseURL),

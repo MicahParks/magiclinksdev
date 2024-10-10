@@ -10,28 +10,28 @@ import (
 	"github.com/MicahParks/magiclinksdev/mldtest"
 )
 
-func TestCreateArgs_Valid(t *testing.T) {
-	p := magiclink.CreateArgs{}
+func TestCreateParams_Valid(t *testing.T) {
+	p := magiclink.CreateParams{}
 	err := p.Valid()
-	if !errors.Is(err, magiclink.ErrArgs) {
-		t.Errorf("expected error %s, got %s", magiclink.ErrArgs, err)
+	if !errors.Is(err, magiclink.ErrParams) {
+		t.Errorf("expected error %s, got %s", magiclink.ErrParams, err)
 	}
 
 	p.Expires = time.Now().Add(mldtest.LinksExpireAfter)
 	err = p.Valid()
-	if !errors.Is(err, magiclink.ErrArgs) {
-		t.Errorf("expected error %s, got %s", magiclink.ErrArgs, err)
+	if !errors.Is(err, magiclink.ErrParams) {
+		t.Errorf("expected error %s, got %s", magiclink.ErrParams, err)
 	}
 	p.Expires = time.Time{}
 
 	p.RedirectURL = new(url.URL)
 	err = p.Valid()
-	if !errors.Is(err, magiclink.ErrArgs) {
-		t.Errorf("expected error %s, got %s", magiclink.ErrArgs, err)
+	if !errors.Is(err, magiclink.ErrParams) {
+		t.Errorf("expected error %s, got %s", magiclink.ErrParams, err)
 	}
 	p.RedirectURL = nil
 
-	p = magiclink.CreateArgs{
+	p = magiclink.CreateParams{
 		Expires:     time.Now().Add(mldtest.LinksExpireAfter),
 		RedirectURL: new(url.URL),
 	}
@@ -41,11 +41,11 @@ func TestCreateArgs_Valid(t *testing.T) {
 	}
 }
 
-func TestArgs_Valid(t *testing.T) {
+func TestParams_Valid(t *testing.T) {
 	p := magiclink.Config{}
 	err := p.Valid()
-	if !errors.Is(err, magiclink.ErrArgs) {
-		t.Errorf("expected error %s, got %s", magiclink.ErrArgs, err)
+	if !errors.Is(err, magiclink.ErrParams) {
+		t.Errorf("expected error %s, got %s", magiclink.ErrParams, err)
 	}
 
 	p = magiclink.Config{

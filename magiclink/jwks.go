@@ -24,7 +24,7 @@ type jwksCache struct {
 	mux         sync.RWMutex
 }
 
-func newJWKSCache(ctx context.Context, config JWKSArgs) (*jwksCache, error) {
+func newJWKSCache(ctx context.Context, config JWKSParams) (*jwksCache, error) {
 	store := config.Store
 	if store == nil {
 		store = jwkset.NewMemoryStorage()

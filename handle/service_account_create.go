@@ -12,9 +12,9 @@ import (
 
 // HandleServiceAccountCreate handles the service account creation endpoint.
 func (s *Server) HandleServiceAccountCreate(ctx context.Context, args model.ValidServiceAccountCreateRequest) (model.ServiceAccountCreateResponse, error) {
-	saArgs := args.ServiceAccountCreateArgs
+	saParams := args.ServiceAccountCreateParams
 
-	createdSA, err := s.Store.CreateSA(ctx, saArgs)
+	createdSA, err := s.Store.CreateSA(ctx, saParams)
 	if err != nil {
 		return model.ServiceAccountCreateResponse{}, fmt.Errorf("failed to create service account: %w", err)
 	}

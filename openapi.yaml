@@ -239,13 +239,13 @@ components:
           type: boolean
     JWTCreateRequest:
       required:
-        - jwtCreateArgs
+        - jwtCreateParams
       type: object
       properties:
-        jwtCreateArgs:
-          $ref: '#/components/schemas/JWTCreateArgs'
+        jwtCreateParams:
+          $ref: '#/components/schemas/JWTCreateParams'
       description: The request body for the /jwt/create endpoint.
-    JWTCreateArgs:
+    JWTCreateParams:
       type: object
       properties:
         alg:
@@ -283,13 +283,13 @@ components:
       description: The response body for the /jwt/create endpoint.
     JWTValidateRequest:
       required:
-        - jwtValidateArgs
+        - jwtValidateParams
       type: object
       properties:
-        jwtValidateArgs:
-          $ref: '#/components/schemas/JWTValidateArgs'
+        jwtValidateParams:
+          $ref: '#/components/schemas/JWTValidateParams'
       description: The request body for the /jwt/validate endpoint.
-    JWTValidateArgs:
+    JWTValidateParams:
       type: object
       properties:
         jwt:
@@ -323,13 +323,13 @@ components:
             \ after the request has been processed. It defaults to 1 hour. The minimum\
             \ value is 5 seconds and the maximum value is 7905600000 seconds, which\
             \ is a bit over 250 years."
-    MagicLinkCreateArgs:
+    MagicLinkCreateParams:
       required:
         - redirectURL
       type: object
       properties:
-        jwtCreateArgs:
-          $ref: '#/components/schemas/JWTCreateArgs'
+        jwtCreateParams:
+          $ref: '#/components/schemas/JWTCreateParams'
         redirectQueryKey:
           type: string
           description: "The URL query key in the redirectURL to contain the signed\
@@ -341,11 +341,11 @@ components:
       description: Parameters to create a magic link.
     MagicLinkCreateRequest:
       required:
-        - magicLinkCreateArgs
+        - magicLinkCreateParams
       type: object
       properties:
-        magicLinkCreateArgs:
-          $ref: '#/components/schemas/MagicLinkCreateArgs'
+        magicLinkCreateParams:
+          $ref: '#/components/schemas/MagicLinkCreateParams'
         magicLinkLimits:
           $ref: '#/components/schemas/MagicLinkLimits'
     MagicLinkCreateResults:
@@ -366,7 +366,7 @@ components:
           $ref: '#/components/schemas/MagicLinkCreateResults'
         requestMetadata:
           $ref: '#/components/schemas/RequestMetadata'
-    MagicLinkEmailCreateArgs:
+    MagicLinkEmailCreateParams:
       required:
         - serviceName
         - subject
@@ -423,14 +423,14 @@ components:
       description: Parameters to create a magic link email.
     MagicLinkEmailCreateRequest:
       required:
-        - magicLinkCreateArgs
-        - magicLinkEmailCreateArgs
+        - magicLinkCreateParams
+        - magicLinkEmailCreateParams
       type: object
       properties:
-        magicLinkCreateArgs:
-          $ref: '#/components/schemas/MagicLinkCreateArgs'
-        magicLinkEmailCreateArgs:
-          $ref: '#/components/schemas/MagicLinkEmailCreateArgs'
+        magicLinkCreateParams:
+          $ref: '#/components/schemas/MagicLinkCreateParams'
+        magicLinkEmailCreateParams:
+          $ref: '#/components/schemas/MagicLinkEmailCreateParams'
     MagicLinkEmailCreateResults:
       type: object
       properties:
@@ -444,7 +444,7 @@ components:
           $ref: '#/components/schemas/MagicLinkEmailCreateResults'
         requestMetadata:
           $ref: '#/components/schemas/RequestMetadata'
-    OTPCreateArgs:
+    OTPCreateParams:
       type: object
       properties:
         lifespanSeconds:
@@ -456,11 +456,11 @@ components:
       description: Parameters to create a One-Time Password (OTP).
     OTPCreateRequest:
       required:
-        - otpCreateArgs
+        - otpCreateParams
       type: object
       properties:
-        otpCreateArgs:
-          $ref: '#/components/schemas/OTPCreateArgs'
+        otpCreateParams:
+          $ref: '#/components/schemas/OTPCreateParams'
     OTPCreateResults:
       type: object
       properties:
@@ -475,7 +475,7 @@ components:
           $ref: '#/components/schemas/OTPCreateResults'
         requestMetadata:
           $ref: '#/components/schemas/RequestMetadata'
-    OTPEmailCreateArgs:
+    OTPEmailCreateParams:
       required:
         - serviceName
         - subject
@@ -526,14 +526,14 @@ components:
       description: Parameters to create a One-Time Password (OTP) email.
     OTPEmailCreateRequest:
       required:
-        - otpCreateArgs
-        - otpEmailCreateArgs
+        - otpCreateParams
+        - otpEmailCreateParams
       type: object
       properties:
-        otpCreateArgs:
-          $ref: '#/components/schemas/OTPCreateArgs'
-        otpEmailCreateArgs:
-          $ref: '#/components/schemas/OTPEmailCreateArgs'
+        otpCreateParams:
+          $ref: '#/components/schemas/OTPCreateParams'
+        otpEmailCreateParams:
+          $ref: '#/components/schemas/OTPEmailCreateParams'
     OTPEmailCreateResults:
       type: object
       properties:

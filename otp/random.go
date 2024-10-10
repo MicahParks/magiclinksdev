@@ -15,17 +15,17 @@ var (
 )
 
 var (
-	ErrInvalidArgs = errors.New("invalid OTP arguments")
+	ErrParams = errors.New("invalid parameters") // TODO Combine with other
 )
 
-type OTPArgs struct { // TODO Rename?
+type OTPParams struct { // TODO Rename?
 	CharSetAlphaLower bool
 	CharSetAlphaUpper bool
 	CharSetNumeric    bool
 	Length            int64
 }
 
-func generateOTP(args OTPArgs) (string, error) {
+func generateOTP(args OTPParams) (string, error) {
 	charSet := make([]rune, 0)
 	if args.CharSetAlphaLower {
 		charSet = append(charSet, alphaLower...)
@@ -37,7 +37,7 @@ func generateOTP(args OTPArgs) (string, error) {
 		charSet = append(charSet, numeric...)
 	}
 	if len(charSet) == 0 {
-		return "", fmt.Errorf("must include at least one character set: %w", ErrInvalidArgs)
+		return "", fmt.Errorf("must include at least one character set: %w", ErrParams)
 	}
 	o := strings.Builder{}
 	for range args.Length {

@@ -37,8 +37,8 @@ func main() {
 	}
 
 	req := model.MagicLinkCreateRequest{
-		MagicLinkCreateArgs: model.MagicLinkCreateArgs{
-			JWTCreateArgs: model.JWTCreateArgs{
+		MagicLinkCreateParams: model.MagicLinkCreateParams{
+			JWTCreateParams: model.JWTCreateParams{
 				Claims:          claims,
 				LifespanSeconds: 5,
 			},

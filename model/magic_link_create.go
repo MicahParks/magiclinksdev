@@ -8,25 +8,25 @@ import (
 	"github.com/MicahParks/magiclinksdev/magiclink"
 )
 
-// MagicLinkCreateArgs are the unvalidated arguments for creating a magic link.
-type MagicLinkCreateArgs struct {
-	JWTCreateArgs    JWTCreateArgs `json:"jwtCreateArgs"`
-	LifespanSeconds  int           `json:"lifespanSeconds"` // TODO Move into link limits.
-	RedirectQueryKey string        `json:"redirectQueryKey"`
-	RedirectURL      string        `json:"redirectURL"`
+// MagicLinkCreateParams are the unvalidated parameters for creating a magic link.
+type MagicLinkCreateParams struct {
+	JWTCreateParams  JWTCreateParams `json:"jwtCreateParams"`
+	LifespanSeconds  int             `json:"lifespanSeconds"` // TODO Move into link limits.
+	RedirectQueryKey string          `json:"redirectQueryKey"`
+	RedirectURL      string          `json:"redirectURL"`
 }
 
-// Validate validates the link create arguments.
-func (p MagicLinkCreateArgs) Validate(config Validation) (ValidMagicLinkCreateArgs, error) {
-	validJWTCreateArgs, err := p.JWTCreateArgs.Validate(config)
+// Validate validates the link create parameters.
+func (p MagicLinkCreateParams) Validate(config Validation) (ValidMagicLinkCreateParams, error) {
+	validJWTCreateParams, err := p.JWTCreateParams.Validate(config)
 	if err != nil {
-		return ValidMagicLinkCreateArgs{}, fmt.Errorf("failed to validate JWT create args: %w", err)
+		return ValidMagicLinkCreateParams{}, fmt.Errorf("failed to validate JWT create args: %w", err)
 	}
 	lifespan := time.Duration(p.LifespanSeconds) * time.Second
 	if lifespan == 0 {
 		lifespan = time.Hour
 	} else if lifespan < 5*time.Second || lifespan > config.LifeSpanSeconds.Get() {
-		return ValidMagicLinkCreateArgs{}, fmt.Errorf("%w: link lifespan must be between 5 and %d", ErrInvalidModel, int(config.LifeSpanSeconds.Get().Seconds()))
+		return ValidMagicLinkCreateParams{}, fmt.Errorf("%w: link lifespan must be between 5 and %d", ErrInvalidModel, int(config.LifeSpanSeconds.Get().Seconds()))
 	}
 
 	if p.RedirectQueryKey == "" {
@@ -34,45 +34,45 @@ func (p MagicLinkCreateArgs) Validate(config Validation) (ValidMagicLinkCreateAr
 	}
 	u, err := httpURL(config, p.RedirectURL)
 	if err != nil {
-		return ValidMagicLinkCreateArgs{}, fmt.Errorf("failed to validate URL: %w", err)
+		return ValidMagicLinkCreateParams{}, fmt.Errorf("failed to validate URL: %w", err)
 	}
-	valid := ValidMagicLinkCreateArgs{
+	valid := ValidMagicLinkCreateParams{
 		LinkLifespan:     lifespan,
-		JWTCreateArgs:    validJWTCreateArgs,
+		JWTCreateParams:  validJWTCreateParams,
 		RedirectQueryKey: p.RedirectQueryKey,
 		RedirectURL:      u,
 	}
 	return valid, nil
 }
 
-// ValidMagicLinkCreateArgs are the validated arguments for creating a magic link.
-type ValidMagicLinkCreateArgs struct {
+// ValidMagicLinkCreateParams are the validated parameters for creating a magic link.
+type ValidMagicLinkCreateParams struct {
 	LinkLifespan     time.Duration
-	JWTCreateArgs    ValidJWTCreateArgs
+	JWTCreateParams  ValidJWTCreateParams
 	RedirectQueryKey string
 	RedirectURL      *url.URL
 }
 
 // MagicLinkCreateRequest is the request to create a magic link.
 type MagicLinkCreateRequest struct {
-	MagicLinkCreateArgs MagicLinkCreateArgs `json:"magicLinkCreateArgs"`
+	MagicLinkCreateParams MagicLinkCreateParams `json:"magicLinkCreateParams"`
 }
 
 // Validate validates the link create request.
 func (b MagicLinkCreateRequest) Validate(config Validation) (ValidMagicLinkCreateRequest, error) {
-	magicLinkArgs, err := b.MagicLinkCreateArgs.Validate(config)
+	magicLinkParams, err := b.MagicLinkCreateParams.Validate(config)
 	if err != nil {
 		return ValidMagicLinkCreateRequest{}, fmt.Errorf("failed to validate magic link args: %w", err)
 	}
 	valid := ValidMagicLinkCreateRequest{
-		MagicLinkArgs: magicLinkArgs,
+		MagicLinkParams: magicLinkParams,
 	}
 	return valid, nil
 }
 
 // ValidMagicLinkCreateRequest is the validated request to create a magic link.
 type ValidMagicLinkCreateRequest struct {
-	MagicLinkArgs ValidMagicLinkCreateArgs
+	MagicLinkParams ValidMagicLinkCreateParams
 }
 
 // MagicLinkCreateResults are the results of creating a magic link.

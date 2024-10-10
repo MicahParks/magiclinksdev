@@ -79,10 +79,10 @@ func (t *testStorage) Close(_ context.Context) error {
 func (t *testStorage) TestingTruncate(_ context.Context) error {
 	return nil
 }
-func (t *testStorage) CreateAdminSA(_ context.Context, _ model.ValidAdminCreateArgs) error {
+func (t *testStorage) CreateAdminSA(_ context.Context, _ model.ValidAdminCreateParams) error {
 	return nil
 }
-func (t *testStorage) CreateSA(_ context.Context, _ model.ValidServiceAccountCreateArgs) (model.ServiceAccount, error) {
+func (t *testStorage) CreateSA(_ context.Context, _ model.ValidServiceAccountCreateParams) (model.ServiceAccount, error) {
 	u := uuid.New()
 	apiKey := uuid.New()
 	aud := uuid.New()
@@ -173,11 +173,11 @@ func (t *testStorage) MarshalWithOptions(ctx context.Context, marshalOptions jwk
 	}
 	return m.MarshalWithOptions(ctx, marshalOptions, validationOptions)
 }
-func (t *testStorage) Create(_ context.Context, _ magiclink.CreateArgs) (secret string, err error) {
+func (t *testStorage) Create(_ context.Context, _ magiclink.CreateParams) (secret string, err error) {
 	return uuid.New().String(), nil
 }
-func (t *testStorage) Read(_ context.Context, _ string) (magiclink.ReadResponse, error) {
-	return magiclink.ReadResponse{}, nil
+func (t *testStorage) Read(_ context.Context, _ string) (magiclink.ReadResult, error) {
+	return magiclink.ReadResult{}, nil
 }
 
 // ErrorStorage is a storage.Storage implementation that always returns an error.
@@ -192,10 +192,10 @@ func (e ErrorStorage) Close(_ context.Context) error {
 func (e ErrorStorage) TestingTruncate(_ context.Context) error {
 	return ErrMLDTest
 }
-func (e ErrorStorage) CreateAdminSA(_ context.Context, _ model.ValidAdminCreateArgs) error {
+func (e ErrorStorage) CreateAdminSA(_ context.Context, _ model.ValidAdminCreateParams) error {
 	return ErrMLDTest
 }
-func (e ErrorStorage) CreateSA(_ context.Context, _ model.ValidServiceAccountCreateArgs) (model.ServiceAccount, error) {
+func (e ErrorStorage) CreateSA(_ context.Context, _ model.ValidServiceAccountCreateParams) (model.ServiceAccount, error) {
 	return model.ServiceAccount{}, ErrMLDTest
 }
 func (e ErrorStorage) ReadSA(_ context.Context, _ uuid.UUID) (model.ServiceAccount, error) {
@@ -222,9 +222,9 @@ func (e ErrorStorage) SnapshotKeys(_ context.Context) ([]jwkset.JWK, error) {
 func (e ErrorStorage) WriteKey(_ context.Context, _ jwkset.JWK) error {
 	return ErrMLDTest
 }
-func (e ErrorStorage) Create(_ context.Context, _ magiclink.CreateArgs) (secret string, err error) {
+func (e ErrorStorage) Create(_ context.Context, _ magiclink.CreateParams) (secret string, err error) {
 	return "", ErrMLDTest
 }
-func (e ErrorStorage) Read(_ context.Context, _ string) (magiclink.ReadResponse, error) {
-	return magiclink.ReadResponse{}, ErrMLDTest
+func (e ErrorStorage) Read(_ context.Context, _ string) (magiclink.ReadResult, error) {
+	return magiclink.ReadResult{}, ErrMLDTest
 }

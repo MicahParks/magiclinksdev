@@ -29,15 +29,15 @@ var (
 
 // HandleJWTCreate handles the creation of a JWT.
 func (s *Server) HandleJWTCreate(ctx context.Context, req model.ValidJWTCreateRequest) (model.JWTCreateResponse, error) {
-	jwtCreateArgs := req.JWTCreateArgs
+	jwtCreateParams := req.JWTCreateParams
 
-	edited, err := s.addRegisteredClaims(ctx, jwtCreateArgs)
+	edited, err := s.addRegisteredClaims(ctx, jwtCreateParams)
 	if err != nil {
 		return model.JWTCreateResponse{}, fmt.Errorf("failed to add registered claims to JWT claims: %w", err)
 	}
 
 	options := storage.ReadSigningKeyOptions{
-		JWTAlg: jwtCreateArgs.Alg,
+		JWTAlg: jwtCreateParams.Alg,
 	}
 	jwk, err := s.Store.ReadSigningKey(ctx, options)
 	if err != nil {
@@ -70,7 +70,7 @@ func (s *Server) HandleJWTCreate(ctx context.Context, req model.ValidJWTCreateRe
 	return response, nil
 }
 
-func (s *Server) addRegisteredClaims(ctx context.Context, args model.ValidJWTCreateArgs) (json.RawMessage, error) {
+func (s *Server) addRegisteredClaims(ctx context.Context, args model.ValidJWTCreateParams) (json.RawMessage, error) {
 	sa, ok := ctx.Value(ctxkey.ServiceAccount).(model.ServiceAccount)
 	if !ok {
 		return nil, fmt.Errorf("%w: service account context not found", ctxkey.ErrCtxKey)
@@ -136,12 +136,12 @@ func (s *Server) addRegisteredClaims(ctx context.Context, args model.ValidJWTCre
 	return edited, nil
 }
 
-func (s *Server) createLinkArgs(ctx context.Context, args model.ValidMagicLinkCreateArgs) (magiclink.CreateArgs, error) {
-	var createArgs magiclink.CreateArgs
+func (s *Server) createLinkParams(ctx context.Context, args model.ValidMagicLinkCreateParams) (magiclink.CreateParams, error) {
+	var createParams magiclink.CreateParams
 
-	edited, err := s.addRegisteredClaims(ctx, args.JWTCreateArgs)
+	edited, err := s.addRegisteredClaims(ctx, args.JWTCreateParams)
 	if err != nil {
-		return createArgs, fmt.Errorf("failed to add registered claims to JWT claims: %w", err)
+		return createParams, fmt.Errorf("failed to add registered claims to JWT claims: %w", err)
 	}
 
 	claims := magiclinksdev.SigningBytesClaims{
@@ -149,18 +149,18 @@ func (s *Server) createLinkArgs(ctx context.Context, args model.ValidMagicLinkCr
 	}
 
 	options := storage.ReadSigningKeyOptions{
-		JWTAlg: args.JWTCreateArgs.Alg,
+		JWTAlg: args.JWTCreateParams.Alg,
 	}
 	jwk, err := s.Store.ReadSigningKey(ctx, options)
 	if err != nil {
 		if errors.Is(err, storage.ErrNotFound) {
-			return createArgs, fmt.Errorf("could not fing signing key with specified JWT alg: %w", ErrJWTAlgNotFound)
+			return createParams, fmt.Errorf("could not fing signing key with specified JWT alg: %w", ErrJWTAlgNotFound)
 		}
-		return createArgs, fmt.Errorf("failed to get JWT signing key: %w", err)
+		return createParams, fmt.Errorf("failed to get JWT signing key: %w", err)
 	}
 
 	kID := jwk.Marshal().KID
-	createArgs = magiclink.CreateArgs{
+	createParams = magiclink.CreateParams{
 		Expires:          time.Now().Add(args.LinkLifespan),
 		JWTClaims:        claims,
 		JWTKeyID:         &kID,
@@ -168,5 +168,5 @@ func (s *Server) createLinkArgs(ctx context.Context, args model.ValidMagicLinkCr
 		RedirectURL:      args.RedirectURL,
 	}
 
-	return createArgs, nil
+	return createParams, nil
 }

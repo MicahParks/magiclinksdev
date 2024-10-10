@@ -6,33 +6,33 @@ import (
 	"github.com/google/uuid"
 )
 
-// AdminCreateArgs are the unvalidated arguments for creating an admin.
-type AdminCreateArgs struct {
-	APIKey                   uuid.UUID                `json:"apiKey"`
-	Aud                      uuid.UUID                `json:"aud"`
-	UUID                     uuid.UUID                `json:"uuid"`
-	ServiceAccountCreateArgs ServiceAccountCreateArgs `json:"serviceAccountCreateArgs"`
+// AdminCreateParams are the unvalidated parameters for creating an admin.
+type AdminCreateParams struct {
+	APIKey                     uuid.UUID                  `json:"apiKey"`
+	Aud                        uuid.UUID                  `json:"aud"`
+	UUID                       uuid.UUID                  `json:"uuid"`
+	ServiceAccountCreateParams ServiceAccountCreateParams `json:"serviceAccountCreateParams"`
 }
 
-// Validate validates the admin create arguments.
-func (a AdminCreateArgs) Validate(config Validation) (ValidAdminCreateArgs, error) {
-	saArgs, err := a.ServiceAccountCreateArgs.Validate(config)
+// Validate validates the admin create parameters.
+func (a AdminCreateParams) Validate(config Validation) (ValidAdminCreateParams, error) {
+	saParams, err := a.ServiceAccountCreateParams.Validate(config)
 	if err != nil {
-		return ValidAdminCreateArgs{}, fmt.Errorf("failed to validate service account args: %w", err)
+		return ValidAdminCreateParams{}, fmt.Errorf("failed to validate service account args: %w", err)
 	}
-	valid := ValidAdminCreateArgs{
-		APIKey:                        a.APIKey,
-		Aud:                           a.Aud,
-		UUID:                          a.UUID,
-		ValidServiceAccountCreateArgs: saArgs,
+	valid := ValidAdminCreateParams{
+		APIKey:                          a.APIKey,
+		Aud:                             a.Aud,
+		UUID:                            a.UUID,
+		ValidServiceAccountCreateParams: saParams,
 	}
 	return valid, nil
 }
 
-// ValidAdminCreateArgs are the validated arguments for creating an admin.
-type ValidAdminCreateArgs struct {
-	APIKey                        uuid.UUID
-	Aud                           uuid.UUID
-	UUID                          uuid.UUID
-	ValidServiceAccountCreateArgs ValidServiceAccountCreateArgs
+// ValidAdminCreateParams are the validated parameters for creating an admin.
+type ValidAdminCreateParams struct {
+	APIKey                          uuid.UUID
+	Aud                             uuid.UUID
+	UUID                            uuid.UUID
+	ValidServiceAccountCreateParams ValidServiceAccountCreateParams
 }

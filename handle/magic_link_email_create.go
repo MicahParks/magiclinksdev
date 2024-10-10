@@ -14,38 +14,38 @@ import (
 
 // HandleMagicLinkEmailCreate handles the email link creation endpoint.
 func (s *Server) HandleMagicLinkEmailCreate(ctx context.Context, req model.ValidMagicLinkEmailCreateRequest) (model.MagicLinkEmailCreateResponse, error) {
-	emailArgs := req.MagicLinkEmailCreateArgs
-	linkArgs := req.MagicLinkCreateArgs
+	emailParams := req.MagicLinkEmailCreateParams
+	linkParams := req.MagicLinkCreateParams
 
-	magicLinkResp, err := s.createLink(ctx, linkArgs)
+	magicLinkResp, err := s.createLink(ctx, linkParams)
 	if err != nil {
 		return model.MagicLinkEmailCreateResponse{}, fmt.Errorf("failed to create magic link: %w", err)
 	}
 
 	meta := email.TemplateMetadata{
-		HTMLInstruction: fmt.Sprintf("You've been sent a magic link from %s.", emailArgs.ServiceName),
-		HTMLTitle:       fmt.Sprintf("Magic link from %s", emailArgs.ServiceName),
+		HTMLInstruction: fmt.Sprintf("You've been sent a magic link from %s.", emailParams.ServiceName),
+		HTMLTitle:       fmt.Sprintf("Magic link from %s", emailParams.ServiceName),
 		MSOButtonStop:   email.MSOButtonStop,
 		MSOButtonStart:  email.MSOButtonStart,
 		MSOHead:         email.MSOHead,
 	}
 	tData := email.TemplateData{
-		ButtonText:   emailArgs.ButtonText,
-		Expiration:   linkArgs.LinkLifespan.String(),
-		Greeting:     emailArgs.Greeting,
-		LogoImageURL: emailArgs.LogoImageURL,
-		LogoClickURL: emailArgs.LogoClickURL,
+		ButtonText:   emailParams.ButtonText,
+		Expiration:   linkParams.LinkLifespan.String(),
+		Greeting:     emailParams.Greeting,
+		LogoImageURL: emailParams.LogoImageURL,
+		LogoClickURL: emailParams.LogoClickURL,
 		LogoAltText:  "logo",
 		MagicLink:    magicLinkResp.MagicLink.String(),
 		Meta:         meta,
-		Subtitle:     emailArgs.SubTitle,
-		Title:        emailArgs.Title,
+		Subtitle:     emailParams.SubTitle,
+		Title:        emailParams.Title,
 		ReCATPTCHA:   s.Config.PreventRobots.Method == config.PreventRobotsReCAPTCHAV3,
 	}
 	e := email.Email{
-		Subject:      emailArgs.Subject,
+		Subject:      emailParams.Subject,
 		TemplateData: tData,
-		To:           emailArgs.ToEmail,
+		To:           emailParams.ToEmail,
 	}
 	err = s.EmailProvider.Send(ctx, e)
 	if err != nil {

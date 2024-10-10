@@ -28,7 +28,7 @@ func main() {
 	}
 
 	req := model.ServiceAccountCreateRequest{
-		ServiceAccountCreateArgs: model.ServiceAccountCreateArgs{},
+		ServiceAccountCreateParams: model.ServiceAccountCreateParams{},
 	}
 	resp, mldErr, err := c.ServiceAccountCreate(ctx, req)
 	if err != nil {

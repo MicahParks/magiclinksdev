@@ -12,12 +12,12 @@ import (
 )
 
 var (
-	// ErrArgs indicates that the given parameters are invalid.
-	ErrArgs = errors.New("invalid arguments")
+	// ErrParams indicates that the given parameters are invalid.
+	ErrParams = errors.New("invalid parameters")
 )
 
-// CreateArgs are the arguments for creating a magic link.
-type CreateArgs struct {
+// CreateParams are the parameters for creating a magic link.
+type CreateParams struct {
 	// Expires is the time the magic link will expire. Use of this field is REQUIRED for all use cases.
 	Expires time.Time
 
@@ -47,21 +47,21 @@ type CreateArgs struct {
 	RedirectURL *url.URL
 }
 
-// Valid confirms the CreateArgs are valid.
-func (p CreateArgs) Valid() error {
+// Valid confirms the CreateParams are valid.
+func (p CreateParams) Valid() error {
 	if p.Expires.IsZero() {
-		return fmt.Errorf("%w: Expires is required", ErrArgs)
+		return fmt.Errorf("%w: Expires is required", ErrParams)
 	}
 	if p.RedirectURL == nil {
-		return fmt.Errorf("%w: RedirectURL is required", ErrArgs)
+		return fmt.Errorf("%w: RedirectURL is required", ErrParams)
 	}
 	return nil
 }
 
-// ReadResponse is the response after a magic link has been read.
-type ReadResponse struct {
-	// CreateArgs are the parameters used to create the magic link.
-	CreateArgs CreateArgs
+// ReadResult is the result after a magic link has been read.
+type ReadResult struct {
+	// CreateParams are the parameters used to create the magic link.
+	CreateParams CreateParams
 	// Visited is the first time the magic link was visited. This is nil if the magic link has not been visited.
 	Visited *time.Time
 }
@@ -92,8 +92,8 @@ var (
 	ErrMagicLinkRead = errors.New("failed to read the magic link from storage")
 )
 
-// ErrorHandlerArgs are the arguments passed to an ErrorHandler when an error occurs.
-type ErrorHandlerArgs struct {
+// ErrorHandlerParams are the parameters passed to an ErrorHandler when an error occurs.
+type ErrorHandlerParams struct {
 	Err                   error
 	Request               *http.Request
 	SuggestedResponseCode int
@@ -104,21 +104,21 @@ type ErrorHandlerArgs struct {
 type ErrorHandler interface {
 	// Handle consumes an error and writes a response to the given writer. The set of possible errors to check by
 	// unwrapping with errors.Is is documented above the interface's source code.
-	Handle(args ErrorHandlerArgs)
+	Handle(args ErrorHandlerParams)
 }
 
 // ErrorHandlerFunc is a function that implements the ErrorHandler interface.
-type ErrorHandlerFunc func(args ErrorHandlerArgs)
+type ErrorHandlerFunc func(args ErrorHandlerParams)
 
 // Handle implements the ErrorHandler interface.
-func (f ErrorHandlerFunc) Handle(args ErrorHandlerArgs) {
+func (f ErrorHandlerFunc) Handle(args ErrorHandlerParams) {
 	f(args)
 }
 
 // Config contains the required assets to create a MagicLink service.
 type Config struct {
 	ErrorHandler     ErrorHandler
-	JWKS             JWKSArgs
+	JWKS             JWKSParams
 	CustomRedirector Redirector
 	ServiceURL       *url.URL
 	SecretQueryKey   string
@@ -128,13 +128,13 @@ type Config struct {
 // Valid confirms the Config is valid.
 func (c Config) Valid() error {
 	if c.ServiceURL == nil {
-		return fmt.Errorf("%w: include a service URL, this is used to build magic links", ErrArgs)
+		return fmt.Errorf("%w: include a service URL, this is used to build magic links", ErrParams)
 	}
 	return nil
 }
 
-// JWKSArgs are the parameters for the MagicLink service's JWK Set.
-type JWKSArgs struct {
+// JWKSParams are the parameters for the MagicLink service's JWK Set.
+type JWKSParams struct {
 	CacheRefresh time.Duration
 	Store        jwkset.Storage
 }
