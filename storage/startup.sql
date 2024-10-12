@@ -14,7 +14,7 @@ INSERT INTO mld.setup (setup)
 VALUES ('{
   "plaintextClaims": false,
   "plaintextJWK": false,
-  "semver": "v0.1.0"
+  "semver": "v0.2.0"
 }');
 
 CREATE TABLE mld.service_account
@@ -65,18 +65,3 @@ CREATE INDEX ON mld.link (sa_id);
 CREATE INDEX ON mld.link (visited);
 CREATE INDEX ON mld.link (created);
 
-CREATE TABLE mld.otp
-(
-    id        BIGSERIAL PRIMARY KEY,
-    sa_id     BIGINT                   NOT NULL REFERENCES mld.service_account (id),
-    expires   TIMESTAMP WITH TIME ZONE NOT NULL,
-    id_public UUID                     NOT NULL UNIQUE,
-    otp       TEXT                     NOT NULL,
-    used      TIMESTAMP WITH TIME ZONE,
-    created   TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-CREATE INDEX ON mld.otp (sa_id);
-CREATE INDEX ON mld.otp (expires);
-CREATE INDEX ON mld.otp (id_public);
-CREATE INDEX ON mld.otp (used);
-CREATE INDEX ON mld.otp (created);

@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	databaseVersion = "v0.1.0"
+	databaseVersion = "v0.2.0"
 )
 
 var (
