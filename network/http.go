@@ -23,7 +23,7 @@ const (
 
 // Validatable is an interface for validating a model.
 type Validatable[T any] interface {
-	Validate(s model.Validation) (T, error)
+	Validate(config model.Validation) (T, error)
 }
 
 // HTTPReady creates an HTTP handler that always returns http.StatusOK.

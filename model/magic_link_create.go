@@ -28,7 +28,6 @@ func (p MagicLinkCreateParams) Validate(config Validation) (ValidMagicLinkCreate
 	} else if lifespan < 5*time.Second || lifespan > config.LifeSpanSeconds.Get() {
 		return ValidMagicLinkCreateParams{}, fmt.Errorf("%w: link lifespan must be between 5 and %d", ErrInvalidModel, int(config.LifeSpanSeconds.Get().Seconds()))
 	}
-
 	if p.RedirectQueryKey == "" {
 		p.RedirectQueryKey = magiclink.DefaultRedirectQueryKey
 	}

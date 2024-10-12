@@ -467,6 +467,19 @@ definitions:
     description: "Parameters to create a One-Time Password (OTP)."
     type: "object"
     properties:
+      charSetAlphaLower:
+        description: "Include a chance to use lowercase letters in the OTP."
+        type: "boolean"
+      charSetAlphaUpper:
+        description: "Include a chance to use uppercase letters in the OTP."
+        type: "boolean"
+      charSetNumeric:
+        description: "Include a chance to use numbers in the OTP."
+        type: "boolean"
+      length:
+        description: "The length of the OTP. It defaults to 6. The minimum value is 1 and the maximum value is 12." # TODO Confirm the maximum value fits in the HTML email template.
+        default: 6
+        type: "integer"
       lifespanSeconds:
         description: "The lifespan of the OTP in seconds. The OTP's lifespan starts after the magic link has been
         visited and the OTP is created. It defaults to 5 minutes. The minimum value is 5 seconds and the maximum value is
