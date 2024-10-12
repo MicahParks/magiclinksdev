@@ -166,6 +166,26 @@ paths:
           schema:
             $ref: "#/definitions/Error"
 
+  /otp/validate: # TODO Add in Go code.
+    post:
+      summary: "Validate a One-Time Password (OTP) given its ID."
+      operationId: "otpValidate"
+      parameters:
+        - in: "body"
+          name: "body"
+          required: true
+          schema:
+            $ref: "#/definitions/OTPValidateRequest"
+      responses:
+        200:
+          description: "The OTP is valid for the given ID."
+        400:
+          description: "The OTP is invalid for the given ID."
+        default:
+          description: "An unexpected error occurred."
+          schema:
+            $ref: "#/definitions/Error"
+
   /otp-email/create: # TODO Add in Go code.
     post:
       summary: "Create a One-Time Password (OTP) and sent it via email."
@@ -466,6 +486,9 @@ definitions:
     description: "The results for creating a One-Time Password (OTP)."
     type: "object"
     properties:
+      id:
+        description: "The ID of the OTP."
+        type: "string"
       otp:
         description: "The One-Time Password."
         type: "string"
@@ -552,6 +575,16 @@ definitions:
         $ref: "#/definitions/OTPEmailCreateResults"
       requestMetadata:
         $ref: "#/definitions/RequestMetadata"
+
+  OTPValidateRequest:
+    type: "object"
+    properties:
+      id:
+        description: "The ID of the OTP to validate."
+        type: "string"
+      otp:
+        description: "The user provided One-Time Password to validate."
+        type: "string"
 
   ServiceAccountCreateRequest:
     description: "The request body for the /admin/service-account/create endpoint."
