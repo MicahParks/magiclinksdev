@@ -79,10 +79,10 @@ func (t *testStorage) Close(_ context.Context) error {
 func (t *testStorage) TestingTruncate(_ context.Context) error {
 	return nil
 }
-func (t *testStorage) CreateAdminSA(_ context.Context, _ model.ValidAdminCreateParams) error {
+func (t *testStorage) SAAdminCreate(_ context.Context, _ model.ValidAdminCreateParams) error {
 	return nil
 }
-func (t *testStorage) CreateSA(_ context.Context, _ model.ValidServiceAccountCreateParams) (model.ServiceAccount, error) {
+func (t *testStorage) SACreate(_ context.Context, _ model.ValidServiceAccountCreateParams) (model.ServiceAccount, error) {
 	u := uuid.New()
 	apiKey := uuid.New()
 	aud := uuid.New()
@@ -95,14 +95,14 @@ func (t *testStorage) CreateSA(_ context.Context, _ model.ValidServiceAccountCre
 	t.sa[u] = sa
 	return sa, nil
 }
-func (t *testStorage) ReadSA(_ context.Context, u uuid.UUID) (model.ServiceAccount, error) {
+func (t *testStorage) SARead(_ context.Context, u uuid.UUID) (model.ServiceAccount, error) {
 	sa, ok := t.sa[u]
 	if !ok {
 		return model.ServiceAccount{}, storage.ErrNotFound
 	}
 	return sa, nil
 }
-func (t *testStorage) ReadSAFromAPIKey(_ context.Context, apiKey uuid.UUID) (model.ServiceAccount, error) {
+func (t *testStorage) SAReadFromAPIKey(_ context.Context, apiKey uuid.UUID) (model.ServiceAccount, error) {
 	for _, sa := range t.sa {
 		if sa.APIKey == apiKey {
 			return sa, nil
@@ -110,13 +110,13 @@ func (t *testStorage) ReadSAFromAPIKey(_ context.Context, apiKey uuid.UUID) (mod
 	}
 	return model.ServiceAccount{}, fmt.Errorf("no service account found with API key %w", storage.ErrNotFound)
 }
-func (t *testStorage) ReadSigningKey(_ context.Context, _ storage.ReadSigningKeyOptions) (meta jwkset.JWK, err error) {
+func (t *testStorage) SigningKeyRead(_ context.Context, _ storage.ReadSigningKeyOptions) (meta jwkset.JWK, err error) {
 	return t.jwk, nil
 }
-func (t *testStorage) ReadDefaultSigningKey(_ context.Context) (jwk jwkset.JWK, err error) {
+func (t *testStorage) SigningKeyDefaultRead(_ context.Context) (jwk jwkset.JWK, err error) {
 	return t.jwk, nil
 }
-func (t *testStorage) UpdateDefaultSigningKey(_ context.Context, _ string) error {
+func (t *testStorage) SigningKeyDefaultUpdate(_ context.Context, _ string) error {
 	return nil
 }
 func (t *testStorage) KeyDelete(_ context.Context, _ string) (ok bool, err error) {

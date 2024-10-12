@@ -50,7 +50,7 @@ func TestMagicLink(t *testing.T) {
 				}
 				defer tx.Rollback(ctx)
 				ctx = context.WithValue(ctx, ctxkey.Tx, tx)
-				defaultKey, err := server.Store.ReadDefaultSigningKey(ctx)
+				defaultKey, err := server.Store.SigningKeyDefaultRead(ctx)
 				if err != nil {
 					panic(fmt.Sprintf("failed to read default signing key: %v", err))
 				}

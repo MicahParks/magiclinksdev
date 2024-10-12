@@ -14,12 +14,12 @@ import (
 func (s *Server) HandleServiceAccountCreate(ctx context.Context, args model.ValidServiceAccountCreateRequest) (model.ServiceAccountCreateResponse, error) {
 	saParams := args.ServiceAccountCreateParams
 
-	createdSA, err := s.Store.CreateSA(ctx, saParams)
+	createdSA, err := s.Store.SACreate(ctx, saParams)
 	if err != nil {
 		return model.ServiceAccountCreateResponse{}, fmt.Errorf("failed to create service account: %w", err)
 	}
 
-	serviceAccount, err := s.Store.ReadSA(ctx, createdSA.UUID)
+	serviceAccount, err := s.Store.SARead(ctx, createdSA.UUID)
 	if err != nil {
 		return model.ServiceAccountCreateResponse{}, fmt.Errorf("failed to get service account as marshallable data structure: %w", err)
 	}

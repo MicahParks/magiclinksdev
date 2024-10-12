@@ -362,10 +362,10 @@ func CreateServer(ctx context.Context, conf config.Config, options ServerOptions
 		if err != nil {
 			return nil, fmt.Errorf("failed to validate admin config: %w", err)
 		}
-		_, err = interfaces.Store.ReadSA(setupCtx, valid.UUID)
+		_, err = interfaces.Store.SARead(setupCtx, valid.UUID)
 		if err != nil {
 			if errors.Is(err, storage.ErrNotFound) {
-				err = interfaces.Store.CreateAdminSA(setupCtx, valid)
+				err = interfaces.Store.SAAdminCreate(setupCtx, valid)
 				if err != nil {
 					return nil, fmt.Errorf("failed to setup admin: %w", err)
 				}

@@ -39,7 +39,7 @@ func (s *Server) HandleJWTCreate(ctx context.Context, req model.ValidJWTCreateRe
 	options := storage.ReadSigningKeyOptions{
 		JWTAlg: jwtCreateParams.Alg,
 	}
-	jwk, err := s.Store.ReadSigningKey(ctx, options)
+	jwk, err := s.Store.SigningKeyRead(ctx, options)
 	if err != nil {
 		if errors.Is(err, storage.ErrNotFound) {
 			return model.JWTCreateResponse{}, fmt.Errorf("could not fing signing key with specified JWT alg: %w", ErrJWTAlgNotFound)
@@ -151,7 +151,7 @@ func (s *Server) createLinkParams(ctx context.Context, args model.ValidMagicLink
 	options := storage.ReadSigningKeyOptions{
 		JWTAlg: args.JWTCreateParams.Alg,
 	}
-	jwk, err := s.Store.ReadSigningKey(ctx, options)
+	jwk, err := s.Store.SigningKeyRead(ctx, options)
 	if err != nil {
 		if errors.Is(err, storage.ErrNotFound) {
 			return createParams, fmt.Errorf("could not fing signing key with specified JWT alg: %w", ErrJWTAlgNotFound)

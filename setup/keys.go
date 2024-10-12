@@ -39,7 +39,7 @@ func CreateKeysIfNotExists(ctx context.Context, store storage.Storage) (keys []j
 		if !(haveEdDSA && haveRS256) {
 			return nil, false, fmt.Errorf("%w: expected to have an EdDSA and an RS256 key", ErrJWKSet)
 		}
-		jwk, err := store.ReadDefaultSigningKey(ctx)
+		jwk, err := store.SigningKeyDefaultRead(ctx)
 		if err != nil {
 			return nil, false, fmt.Errorf("failed to read default signing key: %w", err)
 		}
@@ -75,7 +75,7 @@ func CreateKeysIfNotExists(ctx context.Context, store storage.Storage) (keys []j
 		return nil, false, fmt.Errorf("failed to write EdDSA JWK: %w", err)
 	}
 
-	err = store.UpdateDefaultSigningKey(ctx, jwk.Marshal().KID)
+	err = store.SigningKeyDefaultUpdate(ctx, jwk.Marshal().KID)
 	if err != nil {
 		return nil, false, fmt.Errorf("failed to update default signing key: %w", err)
 	}

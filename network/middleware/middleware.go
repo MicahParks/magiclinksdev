@@ -75,7 +75,7 @@ func createAuthn(server *handle.Server) Middleware {
 				return
 			}
 
-			sa, err := server.Store.ReadSAFromAPIKey(ctx, apiKey)
+			sa, err := server.Store.SAReadFromAPIKey(ctx, apiKey)
 			if err != nil {
 				WriteErrorBody(ctx, http.StatusUnauthorized, mld.ResponseUnauthorized, w)
 				return

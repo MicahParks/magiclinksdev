@@ -150,7 +150,7 @@ TRUNCATE TABLE mld.jwk, mld.link, mld.service_account
 	return nil
 }
 
-func (p postgres) CreateAdminSA(ctx context.Context, args model.ValidAdminCreateParams) error {
+func (p postgres) SAAdminCreate(ctx context.Context, args model.ValidAdminCreateParams) error {
 	tx := ctx.Value(ctxkey.Tx).(*Transaction).Tx
 
 	_, err := tx.Exec(ctx, createServiceAccountQuery, args.UUID, args.APIKey, args.Aud, true)
@@ -160,7 +160,7 @@ func (p postgres) CreateAdminSA(ctx context.Context, args model.ValidAdminCreate
 
 	return nil
 }
-func (p postgres) CreateSA(ctx context.Context, _ model.ValidServiceAccountCreateParams) (model.ServiceAccount, error) {
+func (p postgres) SACreate(ctx context.Context, _ model.ValidServiceAccountCreateParams) (model.ServiceAccount, error) {
 	tx := ctx.Value(ctxkey.Tx).(*Transaction).Tx
 
 	apiKey, err := uuid.NewRandom()
@@ -190,7 +190,7 @@ func (p postgres) CreateSA(ctx context.Context, _ model.ValidServiceAccountCreat
 
 	return sa, nil
 }
-func (p postgres) ReadSA(ctx context.Context, u uuid.UUID) (model.ServiceAccount, error) {
+func (p postgres) SARead(ctx context.Context, u uuid.UUID) (model.ServiceAccount, error) {
 	tx := ctx.Value(ctxkey.Tx).(*Transaction).Tx
 
 	//language=sql
@@ -212,7 +212,7 @@ WHERE uuid = $1
 
 	return sa, nil
 }
-func (p postgres) ReadSAFromAPIKey(ctx context.Context, apiKey uuid.UUID) (model.ServiceAccount, error) {
+func (p postgres) SAReadFromAPIKey(ctx context.Context, apiKey uuid.UUID) (model.ServiceAccount, error) {
 	tx := ctx.Value(ctxkey.Tx).(*Transaction).Tx
 
 	//language=sql
@@ -234,7 +234,7 @@ WHERE api_key = $1
 
 	return sa, nil
 }
-func (p postgres) ReadSigningKey(ctx context.Context, options ReadSigningKeyOptions) (jwk jwkset.JWK, err error) {
+func (p postgres) SigningKeyRead(ctx context.Context, options ReadSigningKeyOptions) (jwk jwkset.JWK, err error) {
 	tx := ctx.Value(ctxkey.Tx).(*Transaction).Tx
 
 	//language=sql
@@ -272,7 +272,7 @@ ORDER BY created DESC
 
 	return jwk, nil
 }
-func (p postgres) ReadDefaultSigningKey(ctx context.Context) (jwk jwkset.JWK, err error) {
+func (p postgres) SigningKeyDefaultRead(ctx context.Context) (jwk jwkset.JWK, err error) {
 	tx := ctx.Value(ctxkey.Tx).(*Transaction).Tx
 
 	//language=sql
@@ -297,7 +297,7 @@ WHERE signing_default = TRUE
 
 	return jwk, nil
 }
-func (p postgres) UpdateDefaultSigningKey(ctx context.Context, keyID string) error {
+func (p postgres) SigningKeyDefaultUpdate(ctx context.Context, keyID string) error {
 	tx := ctx.Value(ctxkey.Tx).(*Transaction).Tx
 
 	//language=sql
