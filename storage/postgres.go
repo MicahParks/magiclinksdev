@@ -23,8 +23,8 @@ import (
 	"github.com/MicahParks/magiclinksdev"
 	"github.com/MicahParks/magiclinksdev/magiclink"
 	"github.com/MicahParks/magiclinksdev/model"
-
 	"github.com/MicahParks/magiclinksdev/network/middleware/ctxkey"
+	"github.com/MicahParks/magiclinksdev/otp"
 )
 
 const (
@@ -318,7 +318,7 @@ WHERE key_id = $1
   Magic link storage.
 */
 
-func (p postgres) Create(ctx context.Context, args magiclink.CreateParams) (secret string, err error) {
+func (p postgres) MagicLinkCreate(ctx context.Context, args magiclink.CreateParams) (secret string, err error) {
 	tx := ctx.Value(ctxkey.Tx).(*Transaction).Tx
 	sa := ctx.Value(ctxkey.ServiceAccount).(model.ServiceAccount)
 
@@ -347,7 +347,7 @@ VALUES ($2, $3, $4, $5, $6, $7, $8, (SELECT id FROM sa))
 
 	return s.String(), nil
 }
-func (p postgres) Read(ctx context.Context, secret string) (magiclink.ReadResult, error) {
+func (p postgres) MagicLinkRead(ctx context.Context, secret string) (magiclink.ReadResult, error) {
 	tx := ctx.Value(ctxkey.Tx).(*Transaction).Tx
 	var response magiclink.ReadResult
 
@@ -398,6 +398,19 @@ RETURNING updated.expires, updated.jwt_claims, updated.jwt_key_id, updated.jwt_s
 	response.CreateParams = args
 	response.Visited = visited
 	return response, nil
+}
+
+/*
+OTP Storage
+*/
+
+func (p postgres) OTPCreate(ctx context.Context, params otp.CreateParams) (otp.CreateResult, error) {
+	// TODO implement me
+	panic("implement me")
+}
+func (p postgres) OTPValidate(ctx context.Context, id, otp string) error {
+	// TODO implement me
+	panic("implement me")
 }
 
 /*

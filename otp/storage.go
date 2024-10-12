@@ -27,8 +27,8 @@ type CreateResult struct {
 }
 
 type Storage interface {
-	Create(ctx context.Context, params CreateParams) (CreateResult, error)
-	Validate(ctx context.Context, id, otp string) error
+	OTPCreate(ctx context.Context, params CreateParams) (CreateResult, error)
+	OTPValidate(ctx context.Context, id, otp string) error
 }
 
 type memoryOTP struct {
@@ -41,7 +41,7 @@ func NewMemoryStorage() Storage {
 		store: make(map[string]CreateResult),
 	}
 }
-func (m *memoryOTP) Create(_ context.Context, params CreateParams) (CreateResult, error) {
+func (m *memoryOTP) OTPCreate(_ context.Context, params CreateParams) (CreateResult, error) {
 	o, err := generateOTP(params)
 	if err != nil {
 		return CreateResult{}, fmt.Errorf("failed to generate OTP: %w", err)
@@ -57,7 +57,7 @@ func (m *memoryOTP) Create(_ context.Context, params CreateParams) (CreateResult
 	m.store[id] = result
 	return result, nil
 }
-func (m *memoryOTP) Validate(_ context.Context, id, otp string) error {
+func (m *memoryOTP) OTPValidate(_ context.Context, id, otp string) error {
 	m.mux.Lock()
 	defer m.mux.Unlock()
 	o, ok := m.store[id]
