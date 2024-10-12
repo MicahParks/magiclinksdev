@@ -405,12 +405,61 @@ OTP Storage
 */
 
 func (p postgres) OTPCreate(ctx context.Context, params otp.CreateParams) (otp.CreateResult, error) {
-	// TODO implement me
-	panic("implement me")
+	tx := ctx.Value(ctxkey.Tx).(*Transaction).Tx
+	sa := ctx.Value(ctxkey.ServiceAccount).(model.ServiceAccount)
+
+	o, err := otp.Generate(params)
+	if err != nil {
+		return otp.CreateResult{}, fmt.Errorf("failed to generate OTP: %w", err)
+	}
+
+	publicID := uuid.New()
+
+	//language=sql
+	const query = `
+WITH sa AS (SELECT id FROM mld.service_account WHERE uuid = $1)
+INSERT INTO mld.otp (sa_id, expires, id_public, otp) VALUES ((SELECT id FROM sa), $1, $2, $3)
+`
+	_, err = tx.Exec(ctx, query, sa.UUID, params.Expires, publicID, o)
+	if err != nil {
+		return otp.CreateResult{}, fmt.Errorf("failed to write OTP to Postgres: %w", err)
+	}
+
+	results := otp.CreateResult{
+		CreateParams: params,
+		ID:           publicID.String(),
+		OTP:          o,
+	}
+
+	return results, nil
 }
-func (p postgres) OTPValidate(ctx context.Context, id, otp string) error {
-	// TODO implement me
-	panic("implement me")
+func (p postgres) OTPValidate(ctx context.Context, id, o string) error {
+	tx := ctx.Value(ctxkey.Tx).(*Transaction).Tx
+
+	u, err := uuid.Parse(id)
+	if err != nil {
+		return fmt.Errorf("failed to parse UUID: %w", otp.ErrOTPInvalid)
+	}
+
+	//language=sql
+	const query = `
+UPDATE mld.otp updated
+SET used = CURRENT_TIMESTAMP
+WHERE updated.id_public = $1
+  AND updated.otp = $2
+  AND updated.expires > CURRENT_TIMESTAMP
+  AND updated.used IS NULL
+`
+	result, err := tx.Exec(ctx, query, u, o)
+	if err != nil {
+		return fmt.Errorf("failed to query database: %w", err)
+	}
+
+	if result.RowsAffected() < 1 {
+		return fmt.Errorf("no rows were updated: %w", otp.ErrOTPInvalid)
+	}
+
+	return nil
 }
 
 /*

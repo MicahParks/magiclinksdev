@@ -28,7 +28,7 @@ type CreateResult struct {
 
 type Storage interface {
 	OTPCreate(ctx context.Context, params CreateParams) (CreateResult, error)
-	OTPValidate(ctx context.Context, id, otp string) error
+	OTPValidate(ctx context.Context, id, o string) error
 }
 
 type memoryOTP struct {
@@ -42,7 +42,7 @@ func NewMemoryStorage() Storage {
 	}
 }
 func (m *memoryOTP) OTPCreate(_ context.Context, params CreateParams) (CreateResult, error) {
-	o, err := generateOTP(params)
+	o, err := Generate(params)
 	if err != nil {
 		return CreateResult{}, fmt.Errorf("failed to generate OTP: %w", err)
 	}

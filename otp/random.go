@@ -18,7 +18,7 @@ var (
 	ErrParams = errors.New("invalid parameters") // TODO Combine with other
 )
 
-func generateOTP(args CreateParams) (string, error) {
+func Generate(args CreateParams) (string, error) {
 	charSet := make([]rune, 0)
 	if args.CharSetAlphaLower {
 		charSet = append(charSet, alphaLower...)
