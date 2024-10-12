@@ -18,14 +18,7 @@ var (
 	ErrParams = errors.New("invalid parameters") // TODO Combine with other
 )
 
-type OTPParams struct { // TODO Rename?
-	CharSetAlphaLower bool
-	CharSetAlphaUpper bool
-	CharSetNumeric    bool
-	Length            int64
-}
-
-func generateOTP(args OTPParams) (string, error) {
+func generateOTP(args CreateParams) (string, error) {
 	charSet := make([]rune, 0)
 	if args.CharSetAlphaLower {
 		charSet = append(charSet, alphaLower...)
