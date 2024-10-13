@@ -38,7 +38,7 @@ var _ storage.Storage = &testStorage{}
 
 type testStorage struct {
 	jwk jwkset.JWK
-	sa  map[uuid.UUID]model.ServiceAccount // TODO Need mutex?
+	sa  map[uuid.UUID]model.ServiceAccount
 }
 
 func (t *testStorage) toMemory(ctx context.Context) (jwkset.Storage, error) {
