@@ -510,6 +510,7 @@ func (p postgres) KeyReadAll(ctx context.Context) ([]jwkset.JWK, error) {
 	const query = `
 SELECT assets, signing_default
 FROM mld.jwk
+ORDER BY signing_default DESC
 `
 	rows, err := tx.Query(ctx, query)
 	if err != nil {

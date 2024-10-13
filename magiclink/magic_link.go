@@ -179,7 +179,7 @@ func (m MagicLink) HandleMagicLink(ctx context.Context, secret string) (jwtB64 s
 		if len(allKeys) == 0 {
 			return "", response, ErrJWKSEmpty
 		}
-		jwk = allKeys[0] // TODO Why the first key? Should this be the signing default? If so, update docs and implementations.
+		jwk = allKeys[0] // First key is default signing key in PostgreSQL implementation.
 	}
 
 	signingMethod := jwt.GetSigningMethod(response.CreateParams.JWTSigningMethod)
