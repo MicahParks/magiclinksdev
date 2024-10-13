@@ -19,10 +19,7 @@ func (o OTPValidateParams) Validate(config Validation) (ValidOTPValidateParams, 
 	if len(o.OTP) == 0 {
 		return ValidOTPValidateParams{}, fmt.Errorf("%w: OTP cannot be empty", ErrInvalidModel)
 	}
-	valid := ValidOTPValidateParams{
-		ID:  o.ID,
-		OTP: o.OTP,
-	}
+	valid := ValidOTPValidateParams(o)
 	return valid, nil
 }
 

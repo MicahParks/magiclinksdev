@@ -48,6 +48,7 @@ func TestMagicLink(t *testing.T) {
 				if err != nil {
 					panic(fmt.Sprintf("failed to begin transaction: %v", err))
 				}
+				//goland:noinspection GoUnhandledErrorResult
 				defer tx.Rollback(ctx)
 				ctx = context.WithValue(ctx, ctxkey.Tx, tx)
 				defaultKey, err := server.Store.SigningKeyDefaultRead(ctx)
