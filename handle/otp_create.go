@@ -38,7 +38,7 @@ func createOTPParams(otpParams model.ValidOTPCreateParams) otp.CreateParams {
 		CharSetAlphaLower: otpParams.CharSetAlphaLower,
 		CharSetAlphaUpper: otpParams.CharSetAlphaUpper,
 		CharSetNumeric:    otpParams.CharSetNumeric,
-		Expires:           time.Now().Add(otpParams.LifespanSeconds),
+		Expires:           time.Now().Add(otpParams.Lifespan),
 		Length:            otpParams.Length,
 	}
 	return params

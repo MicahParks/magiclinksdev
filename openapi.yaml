@@ -192,10 +192,16 @@ paths:
       responses:
         "200":
           description: The OTP is valid for the given ID.
-          content: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OTPValidateResponse'
         "400":
           description: The OTP is invalid for the given ID.
-          content: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         default:
           description: An unexpected error occurred.
           content:
@@ -338,15 +344,6 @@ components:
         requestMetadata:
           $ref: '#/components/schemas/RequestMetadata'
       description: The response body for the /jwt/validate endpoint.
-    MagicLinkLimits:
-      type: object
-      properties:
-        lifespanSeconds:
-          type: integer
-          description: "The number of seconds the magic link should be active for\
-            \ after the request has been processed. It defaults to 1 hour. The minimum\
-            \ value is 5 seconds and the maximum value is 7905600000 seconds, which\
-            \ is a bit over 250 years."
     MagicLinkCreateParams:
       required:
         - redirectURL
@@ -354,6 +351,12 @@ components:
       properties:
         jwtCreateParams:
           $ref: '#/components/schemas/JWTCreateParams'
+        lifespanSeconds:
+          type: integer
+          description: "The number of seconds the magic link should be active for\
+            \ after the request has been processed. It defaults to 1 hour. The minimum\
+            \ value is 5 seconds and the maximum value is 7905600000 seconds, which\
+            \ is a bit over 250 years."
         redirectQueryKey:
           type: string
           description: "The URL query key in the redirectURL to contain the signed\
@@ -370,8 +373,6 @@ components:
       properties:
         magicLinkCreateParams:
           $ref: '#/components/schemas/MagicLinkCreateParams'
-        magicLinkLimits:
-          $ref: '#/components/schemas/MagicLinkLimits'
     MagicLinkCreateResults:
       type: object
       properties:
@@ -471,6 +472,19 @@ components:
     OTPCreateParams:
       type: object
       properties:
+        charSetAlphaLower:
+          type: boolean
+          description: Include a chance to use lowercase letters in the OTP.
+        charSetAlphaUpper:
+          type: boolean
+          description: Include a chance to use uppercase letters in the OTP.
+        charSetNumeric:
+          type: boolean
+          description: Include a chance to use numbers in the OTP.
+        length:
+          type: integer
+          description: The length of the OTP. It defaults to 6. The minimum value
+            is 1 and the maximum value is 12.
         lifespanSeconds:
           type: integer
           description: "The lifespan of the OTP in seconds. The OTP's lifespan starts\
@@ -574,7 +588,7 @@ components:
           $ref: '#/components/schemas/OTPEmailCreateResults'
         requestMetadata:
           $ref: '#/components/schemas/RequestMetadata'
-    OTPValidateRequest:
+    OTPValidateParams:
       type: object
       properties:
         id:
@@ -583,6 +597,14 @@ components:
         otp:
           type: string
           description: The user provided One-Time Password to validate.
+      description: Parameters to validate a One-Time Password (OTP).
+    OTPValidateRequest:
+      type: object
+      properties:
+        otpValidateParams:
+          $ref: '#/components/schemas/OTPValidateParams'
+    OTPValidateResponse:
+      type: object
     ServiceAccountCreateRequest:
       type: object
       description: The request body for the /admin/service-account/create endpoint.

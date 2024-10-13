@@ -31,7 +31,7 @@ func (s *Server) HandleMagicLinkEmailCreate(ctx context.Context, req model.Valid
 	}
 	tData := email.MagicLinkTemplateData{
 		ButtonText:   emailParams.ButtonText,
-		Expiration:   linkParams.LinkLifespan.String(),
+		Expiration:   linkParams.Lifespan.String(),
 		Greeting:     emailParams.Greeting,
 		LogoImageURL: emailParams.LogoImageURL,
 		LogoClickURL: emailParams.LogoClickURL,

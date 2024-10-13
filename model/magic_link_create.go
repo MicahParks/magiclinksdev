@@ -11,7 +11,7 @@ import (
 // MagicLinkCreateParams are the unvalidated parameters for creating a magic link.
 type MagicLinkCreateParams struct {
 	JWTCreateParams  JWTCreateParams `json:"jwtCreateParams"`
-	LifespanSeconds  int             `json:"lifespanSeconds"` // TODO Move into link limits? Or was that when permalinks were going to be added?
+	LifespanSeconds  int             `json:"lifespanSeconds"`
 	RedirectQueryKey string          `json:"redirectQueryKey"`
 	RedirectURL      string          `json:"redirectURL"`
 }
@@ -36,7 +36,7 @@ func (p MagicLinkCreateParams) Validate(config Validation) (ValidMagicLinkCreate
 		return ValidMagicLinkCreateParams{}, fmt.Errorf("failed to validate URL: %w", err)
 	}
 	valid := ValidMagicLinkCreateParams{
-		LinkLifespan:     lifespan,
+		Lifespan:         lifespan,
 		JWTCreateParams:  validJWTCreateParams,
 		RedirectQueryKey: p.RedirectQueryKey,
 		RedirectURL:      u,
@@ -46,7 +46,7 @@ func (p MagicLinkCreateParams) Validate(config Validation) (ValidMagicLinkCreate
 
 // ValidMagicLinkCreateParams are the validated parameters for creating a magic link.
 type ValidMagicLinkCreateParams struct {
-	LinkLifespan     time.Duration // TODO Rename
+	Lifespan         time.Duration
 	JWTCreateParams  ValidJWTCreateParams
 	RedirectQueryKey string
 	RedirectURL      *url.URL

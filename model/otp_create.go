@@ -34,7 +34,7 @@ func (o OTPCreateParams) Validate(config Validation) (ValidOTPCreateParams, erro
 		CharSetAlphaUpper: o.CharSetAlphaUpper,
 		CharSetNumeric:    o.CharSetNumeric,
 		Length:            length,
-		LifespanSeconds:   lifespan,
+		Lifespan:          lifespan,
 	}
 	return valid, nil
 }
@@ -44,7 +44,7 @@ type ValidOTPCreateParams struct {
 	CharSetAlphaUpper bool
 	CharSetNumeric    bool
 	Length            uint
-	LifespanSeconds   time.Duration
+	Lifespan          time.Duration
 }
 
 type OTPCreateRequest struct {

@@ -161,7 +161,7 @@ func (s *Server) createLinkParams(ctx context.Context, args model.ValidMagicLink
 
 	kID := jwk.Marshal().KID
 	createParams = magiclink.CreateParams{
-		Expires:          time.Now().Add(args.LinkLifespan),
+		Expires:          time.Now().Add(args.Lifespan),
 		JWTClaims:        claims,
 		JWTKeyID:         &kID,
 		RedirectQueryKey: args.RedirectQueryKey,

@@ -331,22 +331,18 @@ definitions:
       requestMetadata:
         $ref: "#/definitions/RequestMetadata"
 
-  MagicLinkLimits:
-    type: "object"
-    properties:
-      lifespanSeconds:
-        description: "The number of seconds the magic link should be active for after the request has been processed. It
-        defaults to 1 hour. The minimum value is 5 seconds and the maximum value is 7905600000 seconds, which is a bit
-        over 250 years."
-        type: "integer"
-        default: 3600
-
   MagicLinkCreateParams:
     description: "Parameters to create a magic link."
     type: "object"
     properties:
       jwtCreateParams:
         $ref: "#/definitions/JWTCreateParams"
+      lifespanSeconds:
+        description: "The number of seconds the magic link should be active for after the request has been processed. It
+        defaults to 1 hour. The minimum value is 5 seconds and the maximum value is 7905600000 seconds, which is a bit
+        over 250 years."
+        type: "integer"
+        default: 3600
       redirectQueryKey:
         description: 'The URL query key in the redirectURL to contain the signed JWT when the magic link is used. By
         default, "jwt" is used.'
@@ -362,11 +358,8 @@ definitions:
     properties:
       magicLinkCreateParams:
         $ref: "#/definitions/MagicLinkCreateParams"
-      magicLinkLimits:
-        $ref: "#/definitions/MagicLinkLimits"
     required:
       - "magicLinkCreateParams"
-      - "magicLinkLimitations"
 
   MagicLinkCreateResults:
     type: "object"

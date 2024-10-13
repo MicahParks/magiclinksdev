@@ -28,7 +28,7 @@ func (s *Server) HandleOTPEmailCreate(ctx context.Context, req model.ValidOTPEma
 		MSOHead:         email.MSOHead,
 	}
 	tData := email.OTPTemplateData{
-		Expiration:   req.OTPCreateParams.LifespanSeconds.String(),
+		Expiration:   req.OTPCreateParams.Lifespan.String(),
 		Greeting:     emailParams.Greeting,
 		Meta:         meta,
 		OTP:          otpRes.OTP,
