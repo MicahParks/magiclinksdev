@@ -117,7 +117,7 @@ func TestEmailLinkCreate(t *testing.T) {
 		},
 		MagicLinkCreateParams: linkParams,
 	}
-	resp, mldErr, err := c.EmailLinkCreate(ctx, req)
+	resp, mldErr, err := c.MagicLinkEmailCreate(ctx, req)
 	if err != nil {
 		t.Fatalf("Failed to create email link: %v.", err)
 	}
@@ -240,7 +240,7 @@ func TestLinkCreate(t *testing.T) {
 	req := model.MagicLinkCreateRequest{
 		MagicLinkCreateParams: linkParams,
 	}
-	resp, mldErr, err := c.LinkCreate(ctx, req)
+	resp, mldErr, err := c.MagicLinkCreate(ctx, req)
 	if err != nil {
 		t.Fatalf("Failed to create magic link: %v.", err)
 	}

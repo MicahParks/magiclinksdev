@@ -47,7 +47,7 @@ func main() {
 			RedirectURL:      "https://jwtdebug.micahparks.com",
 		},
 	}
-	resp, mldErr, err := c.LinkCreate(ctx, req)
+	resp, mldErr, err := c.MagicLinkCreate(ctx, req)
 	if err != nil {
 		if mldErr.Code != 0 {
 			logger = logger.With(

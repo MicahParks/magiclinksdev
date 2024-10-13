@@ -418,7 +418,7 @@ func (p postgres) OTPCreate(ctx context.Context, params otp.CreateParams) (otp.C
 	//language=sql
 	const query = `
 WITH sa AS (SELECT id FROM mld.service_account WHERE uuid = $1)
-INSERT INTO mld.otp (sa_id, expires, id_public, otp) VALUES ((SELECT id FROM sa), $1, $2, $3)
+INSERT INTO mld.otp (sa_id, expires, id_public, otp) VALUES ((SELECT id FROM sa), $2, $3, $4)
 `
 	_, err = tx.Exec(ctx, query, sa.UUID, params.Expires, publicID, o)
 	if err != nil {

@@ -136,15 +136,6 @@ func (c Client) LocalJWTValidate(token string, claims jwt.Claims) (*jwt.Token, e
 	return t, nil
 }
 
-// EmailLinkCreate calls the /email-magic-link/create endpoint and returns the appropriate response.
-func (c Client) EmailLinkCreate(ctx context.Context, req model.MagicLinkEmailCreateRequest) (model.MagicLinkEmailCreateResponse, model.Error, error) {
-	resp, errResp, err := request[model.MagicLinkEmailCreateRequest, model.MagicLinkEmailCreateResponse](ctx, c, http.StatusCreated, network.PathMagicLinkEmailCreate, req)
-	if err != nil {
-		return model.MagicLinkEmailCreateResponse{}, errResp, fmt.Errorf("failed to create email link: %w", err)
-	}
-	return resp, errResp, nil
-}
-
 // JWTCreate calls the /jwt/create endpoint and returns the appropriate response.
 func (c Client) JWTCreate(ctx context.Context, req model.JWTCreateRequest) (model.JWTCreateResponse, model.Error, error) {
 	resp, errResp, err := request[model.JWTCreateRequest, model.JWTCreateResponse](ctx, c, http.StatusCreated, network.PathJWTCreate, req)
@@ -165,11 +156,47 @@ func (c Client) JWTValidate(ctx context.Context, req model.JWTValidateRequest) (
 	return resp, errResp, nil
 }
 
-// LinkCreate calls the /magic-link/create endpoint and returns the appropriate response.
-func (c Client) LinkCreate(ctx context.Context, req model.MagicLinkCreateRequest) (model.MagicLinkCreateResponse, model.Error, error) {
+// MagicLinkCreate calls the /magic-link/create endpoint and returns the appropriate response.
+func (c Client) MagicLinkCreate(ctx context.Context, req model.MagicLinkCreateRequest) (model.MagicLinkCreateResponse, model.Error, error) {
 	resp, errResp, err := request[model.MagicLinkCreateRequest, model.MagicLinkCreateResponse](ctx, c, http.StatusCreated, network.PathMagicLinkCreate, req)
 	if err != nil {
 		return model.MagicLinkCreateResponse{}, errResp, fmt.Errorf("failed to create link: %w", err)
+	}
+	return resp, errResp, nil
+}
+
+// MagicLinkEmailCreate calls the /magic-link-email/create endpoint and returns the appropriate response.
+func (c Client) MagicLinkEmailCreate(ctx context.Context, req model.MagicLinkEmailCreateRequest) (model.MagicLinkEmailCreateResponse, model.Error, error) {
+	resp, errResp, err := request[model.MagicLinkEmailCreateRequest, model.MagicLinkEmailCreateResponse](ctx, c, http.StatusCreated, network.PathMagicLinkEmailCreate, req)
+	if err != nil {
+		return model.MagicLinkEmailCreateResponse{}, errResp, fmt.Errorf("failed to create email link: %w", err)
+	}
+	return resp, errResp, nil
+}
+
+// OTPCreate calls the /otp/create endpoint and returns the appropriate response.
+func (c Client) OTPCreate(ctx context.Context, req model.OTPCreateRequest) (model.OTPCreateResponse, model.Error, error) {
+	resp, errResp, err := request[model.OTPCreateRequest, model.OTPCreateResponse](ctx, c, http.StatusCreated, network.PathOTPCreate, req)
+	if err != nil {
+		return model.OTPCreateResponse{}, errResp, fmt.Errorf("failed to create OTP: %w", err)
+	}
+	return resp, errResp, nil
+}
+
+// OTPValidate calls the /otp/validate endpoint and returns the appropriate response.
+func (c Client) OTPValidate(ctx context.Context, req model.OTPValidateRequest) (model.OTPValidateResponse, model.Error, error) {
+	resp, errResp, err := request[model.OTPValidateRequest, model.OTPValidateResponse](ctx, c, http.StatusOK, network.PathOTPValidate, req)
+	if err != nil {
+		return model.OTPValidateResponse{}, errResp, fmt.Errorf("failed to validate OTP: %w", err)
+	}
+	return resp, errResp, nil
+}
+
+// OTPEmailCreate calls the /otp-email/create endpoint and returns the appropriate response.
+func (c Client) OTPEmailCreate(ctx context.Context, req model.OTPEmailCreateRequest) (model.OTPEmailCreateResponse, model.Error, error) {
+	resp, errResp, err := request[model.OTPEmailCreateRequest, model.OTPEmailCreateResponse](ctx, c, http.StatusCreated, network.PathOTPEmailCreate, req)
+	if err != nil {
+		return model.OTPEmailCreateResponse{}, errResp, fmt.Errorf("failed to create email OTP: %w", err)
 	}
 	return resp, errResp, nil
 }
