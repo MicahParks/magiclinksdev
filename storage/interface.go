@@ -9,6 +9,7 @@ import (
 
 	"github.com/MicahParks/magiclinksdev/magiclink"
 	"github.com/MicahParks/magiclinksdev/model"
+	"github.com/MicahParks/magiclinksdev/otp"
 )
 
 var (
@@ -34,6 +35,7 @@ type Storage interface {
 
 	jwkset.Storage
 	magiclink.Storage
+	otp.Storage
 }
 
 // Tx is the interface for a transaction.

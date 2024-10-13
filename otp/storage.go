@@ -17,7 +17,7 @@ type CreateParams struct {
 	CharSetAlphaUpper bool
 	CharSetNumeric    bool
 	Expires           time.Time
-	Length            int64
+	Length            uint
 }
 
 type CreateResult struct {

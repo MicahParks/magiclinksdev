@@ -120,12 +120,12 @@ func testCreateCases(ctx context.Context, t *testing.T, appServer *httptest.Serv
 			RedirectQueryKey: cParam.RedirectQueryKey,
 			RedirectURL:      redirectURL,
 		}
-		createResp, err := m.NewLink(ctx, cP)
+		createRes, err := m.NewLink(ctx, cP)
 		if err != nil {
 			t.Fatalf("Failed to create magic link: %s", err)
 		}
 
-		resp, err := http.Get(createResp.MagicLink.String())
+		resp, err := http.Get(createRes.MagicLink.String())
 		if err != nil {
 			t.Fatalf("Failed to GET magic link: %s", err)
 		}

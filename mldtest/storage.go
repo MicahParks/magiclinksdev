@@ -11,6 +11,7 @@ import (
 
 	"github.com/MicahParks/magiclinksdev/magiclink"
 	"github.com/MicahParks/magiclinksdev/model"
+	"github.com/MicahParks/magiclinksdev/otp"
 	"github.com/MicahParks/magiclinksdev/storage"
 )
 
@@ -179,52 +180,85 @@ func (t *testStorage) MagicLinkCreate(_ context.Context, _ magiclink.CreateParam
 func (t *testStorage) MagicLinkRead(_ context.Context, _ string) (magiclink.ReadResult, error) {
 	return magiclink.ReadResult{}, nil
 }
+func (t *testStorage) OTPCreate(_ context.Context, _ otp.CreateParams) (otp.CreateResult, error) {
+	return otp.CreateResult{}, nil
+}
+func (t *testStorage) OTPValidate(_ context.Context, _, _ string) error {
+	return nil
+}
 
 // ErrorStorage is a storage.Storage implementation that always returns an error.
 type ErrorStorage struct{}
 
-func (e ErrorStorage) Begin(_ context.Context) (storage.Tx, error) {
+func (e ErrorStorage) Begin(ctx context.Context) (storage.Tx, error) {
 	return nil, ErrMLDTest
 }
-func (e ErrorStorage) Close(_ context.Context) error {
+func (e ErrorStorage) Close(ctx context.Context) error {
 	return ErrMLDTest
 }
-func (e ErrorStorage) TestingTruncate(_ context.Context) error {
+func (e ErrorStorage) TestingTruncate(ctx context.Context) error {
 	return ErrMLDTest
 }
-func (e ErrorStorage) CreateAdminSA(_ context.Context, _ model.ValidAdminCreateParams) error {
+func (e ErrorStorage) SAAdminCreate(ctx context.Context, args model.ValidAdminCreateParams) error {
 	return ErrMLDTest
 }
-func (e ErrorStorage) CreateSA(_ context.Context, _ model.ValidServiceAccountCreateParams) (model.ServiceAccount, error) {
+func (e ErrorStorage) SACreate(ctx context.Context, args model.ValidServiceAccountCreateParams) (model.ServiceAccount, error) {
 	return model.ServiceAccount{}, ErrMLDTest
 }
-func (e ErrorStorage) ReadSA(_ context.Context, _ uuid.UUID) (model.ServiceAccount, error) {
+func (e ErrorStorage) SARead(ctx context.Context, u uuid.UUID) (model.ServiceAccount, error) {
 	return model.ServiceAccount{}, ErrMLDTest
 }
-func (e ErrorStorage) ReadSAFromAPIKey(_ context.Context, _ uuid.UUID) (model.ServiceAccount, error) {
+func (e ErrorStorage) SAReadFromAPIKey(ctx context.Context, apiKey uuid.UUID) (model.ServiceAccount, error) {
 	return model.ServiceAccount{}, ErrMLDTest
 }
-func (e ErrorStorage) ReadSigningKey(_ context.Context, _ storage.ReadSigningKeyOptions) (meta jwkset.JWK, err error) {
+func (e ErrorStorage) SigningKeyRead(ctx context.Context, options storage.ReadSigningKeyOptions) (jwk jwkset.JWK, err error) {
 	return jwkset.JWK{}, ErrMLDTest
 }
-func (e ErrorStorage) UpdateDefaultSigningKey(_ context.Context, _ string) error {
-	return ErrMLDTest
-}
-func (e ErrorStorage) DeleteKey(_ context.Context, _ string) (ok bool, err error) {
-	return true, ErrMLDTest
-}
-func (e ErrorStorage) ReadKey(_ context.Context, _ string) (jwkset.JWK, error) {
+func (e ErrorStorage) SigningKeyDefaultRead(ctx context.Context) (jwk jwkset.JWK, err error) {
 	return jwkset.JWK{}, ErrMLDTest
 }
-func (e ErrorStorage) SnapshotKeys(_ context.Context) ([]jwkset.JWK, error) {
+func (e ErrorStorage) SigningKeyDefaultUpdate(ctx context.Context, keyID string) error {
+	return ErrMLDTest
+}
+func (e ErrorStorage) KeyDelete(ctx context.Context, keyID string) (ok bool, err error) {
+	return false, ErrMLDTest
+}
+func (e ErrorStorage) KeyRead(ctx context.Context, keyID string) (jwkset.JWK, error) {
+	return jwkset.JWK{}, ErrMLDTest
+}
+func (e ErrorStorage) KeyReadAll(ctx context.Context) ([]jwkset.JWK, error) {
 	return nil, ErrMLDTest
 }
-func (e ErrorStorage) WriteKey(_ context.Context, _ jwkset.JWK) error {
+func (e ErrorStorage) KeyWrite(ctx context.Context, jwk jwkset.JWK) error {
 	return ErrMLDTest
 }
-func (e ErrorStorage) MagicLinkCreate(_ context.Context, _ magiclink.CreateParams) (secret string, err error) {
+func (e ErrorStorage) JSON(ctx context.Context) (json.RawMessage, error) {
+	return nil, ErrMLDTest
+}
+func (e ErrorStorage) JSONPublic(ctx context.Context) (json.RawMessage, error) {
+	return nil, ErrMLDTest
+}
+func (e ErrorStorage) JSONPrivate(ctx context.Context) (json.RawMessage, error) {
+	return nil, ErrMLDTest
+}
+func (e ErrorStorage) JSONWithOptions(ctx context.Context, marshalOptions jwkset.JWKMarshalOptions, validationOptions jwkset.JWKValidateOptions) (json.RawMessage, error) {
+	return nil, ErrMLDTest
+}
+func (e ErrorStorage) Marshal(ctx context.Context) (jwkset.JWKSMarshal, error) {
+	return jwkset.JWKSMarshal{}, ErrMLDTest
+}
+func (e ErrorStorage) MarshalWithOptions(ctx context.Context, marshalOptions jwkset.JWKMarshalOptions, validationOptions jwkset.JWKValidateOptions) (jwkset.JWKSMarshal, error) {
+	return jwkset.JWKSMarshal{}, ErrMLDTest
+}
+func (e ErrorStorage) MagicLinkCreate(ctx context.Context, params magiclink.CreateParams) (secret string, err error) {
 	return "", ErrMLDTest
 }
-func (e ErrorStorage) MagicLinkRead(_ context.Context, _ string) (magiclink.ReadResult, error) {
+func (e ErrorStorage) MagicLinkRead(ctx context.Context, secret string) (magiclink.ReadResult, error) {
 	return magiclink.ReadResult{}, ErrMLDTest
+}
+func (e ErrorStorage) OTPCreate(ctx context.Context, params otp.CreateParams) (otp.CreateResult, error) {
+	return otp.CreateResult{}, ErrMLDTest
+}
+func (e ErrorStorage) OTPValidate(ctx context.Context, id, o string) error {
+	return ErrMLDTest
 }

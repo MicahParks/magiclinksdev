@@ -91,7 +91,7 @@ func (v Validation) DefaultsAndValidate() (Validation, error) {
 }
 
 func httpURL(config Validation, raw string) (*url.URL, error) {
-	u, err := url.Parse(raw)
+	u, err := url.ParseRequestURI(raw)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse service URL: %w", err)
 	}

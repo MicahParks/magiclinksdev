@@ -20,7 +20,7 @@ func (o OTPCreateParams) Validate(config Validation) (ValidOTPCreateParams, erro
 	length := o.Length
 	if length == 0 {
 		length = 6
-	} else if length < 1 || length > 12 {
+	} else if length < 1 || length > 12 { // Limited by email template.
 		return ValidOTPCreateParams{}, fmt.Errorf("%w: link length must be between 1 and 12", ErrInvalidModel)
 	}
 	lifespan := time.Duration(o.LifespanSeconds) * time.Second

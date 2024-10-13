@@ -17,6 +17,6 @@ type Provider interface {
 // Email is the model for an email.
 type Email struct {
 	Subject      string
-	TemplateData TemplateData
+	TemplateData any
 	To           *mail.Address
 }

@@ -228,6 +228,108 @@ func HTTPMagicLinkEmailCreate(s *handle.Server) http.Handler {
 	})
 }
 
+// HTTPOTPCreate creates an HTTP handler for the HandleOTPCreate method.
+func HTTPOTPCreate(s *handle.Server) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		logger := ctx.Value(ctxkey.Logger).(*slog.Logger)
+		tx := ctx.Value(ctxkey.Tx).(storage.Tx)
+
+		validated, done := unmarshalRequest[model.OTPCreateRequest, model.ValidOTPCreateRequest](r, s.Config.Validation, w)
+		if done {
+			return
+		}
+
+		response, err := s.HandleOTPCreate(ctx, validated)
+		if err != nil {
+			logger.ErrorContext(ctx, "Failed to create OTP.",
+				mld.LogErr, err,
+			)
+			middleware.WriteErrorBody(ctx, http.StatusInternalServerError, mld.ResponseInternalServerError, w)
+			return
+		}
+
+		err = tx.Commit(ctx)
+		if err != nil {
+			logger.ErrorContext(ctx, "Failed to commit transaction for create OTP.",
+				mld.LogErr, err,
+			)
+			middleware.WriteErrorBody(ctx, http.StatusInternalServerError, mld.ResponseInternalServerError, w)
+			return
+		}
+
+		writeResponse(ctx, http.StatusCreated, response, w)
+	})
+}
+
+// HTTPOTPValidate creates an HTTP handler for the HandleOTPValidate method.
+func HTTPOTPValidate(s *handle.Server) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		logger := ctx.Value(ctxkey.Logger).(*slog.Logger)
+		tx := ctx.Value(ctxkey.Tx).(storage.Tx)
+
+		validated, done := unmarshalRequest[model.OTPValidateRequest, model.ValidOTPValidateRequest](r, s.Config.Validation, w)
+		if done {
+			return
+		}
+
+		response, err := s.HandleOTPValidate(ctx, validated)
+		if err != nil {
+			logger.ErrorContext(ctx, "Failed to validate OTP.",
+				mld.LogErr, err,
+			)
+			middleware.WriteErrorBody(ctx, http.StatusInternalServerError, mld.ResponseInternalServerError, w)
+			return
+		}
+
+		err = tx.Commit(ctx)
+		if err != nil {
+			logger.ErrorContext(ctx, "Failed to commit transaction for validate OTP.",
+				mld.LogErr, err,
+			)
+			middleware.WriteErrorBody(ctx, http.StatusInternalServerError, mld.ResponseInternalServerError, w)
+			return
+		}
+
+		writeResponse(ctx, http.StatusOK, response, w)
+	})
+}
+
+// HTTPOTPEmailCreate creates an HTTP handler for the HandleOTPEmailCreate method.
+func HTTPOTPEmailCreate(s *handle.Server) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		logger := ctx.Value(ctxkey.Logger).(*slog.Logger)
+		tx := ctx.Value(ctxkey.Tx).(storage.Tx)
+
+		validated, done := unmarshalRequest[model.OTPEmailCreateRequest, model.ValidOTPEmailCreateRequest](r, s.Config.Validation, w)
+		if done {
+			return
+		}
+
+		response, err := s.HandleOTPEmailCreate(ctx, validated)
+		if err != nil {
+			logger.ErrorContext(ctx, "Failed to create OTP email.",
+				mld.LogErr, err,
+			)
+			middleware.WriteErrorBody(ctx, http.StatusInternalServerError, mld.ResponseInternalServerError, w)
+			return
+		}
+
+		err = tx.Commit(ctx)
+		if err != nil {
+			logger.ErrorContext(ctx, "Failed to commit transaction for create OTP email.",
+				mld.LogErr, err,
+			)
+			middleware.WriteErrorBody(ctx, http.StatusInternalServerError, mld.ResponseInternalServerError, w)
+			return
+		}
+
+		writeResponse(ctx, http.StatusCreated, response, w)
+	})
+}
+
 func writeResponse(ctx context.Context, code int, response any, w http.ResponseWriter) {
 	body, err := json.Marshal(response)
 	if err != nil {

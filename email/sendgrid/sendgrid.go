@@ -43,8 +43,8 @@ type sendGrid struct {
 // NewProvider creates a new SendGrid email provider.
 func NewProvider(conf Config) (email.Provider, error) {
 	client := sendgrid.NewSendClient(conf.APIKey)
-	htmlTmpl := template.Must(template.New("").Parse(email.HTMLTemplate))
-	textTmpl := textTemplate.Must(textTemplate.New("").Parse(email.TextTemplate))
+	htmlTmpl := template.Must(template.New("").Parse(email.MagicLinkHTMLTemplate))
+	textTmpl := textTemplate.Must(textTemplate.New("").Parse(email.MagicLinkTextTemplate))
 	s := sendGrid{
 		client:   client,
 		from:     conf.FromEmail.Get(),

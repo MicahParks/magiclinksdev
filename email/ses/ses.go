@@ -82,8 +82,8 @@ func NewProvider(conf Config) (SES, error) {
 
 // NewProviderInitialized creates a new SES provider with an initialized configuration.
 func NewProviderInitialized(conf InitializedConfig, svc *ses.SES) (SES, error) {
-	htmlTmpl := template.Must(template.New("").Parse(email.HTMLTemplate))
-	textTmpl := textTemplate.Must(textTemplate.New("").Parse(email.TextTemplate))
+	htmlTmpl := template.Must(template.New("").Parse(email.MagicLinkHTMLTemplate))
+	textTmpl := textTemplate.Must(textTemplate.New("").Parse(email.MagicLinkTextTemplate))
 	s := SES{
 		from:     conf.FromEmail,
 		htmlTmpl: htmlTmpl,

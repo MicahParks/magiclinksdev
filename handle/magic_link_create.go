@@ -16,15 +16,15 @@ import (
 func (s *Server) HandleMagicLinkCreate(ctx context.Context, req model.ValidMagicLinkCreateRequest) (response model.MagicLinkCreateResponse, err error) {
 	linkParams := req.MagicLinkParams
 
-	magicLinkResp, err := s.createLink(ctx, linkParams)
+	magicLinkRes, err := s.createLink(ctx, linkParams)
 	if err != nil {
 		return model.MagicLinkCreateResponse{}, fmt.Errorf("failed to create magic link: %w", err)
 	}
 
 	resp := model.MagicLinkCreateResponse{
 		MagicLinkCreateResults: model.MagicLinkCreateResults{
-			MagicLink: magicLinkResp.MagicLink.String(),
-			Secret:    magicLinkResp.Secret,
+			MagicLink: magicLinkRes.MagicLink.String(),
+			Secret:    magicLinkRes.Secret,
 		},
 		RequestMetadata: model.RequestMetadata{
 			UUID: ctx.Value(ctxkey.RequestUUID).(uuid.UUID),
@@ -40,10 +40,10 @@ func (s *Server) createLink(ctx context.Context, linkParams model.ValidMagicLink
 		return magiclink.CreateResponse{}, fmt.Errorf("failed to create magic link create args: %w", err)
 	}
 
-	magicLinkResp, err := s.MagicLink.NewLink(ctx, magicLinkCreateParams)
+	magicLinkRes, err := s.MagicLink.NewLink(ctx, magicLinkCreateParams)
 	if err != nil {
 		return magiclink.CreateResponse{}, fmt.Errorf("failed to create magic link: %w", err)
 	}
 
-	return magicLinkResp, nil
+	return magicLinkRes, nil
 }

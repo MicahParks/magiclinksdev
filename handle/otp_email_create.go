@@ -1,0 +1,64 @@
+package handle
+
+import (
+	"context"
+	"fmt"
+
+	"github.com/google/uuid"
+
+	"github.com/MicahParks/magiclinksdev/email"
+	"github.com/MicahParks/magiclinksdev/model"
+	"github.com/MicahParks/magiclinksdev/network/middleware/ctxkey"
+)
+
+func (s *Server) HandleOTPEmailCreate(ctx context.Context, req model.ValidOTPEmailCreateRequest) (response model.OTPEmailCreateResponse, err error) {
+	emailParams := req.OTPEmailCreateParams
+	otpParams := createOTPParams(req.OTPCreateParams)
+
+	otpRes, err := s.Store.OTPCreate(ctx, otpParams)
+	if err != nil {
+		return model.OTPEmailCreateResponse{}, fmt.Errorf("failed to create OTP: %w", err)
+	}
+
+	meta := email.TemplateMetadata{
+		HTMLInstruction: fmt.Sprintf("You've been sent a magic link from %s.", emailParams.ServiceName),
+		HTMLTitle:       fmt.Sprintf("Magic link from %s", emailParams.ServiceName),
+		MSOButtonStop:   email.MSOButtonStop,
+		MSOButtonStart:  email.MSOButtonStart,
+		MSOHead:         email.MSOHead,
+	}
+	tData := email.OTPTemplateData{
+		Expiration:   req.OTPCreateParams.LifespanSeconds.String(),
+		Greeting:     emailParams.Greeting,
+		LogoImageURL: emailParams.LogoImageURL,
+		LogoClickURL: emailParams.LogoClickURL,
+		LogoAltText:  "logo",
+		MagicLink:    otpRes.OTP,
+		Meta:         meta,
+		Subtitle:     emailParams.SubTitle,
+		Title:        emailParams.Title,
+	}
+	e := email.Email{
+		Subject:      emailParams.Subject,
+		TemplateData: tData,
+		To:           emailParams.ToEmail,
+	}
+	err = s.EmailProvider.Send(ctx, e)
+	if err != nil {
+		return model.OTPEmailCreateResponse{}, fmt.Errorf("failed to send email: %w", err)
+	}
+
+	resp := model.OTPEmailCreateResponse{
+		OTPEmailCreateResults: model.OTPEmailCreateResults{
+			OTPCreateResults: model.OTPCreateResults{
+				ID:  otpRes.ID,
+				OTP: otpRes.OTP,
+			},
+		},
+		RequestMetadata: model.RequestMetadata{
+			UUID: ctx.Value(ctxkey.RequestUUID).(uuid.UUID),
+		},
+	}
+
+	return resp, nil
+}

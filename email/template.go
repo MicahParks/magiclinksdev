@@ -29,18 +29,18 @@ const (
   <![endif]-->`
 )
 
-// HTMLTemplate is the HTML template for the email.
+// MagicLinkHTMLTemplate is the HTML template for the magic link email.
 //
 //go:embed html.gohtml
-var HTMLTemplate string
+var MagicLinkHTMLTemplate string
 
-// TextTemplate is the text template for the email.
+// MagicLinkTextTemplate is the text template for the magic link email.
 //
 //go:embed text.gotxt
-var TextTemplate string
+var MagicLinkTextTemplate string
 
-// TemplateData is the data for the email templates.
-type TemplateData struct {
+// MagicLinkTemplateData is the data for the magic link email template.
+type MagicLinkTemplateData struct {
 	ButtonText   string
 	Expiration   string
 	Greeting     string
@@ -52,6 +52,30 @@ type TemplateData struct {
 	LogoClickURL string
 	LogoAltText  string
 	ReCATPTCHA   bool
+}
+
+// OTPHTMLTemplate is the HTML template for the OTP email.
+//
+//go:embed otp_html.gohtml
+var OTPHTMLTemplate string
+
+// OTPTextTemplate is the text template for the OTP email.
+//
+//go:embed otp_text.gotxt
+var OTPTextTemplate string
+
+// OTPTemplateData is the data for the OTP email template.
+type OTPTemplateData struct {
+	Expiration   string
+	Greeting     string
+	MagicLink    string
+	Meta         TemplateMetadata
+	OTP          string
+	Subtitle     string
+	Title        string
+	LogoImageURL string
+	LogoClickURL string
+	LogoAltText  string
 }
 
 // TemplateMetadata contains non-configurable metadata for the email templates.

@@ -83,8 +83,8 @@ type ValidMagicLinkEmailCreateParams struct {
 
 // MagicLinkEmailCreateRequest is the unvalidated request to create a magic link email.
 type MagicLinkEmailCreateRequest struct {
-	MagicLinkEmailCreateParams MagicLinkEmailCreateParams `json:"magicLinkEmailCreateParams"`
 	MagicLinkCreateParams      MagicLinkCreateParams      `json:"magicLinkCreateParams"`
+	MagicLinkEmailCreateParams MagicLinkEmailCreateParams `json:"magicLinkEmailCreateParams"`
 }
 
 // Validate implements the Validatable interface.
@@ -98,16 +98,16 @@ func (b MagicLinkEmailCreateRequest) Validate(config Validation) (ValidMagicLink
 		return ValidMagicLinkEmailCreateRequest{}, fmt.Errorf("failed to validate link params: %w", err)
 	}
 	valid := ValidMagicLinkEmailCreateRequest{
-		MagicLinkEmailCreateParams: magicLinkEmailCreateParams,
 		MagicLinkCreateParams:      magicLinkCreateParams,
+		MagicLinkEmailCreateParams: magicLinkEmailCreateParams,
 	}
 	return valid, nil
 }
 
 // ValidMagicLinkEmailCreateRequest is the validated request to create an email link.
 type ValidMagicLinkEmailCreateRequest struct {
-	MagicLinkEmailCreateParams ValidMagicLinkEmailCreateParams
 	MagicLinkCreateParams      ValidMagicLinkCreateParams
+	MagicLinkEmailCreateParams ValidMagicLinkEmailCreateParams
 }
 
 // MagicLinkEmailCreateResults are the results of creating an email link.

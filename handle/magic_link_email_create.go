@@ -17,7 +17,7 @@ func (s *Server) HandleMagicLinkEmailCreate(ctx context.Context, req model.Valid
 	emailParams := req.MagicLinkEmailCreateParams
 	linkParams := req.MagicLinkCreateParams
 
-	magicLinkResp, err := s.createLink(ctx, linkParams)
+	magicLinkRes, err := s.createLink(ctx, linkParams)
 	if err != nil {
 		return model.MagicLinkEmailCreateResponse{}, fmt.Errorf("failed to create magic link: %w", err)
 	}
@@ -29,14 +29,14 @@ func (s *Server) HandleMagicLinkEmailCreate(ctx context.Context, req model.Valid
 		MSOButtonStart:  email.MSOButtonStart,
 		MSOHead:         email.MSOHead,
 	}
-	tData := email.TemplateData{
+	tData := email.MagicLinkTemplateData{
 		ButtonText:   emailParams.ButtonText,
 		Expiration:   linkParams.LinkLifespan.String(),
 		Greeting:     emailParams.Greeting,
 		LogoImageURL: emailParams.LogoImageURL,
 		LogoClickURL: emailParams.LogoClickURL,
 		LogoAltText:  "logo",
-		MagicLink:    magicLinkResp.MagicLink.String(),
+		MagicLink:    magicLinkRes.MagicLink.String(),
 		Meta:         meta,
 		Subtitle:     emailParams.SubTitle,
 		Title:        emailParams.Title,
@@ -53,8 +53,8 @@ func (s *Server) HandleMagicLinkEmailCreate(ctx context.Context, req model.Valid
 	}
 
 	linkCreateResponse := model.MagicLinkCreateResults{
-		MagicLink: magicLinkResp.MagicLink.String(),
-		Secret:    magicLinkResp.Secret,
+		MagicLink: magicLinkRes.MagicLink.String(),
+		Secret:    magicLinkRes.Secret,
 	}
 	resp := model.MagicLinkEmailCreateResponse{
 		MagicLinkEmailCreateResults: model.MagicLinkEmailCreateResults{

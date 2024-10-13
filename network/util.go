@@ -23,6 +23,12 @@ const (
 	PathMagicLinkCreate = "magic-link/create"
 	// PathMagicLinkEmailCreate is the path to the magic link email creation endpoint.
 	PathMagicLinkEmailCreate = "magic-link-email/create"
+	// PathOTPCreate is the path to the OTP creation endpoint.
+	PathOTPCreate = "otp/create"
+	// PathOTPValidate is the path to the OTP validation endpoint.
+	PathOTPValidate = "otp/validate"
+	// PathOTPEmailCreate is the path to the OTP email creation endpoint.
+	PathOTPEmailCreate = "otp-email/create"
 )
 
 // CreateHTTPHandlers creates the HTTP handlers for the server.
@@ -83,6 +89,30 @@ func CreateHTTPHandlers(server *handle.Server) (*http.ServeMux, error) {
 		{
 			Handler: HTTPMagicLinkEmailCreate(server),
 			Path:    PathMagicLinkEmailCreate,
+			Toggle: handle.MiddlewareToggle{
+				Authn:     true,
+				RateLimit: true,
+			},
+		},
+		{
+			Handler: HTTPOTPCreate(server),
+			Path:    PathOTPCreate,
+			Toggle: handle.MiddlewareToggle{
+				Authn:     true,
+				RateLimit: true,
+			},
+		},
+		{
+			Handler: HTTPOTPValidate(server),
+			Path:    PathOTPValidate,
+			Toggle: handle.MiddlewareToggle{
+				Authn:     true,
+				RateLimit: true,
+			},
+		},
+		{
+			Handler: HTTPOTPEmailCreate(server),
+			Path:    PathOTPEmailCreate,
 			Toggle: handle.MiddlewareToggle{
 				Authn:     true,
 				RateLimit: true,
