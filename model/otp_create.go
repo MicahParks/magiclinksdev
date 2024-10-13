@@ -3,6 +3,8 @@ package model
 import (
 	"fmt"
 	"time"
+
+	mld "github.com/MicahParks/magiclinksdev"
 )
 
 type OTPCreateParams struct {
@@ -19,7 +21,7 @@ func (o OTPCreateParams) Validate(config Validation) (ValidOTPCreateParams, erro
 	}
 	length := o.Length
 	if length == 0 {
-		length = 6
+		length = mld.DefaultOTPLength
 	} else if length < 1 || length > 12 { // Limited by email template.
 		return ValidOTPCreateParams{}, fmt.Errorf("%w: link length must be between 1 and 12", ErrInvalidModel)
 	}

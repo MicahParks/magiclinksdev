@@ -8,6 +8,8 @@ import (
 const (
 	// ContentTypeJSON is the content type for JSON.
 	ContentTypeJSON = "application/json"
+	// DefaultOTPLength is the default length for OTPs.
+	DefaultOTPLength = 6
 	// DefaultRelativePathRedirect is the default relative path for redirecting.
 	DefaultRelativePathRedirect = "redirect"
 	// HeaderContentType is the content type header.
