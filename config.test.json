@@ -17,7 +17,7 @@
         "serviceAccountCreateParams": {}
       }
     ],
-    "baseURL": "http://localtest/api/v1/",
+    "baseURL": "http://localtest/api/v2/",
     "iss": "testIssuer",
     "jwks": {
       "ignoreDefault": false

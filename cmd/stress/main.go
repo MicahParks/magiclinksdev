@@ -35,7 +35,7 @@ func main() {
 		)
 		exit(ctx, l, time.Now(), 1)
 	}
-	u, err = u.Parse("/api/v1/" + network.PathLinkCreate)
+	u, err = u.Parse("/api/v2/" + network.PathLinkCreate)
 	if err != nil {
 		l.ErrorContext(ctx, "Failed to parse URL.",
 			mld.LogErr, err,

@@ -8,7 +8,7 @@ info:
   title: "magiclinks.dev"
   description: "The v2 API specification for the magiclinksdev project.
   \n\n
-  The default JWK Set relative URL path is `/api/v1/jwks.json`.
+  The default JWK Set relative URL path is `/api/v2/jwks.json`.
   \n\n
   The documentation site is at https://docs.magiclinks.dev
   \n
