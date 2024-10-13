@@ -177,67 +177,22 @@ definitions:
         description: "A UUID that uniquely identifies the request."
         format: "uuid"
 
-  APIKey:
+  ServiceAccount:
     type: "object"
     properties:
-      apiKey:
-        type: "string"
-        description: "The API key."
-
-  Audience:
-    type: "object"
-    properties:
-      apiKeys:
-        type: "array"
-        description: "API keys for this audience."
-        items:
-          $ref: "#/definitions/APIKey"
-      aud:
-        type: "string"
-        description: "The audience of JWTs created for this service account context."
-      serviceLogo:
-        type: "string"
-        description: "The URL of the service account's service logo."
-      serviceName:
-        type: "string"
-        description: "The name of the service account's service."
-      serviceURL:
-        type: "string"
-        description: "The URL of the landing page for the service account's service."
-
-  ServiceAccountMeta:
-    type: "object"
-    properties:
-      admin:
-        type: "boolean"
-        description: "Whether the service account is an admin."
       uuid:
         type: "string"
         description: "The UUID of the service account."
         format: "uuid"
-
-  ServiceAccount:
-    type: "object"
-    properties:
-      audiences:
-        type: "array"
-        description: "The audiences for this service account."
-        items:
-          $ref: "#/definitions/Audience"
-      meta:
-        $ref: "#/definitions/ServiceAccountMeta"
-
-  JWTClaims:
-    description: "Any valid JSON object."
-    type: "object"
-    properties:
-      claims:
-        description: 'Any valid JSON object. Do not provide any JSON attributes mentioned in RFC 7519 section 4.1 as
-        this will cause an error. These are JWT "Registered Claim Names".'
-        type: "object"
-        externalDocs:
-          description: "RFC 7519 section 4.1"
-          url: "https://tools.ietf.org/html/rfc7519#section-4.1"
+      apiKey:
+        type: "string"
+        description: "The API key of the service account."
+      aud:
+        type: "string"
+        description: "The audience of the service account."
+      admin:
+        type: "boolean"
+        description: "Whether the service account is an admin."
 
   JWTCreateRequest:
     description: "The request body for the /jwt/create endpoint."
@@ -258,7 +213,15 @@ definitions:
         type: "string"
       jwtClaims:
         description: "The JWT claims used to create the signed JWT."
-        $ref: "#/definitions/JWTClaims"
+        type: "object"
+        properties:
+          claims:
+            description: 'Any valid JSON object. Do not provide any JSON attributes mentioned in RFC 7519 section 4.1 as
+            this will cause an error. These are JWT "Registered Claim Names".'
+            type: "object"
+            externalDocs:
+              description: "RFC 7519 section 4.1"
+              url: "https://tools.ietf.org/html/rfc7519#section-4.1"
       jwtLifespanSeconds:
         description: "The lifespan of the JWT in seconds. The JWT's lifespan starts after the magic link has been
         visited and the JWT is signed. It defaults to 5 minutes. The minimum value is 5 and the maximum value is
@@ -337,7 +300,7 @@ definitions:
         description: 'The URL query key in the redirectURL to contain the signed JWT when the magic link is used. By
         default, "jwt" is used.'
         type: "string"
-      redirectURL:
+      redirectUrl:
         description: "The URL to redirect to with the signed JWT when the link is used."
         type: "string"
     required:
@@ -459,18 +422,6 @@ definitions:
   ServiceAccountCreateArgs:
     description: "Parameters to create a service account."
     type: "object"
-    properties:
-      serviceLogo:
-        description: "The URL of the service account's service's logo."
-        type: "string"
-        format: "uri"
-      serviceName:
-        description: "The name of the service account's service."
-        type: "string"
-      serviceURL:
-        description: "The landing page URL for the service account's service."
-        type: "string"
-        format: "uri"
 
   ServiceAccountCreateRequest:
     description: "The request body for the /admin/service-account/create endpoint."
@@ -493,7 +444,7 @@ definitions:
     description: "The response body for the /admin/service-account/create endpoint."
     type: "object"
     properties:
-      serviceAccountCreateResults:
+      createServiceAccountResults:
         $ref: "#/definitions/ServiceAccountCreateResults"
       requestMetadata:
         $ref: "#/definitions/RequestMetadata"
