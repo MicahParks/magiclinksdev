@@ -10,7 +10,7 @@ import (
 type JWTCreateParams struct {
 	Alg             string `json:"alg"`
 	Claims          any    `json:"claims"`
-	LifespanSeconds int64  `json:"lifespanSeconds"`
+	LifespanSeconds int    `json:"lifespanSeconds"`
 }
 
 // Validate implements the Validatable interface.

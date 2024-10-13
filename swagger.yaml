@@ -1,9 +1,5 @@
 swagger: "2.0" # https://stackoverflow.com/a/59749691/14797322
 
-# TODO Consistent use of periods
-# TODO Confirm every JSON attribute matches
-# TODO Proofread everything in the specification
-
 info:
   title: "magiclinks.dev"
   description: "The v2 API specification for the magiclinksdev project.
@@ -32,11 +28,11 @@ produces:
 paths:
   /ready:
     get:
-      summary: "Check if the service is running and ready to accept requests."
+      summary: "Check if the service is ready to accept requests."
       operationId: "ready"
       responses:
         200:
-          description: "The service is running and ready to accept requests."
+          description: "The service is ready to accept requests."
         default:
           description: "The service is not ready to accept requests."
 
@@ -58,13 +54,13 @@ paths:
           schema:
             $ref: "#/definitions/ServiceAccountCreateResponse"
         default:
-          description: "An error occurred."
+          description: "An unexpected error occurred."
           schema:
             $ref: "#/definitions/Error"
 
   /jwt/create:
     post:
-      summary: "Create a JWT, typically for a JWT refresh."
+      summary: "Create a JWT, typically after OTP verification or a JWT refresh."
       operationId: "jwtCreate"
       parameters:
         - name: "body"
@@ -78,13 +74,13 @@ paths:
           schema:
             $ref: "#/definitions/JWTCreateResponse"
         default:
-          description: "An error occurred."
+          description: "An unexpected error occurred."
           schema:
             $ref: "#/definitions/Error"
 
   /jwt/validate:
     post:
-      summary: "Validate a JWT."
+      summary: "Verify and validate a JWT."
       operationId: "jwtValidate"
       parameters:
         - in: "body"
@@ -94,15 +90,15 @@ paths:
             $ref: "#/definitions/JWTValidateRequest"
       responses:
         200:
-          description: "The JWT was signed by an active key in the JWK Set."
+          description: "The JWT is verified and validated."
           schema:
             $ref: "#/definitions/JWTValidateResponse"
         422:
-          description: "The given JWT was invalid."
+          description: "The JWT failed verification and validation."
           schema:
             $ref: "#/definitions/Error"
         default:
-          description: "An error occurred."
+          description: "An unexpected error occurred."
           schema:
             $ref: "#/definitions/Error"
 
@@ -146,7 +142,7 @@ paths:
           schema:
             $ref: "#/definitions/Error"
 
-  /otp/create: # TODO Add in Go code.
+  /otp/create:
     post:
       summary: "Create a One-Time Password (OTP)."
       operationId: "otpCreate"
@@ -166,9 +162,9 @@ paths:
           schema:
             $ref: "#/definitions/Error"
 
-  /otp/validate: # TODO Add in Go code.
+  /otp/validate:
     post:
-      summary: "Validate a One-Time Password (OTP) given its ID."
+      summary: "Verify and validate a One-Time Password (OTP) given its ID."
       operationId: "otpValidate"
       parameters:
         - in: "body"
@@ -178,11 +174,11 @@ paths:
             $ref: "#/definitions/OTPValidateRequest"
       responses:
         200:
-          description: "The OTP is valid for the given ID."
+          description: "The OTP is verified and valid for the given ID."
           schema:
             $ref: "#/definitions/OTPValidateResponse"
         400:
-          description: "The OTP is invalid for the given ID."
+          description: "The OTP failed verification or validation for the given ID."
           schema:
             $ref: "#/definitions/Error"
         default:
@@ -190,7 +186,7 @@ paths:
           schema:
             $ref: "#/definitions/Error"
 
-  /otp-email/create: # TODO Add in Go code.
+  /otp-email/create:
     post:
       summary: "Create a One-Time Password (OTP) and sent it via email."
       operationId: "otpEmailCreate"
@@ -245,15 +241,6 @@ definitions:
       admin:
         type: "boolean"
 
-  JWTCreateRequest:
-    description: "The request body for the /jwt/create endpoint."
-    type: "object"
-    properties:
-      jwtCreateParams:
-        $ref: "#/definitions/JWTCreateParams"
-    required:
-      - "jwtCreateParams"
-
   JWTCreateParams:
     description: "Parameters used to create a JWT."
     type: "object"
@@ -276,6 +263,15 @@ definitions:
         default: 300
         type: "integer"
 
+  JWTCreateRequest:
+    description: "The request body for the /jwt/create endpoint."
+    type: "object"
+    properties:
+      jwtCreateParams:
+        $ref: "#/definitions/JWTCreateParams"
+    required:
+      - "jwtCreateParams"
+
   JWTCreateResults:
     description: "The results for creating a JWT."
     type: "object"
@@ -293,6 +289,14 @@ definitions:
       requestMetadata:
         $ref: "#/definitions/RequestMetadata"
 
+  JWTValidateParams:
+    description: "Parameters used to validate a JWT."
+    type: "object"
+    properties:
+      jwt:
+        description: "The JWT to validate."
+        type: "string"
+
   JWTValidateRequest:
     description: "The request body for the /jwt/validate endpoint."
     type: "object"
@@ -301,14 +305,6 @@ definitions:
         $ref: "#/definitions/JWTValidateParams"
     required:
       - "jwtValidateParams"
-
-  JWTValidateParams:
-    description: "Parameters used to validate a JWT."
-    type: "object"
-    properties:
-      jwt:
-        description: "The JWT to validate."
-        type: "string"
 
   JWTValidateResults:
     description: "The results for validateing a JWT."
@@ -606,9 +602,16 @@ definitions:
   OTPValidateResponse:
     type: "object"
 
+  ServiceAccountCreateParams:
+    description: "Parameters to create a service account."
+    type: "object"
+
   ServiceAccountCreateRequest:
     description: "The request body for the /admin/service-account/create endpoint."
     type: "object"
+    properties:
+      serviceAccountCreateParams:
+        $ref: "#/definitions/ServiceAccountCreateParams"
 
   ServiceAccountCreateResults:
     description: "The results for creating a service account."

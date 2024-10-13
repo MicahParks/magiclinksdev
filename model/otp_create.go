@@ -6,11 +6,11 @@ import (
 )
 
 type OTPCreateParams struct {
-	CharSetAlphaLower bool  `json:"charSetAlphaLower"`
-	CharSetAlphaUpper bool  `json:"charSetAlphaUpper"`
-	CharSetNumeric    bool  `json:"charSetNumeric"`
-	Length            uint  `json:"length"`
-	LifespanSeconds   int64 `json:"lifespanSeconds"`
+	CharSetAlphaLower bool `json:"charSetAlphaLower"`
+	CharSetAlphaUpper bool `json:"charSetAlphaUpper"`
+	CharSetNumeric    bool `json:"charSetNumeric"`
+	Length            uint `json:"length"`
+	LifespanSeconds   int  `json:"lifespanSeconds"`
 }
 
 func (o OTPCreateParams) Validate(config Validation) (ValidOTPCreateParams, error) {
