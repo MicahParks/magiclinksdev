@@ -6,7 +6,6 @@ import (
 	"unicode/utf8"
 )
 
-// OTPEmailCreateParams are the unvalidated parameters for creating an OTP email.
 type OTPEmailCreateParams struct {
 	Greeting     string `json:"greeting"`
 	LogoClickURL string `json:"logoClickURL"`
@@ -19,7 +18,6 @@ type OTPEmailCreateParams struct {
 	ToName       string `json:"toName"`
 }
 
-// Validate implements the Validatable interface.
 func (p OTPEmailCreateParams) Validate(config Validation) (ValidOTPEmailCreateParams, error) {
 	if p.LogoImageURL != "" {
 		u, err := httpURL(config, p.LogoClickURL)
@@ -63,7 +61,6 @@ func (p OTPEmailCreateParams) Validate(config Validation) (ValidOTPEmailCreatePa
 	return valid, nil
 }
 
-// ValidOTPEmailCreateParams are the validated parameters for creating an OTP email.
 type ValidOTPEmailCreateParams struct {
 	Greeting     string
 	LogoClickURL string
@@ -75,13 +72,11 @@ type ValidOTPEmailCreateParams struct {
 	ToEmail      *mail.Address
 }
 
-// OTPEmailCreateRequest is the unvalidated request to create an OTP email.
 type OTPEmailCreateRequest struct {
 	OTPCreateParams      OTPCreateParams      `json:"otpCreateParams"`
 	OTPEmailCreateParams OTPEmailCreateParams `json:"otpEmailCreateParams"`
 }
 
-// Validate implements the Validatable interface.
 func (b OTPEmailCreateRequest) Validate(config Validation) (ValidOTPEmailCreateRequest, error) {
 	otpEmailCreateParams, err := b.OTPEmailCreateParams.Validate(config)
 	if err != nil {
@@ -98,18 +93,15 @@ func (b OTPEmailCreateRequest) Validate(config Validation) (ValidOTPEmailCreateR
 	return valid, nil
 }
 
-// ValidOTPEmailCreateRequest is the validated request to create an email link.
 type ValidOTPEmailCreateRequest struct {
 	OTPCreateParams      ValidOTPCreateParams
 	OTPEmailCreateParams ValidOTPEmailCreateParams
 }
 
-// OTPEmailCreateResults are the results of creating an email link.
 type OTPEmailCreateResults struct {
 	OTPCreateResults OTPCreateResults `json:"otpCreateResults"`
 }
 
-// OTPEmailCreateResponse is the response to creating an email link.
 type OTPEmailCreateResponse struct {
 	OTPEmailCreateResults OTPEmailCreateResults `json:"otpEmailCreateResults"`
 	RequestMetadata       RequestMetadata       `json:"requestMetadata"`

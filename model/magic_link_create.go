@@ -8,7 +8,6 @@ import (
 	"github.com/MicahParks/magiclinksdev/magiclink"
 )
 
-// MagicLinkCreateParams are the unvalidated parameters for creating a magic link.
 type MagicLinkCreateParams struct {
 	JWTCreateParams  JWTCreateParams `json:"jwtCreateParams"`
 	LifespanSeconds  int             `json:"lifespanSeconds"`
@@ -16,7 +15,6 @@ type MagicLinkCreateParams struct {
 	RedirectURL      string          `json:"redirectURL"`
 }
 
-// Validate validates the link create parameters.
 func (p MagicLinkCreateParams) Validate(config Validation) (ValidMagicLinkCreateParams, error) {
 	validJWTCreateParams, err := p.JWTCreateParams.Validate(config)
 	if err != nil {
@@ -44,7 +42,6 @@ func (p MagicLinkCreateParams) Validate(config Validation) (ValidMagicLinkCreate
 	return valid, nil
 }
 
-// ValidMagicLinkCreateParams are the validated parameters for creating a magic link.
 type ValidMagicLinkCreateParams struct {
 	Lifespan         time.Duration
 	JWTCreateParams  ValidJWTCreateParams
@@ -52,12 +49,10 @@ type ValidMagicLinkCreateParams struct {
 	RedirectURL      *url.URL
 }
 
-// MagicLinkCreateRequest is the request to create a magic link.
 type MagicLinkCreateRequest struct {
 	MagicLinkCreateParams MagicLinkCreateParams `json:"magicLinkCreateParams"`
 }
 
-// Validate validates the link create request.
 func (b MagicLinkCreateRequest) Validate(config Validation) (ValidMagicLinkCreateRequest, error) {
 	magicLinkParams, err := b.MagicLinkCreateParams.Validate(config)
 	if err != nil {
@@ -69,18 +64,15 @@ func (b MagicLinkCreateRequest) Validate(config Validation) (ValidMagicLinkCreat
 	return valid, nil
 }
 
-// ValidMagicLinkCreateRequest is the validated request to create a magic link.
 type ValidMagicLinkCreateRequest struct {
 	MagicLinkParams ValidMagicLinkCreateParams
 }
 
-// MagicLinkCreateResults are the results of creating a magic link.
 type MagicLinkCreateResults struct {
 	MagicLink string `json:"magicLink"`
 	Secret    string `json:"secret"`
 }
 
-// MagicLinkCreateResponse is the response to creating a magic link.
 type MagicLinkCreateResponse struct {
 	MagicLinkCreateResults MagicLinkCreateResults `json:"magicLinkCreateResults"`
 	RequestMetadata        RequestMetadata        `json:"requestMetadata"`

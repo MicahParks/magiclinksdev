@@ -6,7 +6,6 @@ import (
 	"unicode/utf8"
 )
 
-// MagicLinkEmailCreateParams are the unvalidated parameters for creating a magic link email.
 type MagicLinkEmailCreateParams struct {
 	ButtonText   string `json:"buttonText"`
 	Greeting     string `json:"greeting"`
@@ -20,7 +19,6 @@ type MagicLinkEmailCreateParams struct {
 	ToName       string `json:"toName"`
 }
 
-// Validate implements the Validatable interface.
 func (p MagicLinkEmailCreateParams) Validate(config Validation) (ValidMagicLinkEmailCreateParams, error) {
 	if p.ButtonText == "" {
 		p.ButtonText = "Magic link"
@@ -68,7 +66,6 @@ func (p MagicLinkEmailCreateParams) Validate(config Validation) (ValidMagicLinkE
 	return valid, nil
 }
 
-// ValidMagicLinkEmailCreateParams are the validated parameters for creating a magic link email.
 type ValidMagicLinkEmailCreateParams struct {
 	ButtonText   string
 	Greeting     string
@@ -81,13 +78,11 @@ type ValidMagicLinkEmailCreateParams struct {
 	ToEmail      *mail.Address
 }
 
-// MagicLinkEmailCreateRequest is the unvalidated request to create a magic link email.
 type MagicLinkEmailCreateRequest struct {
 	MagicLinkCreateParams      MagicLinkCreateParams      `json:"magicLinkCreateParams"`
 	MagicLinkEmailCreateParams MagicLinkEmailCreateParams `json:"magicLinkEmailCreateParams"`
 }
 
-// Validate implements the Validatable interface.
 func (b MagicLinkEmailCreateRequest) Validate(config Validation) (ValidMagicLinkEmailCreateRequest, error) {
 	magicLinkEmailCreateParams, err := b.MagicLinkEmailCreateParams.Validate(config)
 	if err != nil {
@@ -104,18 +99,15 @@ func (b MagicLinkEmailCreateRequest) Validate(config Validation) (ValidMagicLink
 	return valid, nil
 }
 
-// ValidMagicLinkEmailCreateRequest is the validated request to create an email link.
 type ValidMagicLinkEmailCreateRequest struct {
 	MagicLinkCreateParams      ValidMagicLinkCreateParams
 	MagicLinkEmailCreateParams ValidMagicLinkEmailCreateParams
 }
 
-// MagicLinkEmailCreateResults are the results of creating an email link.
 type MagicLinkEmailCreateResults struct {
 	MagicLinkCreateResults MagicLinkCreateResults `json:"magicLinkCreateResults"`
 }
 
-// MagicLinkEmailCreateResponse is the response to creating an email link.
 type MagicLinkEmailCreateResponse struct {
 	MagicLinkEmailCreateResults MagicLinkEmailCreateResults `json:"magicLinkEmailCreateResults"`
 	RequestMetadata             RequestMetadata             `json:"requestMetadata"`

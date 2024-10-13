@@ -11,7 +11,7 @@ type OTPValidateParams struct {
 	OTP string `json:"otp"`
 }
 
-func (o OTPValidateParams) Validate(config Validation) (ValidOTPValidateParams, error) {
+func (o OTPValidateParams) Validate(_ Validation) (ValidOTPValidateParams, error) {
 	_, err := uuid.Parse(o.ID)
 	if err != nil {
 		return ValidOTPValidateParams{}, fmt.Errorf("currently all OTP IDs must be UUIDs: %w", ErrInvalidModel)

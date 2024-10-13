@@ -61,7 +61,6 @@ type Validation struct {
 	URLMaxLength        uint                        `json:"urlMaxLength"`
 }
 
-// DefaultsAndValidate implements the jsontype.Config interface.
 func (v Validation) DefaultsAndValidate() (Validation, error) {
 	if v.LinkLifespanDefault.Get() == 0 {
 		v.LinkLifespanDefault = jt.New(time.Hour)

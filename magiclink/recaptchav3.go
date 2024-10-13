@@ -28,7 +28,6 @@ type ReCAPTCHAV3Config struct {
 	Verifier recaptcha.VerifierV3 `json:"-"`
 }
 
-// DefaultsAndValidate implements the jsontype.Config interface.
 func (r ReCAPTCHAV3Config) DefaultsAndValidate() (ReCAPTCHAV3Config, error) {
 	if r.MinScore == 0 {
 		r.MinScore = 0.5
@@ -74,7 +73,6 @@ func NewReCAPTCHAV3Redirector(config ReCAPTCHAV3Config) Redirector {
 	return r
 }
 
-// Redirect implements the Redirector interface.
 func (r ReCAPTCHAV3Redirector) Redirect(args RedirectorParams) {
 	ctx := args.Request.Context()
 

@@ -6,7 +6,6 @@ import (
 	"github.com/google/uuid"
 )
 
-// AdminCreateParams are the unvalidated parameters for creating an admin.
 type AdminCreateParams struct {
 	APIKey                     uuid.UUID                  `json:"apiKey"`
 	Aud                        uuid.UUID                  `json:"aud"`
@@ -14,7 +13,6 @@ type AdminCreateParams struct {
 	ServiceAccountCreateParams ServiceAccountCreateParams `json:"serviceAccountCreateParams"`
 }
 
-// Validate validates the admin create parameters.
 func (a AdminCreateParams) Validate(config Validation) (ValidAdminCreateParams, error) {
 	saParams, err := a.ServiceAccountCreateParams.Validate(config)
 	if err != nil {
@@ -29,7 +27,6 @@ func (a AdminCreateParams) Validate(config Validation) (ValidAdminCreateParams, 
 	return valid, nil
 }
 
-// ValidAdminCreateParams are the validated parameters for creating an admin.
 type ValidAdminCreateParams struct {
 	APIKey                          uuid.UUID
 	Aud                             uuid.UUID
