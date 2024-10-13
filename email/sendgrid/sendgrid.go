@@ -34,35 +34,47 @@ func (s Config) DefaultsAndValidate() (Config, error) {
 }
 
 type sendGrid struct {
-	client   *sendgrid.Client
-	from     *netMail.Address
-	htmlTmpl *template.Template
-	textTmpl *textTemplate.Template
+	client            *sendgrid.Client
+	from              *netMail.Address
+	magicLinkHTMLTmpl *template.Template
+	magicLinkTxtTmpl  *textTemplate.Template
+	oTPHTMLTmpl       *template.Template
+	oTPTxtTmpl        *textTemplate.Template
 }
 
 // NewProvider creates a new SendGrid email provider.
 func NewProvider(conf Config) (email.Provider, error) {
 	client := sendgrid.NewSendClient(conf.APIKey)
-	htmlTmpl := template.Must(template.New("").Parse(email.MagicLinkHTMLTemplate))
-	textTmpl := textTemplate.Must(textTemplate.New("").Parse(email.MagicLinkTextTemplate))
+	magicLinkHTMLTmpl := template.Must(template.New("").Parse(email.MagicLinkHTMLTemplate))
+	magicLinkTxtTmpl := textTemplate.Must(textTemplate.New("").Parse(email.MagicLinkTextTemplate))
+	otpHTMLTmpl := template.Must(template.New("").Parse(email.OTPHTMLTemplate))
+	otpTxtTmpl := textTemplate.Must(textTemplate.New("").Parse(email.OTPTextTemplate))
 	s := sendGrid{
-		client:   client,
-		from:     conf.FromEmail.Get(),
-		htmlTmpl: htmlTmpl,
-		textTmpl: textTmpl,
+		client:            client,
+		from:              conf.FromEmail.Get(),
+		magicLinkHTMLTmpl: magicLinkHTMLTmpl,
+		magicLinkTxtTmpl:  magicLinkTxtTmpl,
+		oTPHTMLTmpl:       otpHTMLTmpl,
+		oTPTxtTmpl:        otpTxtTmpl,
 	}
 	return s, nil
 }
 
-// Send implements the email.Provider interface.
-func (s sendGrid) Send(ctx context.Context, e email.Email) error {
+func (s sendGrid) SendMagicLink(ctx context.Context, e email.Email) error {
+	return s.sendEmail(ctx, e, s.magicLinkHTMLTmpl, s.magicLinkTxtTmpl)
+}
+func (s sendGrid) SendOTP(ctx context.Context, e email.Email) error {
+	return s.sendEmail(ctx, e, s.oTPHTMLTmpl, s.oTPTxtTmpl)
+}
+
+func (s sendGrid) sendEmail(ctx context.Context, e email.Email, htmlTmpl *template.Template, txtTmpl *textTemplate.Template) error {
 	htmlBuf := bytes.NewBuffer(nil)
-	err := s.htmlTmpl.Execute(htmlBuf, e.TemplateData)
+	err := htmlTmpl.Execute(htmlBuf, e.TemplateData)
 	if err != nil {
 		return fmt.Errorf("failed to execute template for HTML email: %w", err)
 	}
 	textBuf := bytes.NewBuffer(nil)
-	err = s.textTmpl.Execute(textBuf, e.TemplateData)
+	err = txtTmpl.Execute(textBuf, e.TemplateData)
 	if err != nil {
 		return fmt.Errorf("failed to execute template for text email: %w", err)
 	}

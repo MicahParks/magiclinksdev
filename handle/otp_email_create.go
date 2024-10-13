@@ -43,7 +43,7 @@ func (s *Server) HandleOTPEmailCreate(ctx context.Context, req model.ValidOTPEma
 		TemplateData: tData,
 		To:           emailParams.ToEmail,
 	}
-	err = s.EmailProvider.Send(ctx, e)
+	err = s.EmailProvider.SendMagicLink(ctx, e)
 	if err != nil {
 		return model.OTPEmailCreateResponse{}, fmt.Errorf("failed to send email: %w", err)
 	}

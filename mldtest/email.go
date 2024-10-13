@@ -9,15 +9,19 @@ import (
 // ErrorProvider is an email provider that always returns an error.
 type ErrorProvider struct{}
 
-// Send implements the email.Provider interface.
-func (e ErrorProvider) Send(_ context.Context, _ email.Email) error {
+func (e ErrorProvider) SendMagicLink(_ context.Context, _ email.Email) error {
+	return ErrMLDTest
+}
+func (e ErrorProvider) SendOTP(_ context.Context, _ email.Email) error {
 	return ErrMLDTest
 }
 
 // NopProvider is an email provider that does nothing.
 type NopProvider struct{}
 
-// Send implements the email.Provider interface.
-func (n NopProvider) Send(_ context.Context, _ email.Email) error {
+func (n NopProvider) SendMagicLink(_ context.Context, _ email.Email) error {
+	return nil
+}
+func (n NopProvider) SendOTP(_ context.Context, _ email.Email) error {
 	return nil
 }

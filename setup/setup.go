@@ -438,9 +438,14 @@ type nopProvider struct {
 	logger *slog.Logger
 }
 
-// Send implements email.Provider.
-func (n nopProvider) Send(ctx context.Context, e email.Email) error {
-	n.logger.DebugContext(ctx, "Sending email.",
+func (n nopProvider) SendMagicLink(ctx context.Context, e email.Email) error {
+	n.logger.DebugContext(ctx, "Sending magic link email.",
+		"email", e,
+	)
+	return nil
+}
+func (n nopProvider) SendOTP(ctx context.Context, e email.Email) error {
+	n.logger.DebugContext(ctx, "Sending OTP email.",
 		"email", e,
 	)
 	return nil

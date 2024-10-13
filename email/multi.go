@@ -34,11 +34,27 @@ func NewMultiProvider(providers []Provider, options MultiProviderOptions) (Provi
 	return m, nil
 }
 
-// Send sends an email using the multiple email provider.
-func (m multiProvider) Send(ctx context.Context, e Email) error {
+func (m multiProvider) SendMagicLink(ctx context.Context, e Email) error {
 	combinedErr := fmt.Errorf("%w: no providers were able to send the email", ErrProvider)
 	for _, p := range m.providers {
-		err := p.Send(ctx, e)
+		err := p.SendMagicLink(ctx, e)
+		if err == nil {
+			return nil
+		}
+		m.logger.ErrorContext(ctx, "Failed to send email with using multi-provider. Attempting with next provider.",
+			mld.LogErr, err,
+		)
+		combinedErr = fmt.Errorf("%w: %w", combinedErr, err)
+	}
+	m.logger.ErrorContext(ctx, "Failed to send email with using multi-provider. No providers were able to send the email.",
+		mld.LogErr, combinedErr,
+	)
+	return combinedErr
+}
+func (m multiProvider) SendOTP(ctx context.Context, e Email) error {
+	combinedErr := fmt.Errorf("%w: no providers were able to send the email", ErrProvider)
+	for _, p := range m.providers {
+		err := p.SendOTP(ctx, e)
 		if err == nil {
 			return nil
 		}

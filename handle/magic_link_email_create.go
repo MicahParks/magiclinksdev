@@ -47,7 +47,7 @@ func (s *Server) HandleMagicLinkEmailCreate(ctx context.Context, req model.Valid
 		TemplateData: tData,
 		To:           emailParams.ToEmail,
 	}
-	err = s.EmailProvider.Send(ctx, e)
+	err = s.EmailProvider.SendMagicLink(ctx, e)
 	if err != nil {
 		return model.MagicLinkEmailCreateResponse{}, fmt.Errorf("failed to send email: %w", err)
 	}
