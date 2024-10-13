@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	mld "github.com/MicahParks/magiclinksdev"
 	"github.com/MicahParks/magiclinksdev/magiclink"
 	"github.com/MicahParks/magiclinksdev/mldtest"
 )
@@ -13,21 +14,21 @@ import (
 func TestCreateParams_Valid(t *testing.T) {
 	p := magiclink.CreateParams{}
 	err := p.Valid()
-	if !errors.Is(err, magiclink.ErrParams) {
-		t.Errorf("expected error %s, got %s", magiclink.ErrParams, err)
+	if !errors.Is(err, mld.ErrParams) {
+		t.Errorf("expected error %s, got %s", mld.ErrParams, err)
 	}
 
 	p.Expires = time.Now().Add(mldtest.LinksExpireAfter)
 	err = p.Valid()
-	if !errors.Is(err, magiclink.ErrParams) {
-		t.Errorf("expected error %s, got %s", magiclink.ErrParams, err)
+	if !errors.Is(err, mld.ErrParams) {
+		t.Errorf("expected error %s, got %s", mld.ErrParams, err)
 	}
 	p.Expires = time.Time{}
 
 	p.RedirectURL = new(url.URL)
 	err = p.Valid()
-	if !errors.Is(err, magiclink.ErrParams) {
-		t.Errorf("expected error %s, got %s", magiclink.ErrParams, err)
+	if !errors.Is(err, mld.ErrParams) {
+		t.Errorf("expected error %s, got %s", mld.ErrParams, err)
 	}
 	p.RedirectURL = nil
 
@@ -44,8 +45,8 @@ func TestCreateParams_Valid(t *testing.T) {
 func TestParams_Valid(t *testing.T) {
 	p := magiclink.Config{}
 	err := p.Valid()
-	if !errors.Is(err, magiclink.ErrParams) {
-		t.Errorf("expected error %s, got %s", magiclink.ErrParams, err)
+	if !errors.Is(err, mld.ErrParams) {
+		t.Errorf("expected error %s, got %s", mld.ErrParams, err)
 	}
 
 	p = magiclink.Config{

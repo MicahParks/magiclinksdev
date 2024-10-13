@@ -2,20 +2,17 @@ package otp
 
 import (
 	"crypto/rand"
-	"errors"
 	"fmt"
 	"math/big"
 	"strings"
+
+	mld "github.com/MicahParks/magiclinksdev"
 )
 
 var (
 	alphaLower = []rune("abcdefghijklmnopqrstuvwxyz")
 	alphaUpper = []rune("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
 	numeric    = []rune("0123456789")
-)
-
-var (
-	ErrParams = errors.New("invalid parameters") // TODO Combine with other
 )
 
 func Generate(args CreateParams) (string, error) {
@@ -30,7 +27,7 @@ func Generate(args CreateParams) (string, error) {
 		charSet = append(charSet, numeric...)
 	}
 	if len(charSet) == 0 {
-		return "", fmt.Errorf("must include at least one character set: %w", ErrParams)
+		return "", fmt.Errorf("must include at least one character set: %w", mld.ErrParams)
 	}
 	o := strings.Builder{}
 	for range args.Length {

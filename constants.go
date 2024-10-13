@@ -1,6 +1,7 @@
 package magiclinksdev
 
 import (
+	"errors"
 	"time"
 )
 
@@ -27,6 +28,10 @@ const (
 	ResponseTooManyRequests = "Too many requests."
 	// ResponseUnauthorized is the response for unauthorized requests.
 	ResponseUnauthorized = "Unauthorized."
+)
+
+var (
+	ErrParams = errors.New("invalid parameters")
 )
 
 func Ptr[T any](v T) *T {

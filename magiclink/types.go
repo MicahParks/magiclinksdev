@@ -9,11 +9,8 @@ import (
 
 	"github.com/MicahParks/jwkset"
 	"github.com/golang-jwt/jwt/v5"
-)
 
-var (
-	// ErrParams indicates that the given parameters are invalid.
-	ErrParams = errors.New("invalid parameters")
+	mld "github.com/MicahParks/magiclinksdev"
 )
 
 // CreateParams are the parameters for creating a magic link.
@@ -50,10 +47,10 @@ type CreateParams struct {
 // Valid confirms the CreateParams are valid.
 func (p CreateParams) Valid() error {
 	if p.Expires.IsZero() {
-		return fmt.Errorf("%w: Expires is required", ErrParams)
+		return fmt.Errorf("%w: Expires is required", mld.ErrParams)
 	}
 	if p.RedirectURL == nil {
-		return fmt.Errorf("%w: RedirectURL is required", ErrParams)
+		return fmt.Errorf("%w: RedirectURL is required", mld.ErrParams)
 	}
 	return nil
 }
@@ -128,7 +125,7 @@ type Config struct {
 // Valid confirms the Config is valid.
 func (c Config) Valid() error {
 	if c.ServiceURL == nil {
-		return fmt.Errorf("%w: include a service URL, this is used to build magic links", ErrParams)
+		return fmt.Errorf("%w: include a service URL, this is used to build magic links", mld.ErrParams)
 	}
 	return nil
 }
