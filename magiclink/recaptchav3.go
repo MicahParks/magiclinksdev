@@ -147,10 +147,7 @@ func (r ReCAPTCHAV3TemplateData) DefaultsAndValidate() (ReCAPTCHAV3TemplateData,
 		r.CSS = template.CSS(defaultCSS)
 	}
 	if r.Instruction == "" {
-		if r.ButtonBypass {
-			r.Instruction = "Please click the button below to continue. "
-		}
-		r.Instruction += "This page helps prevent robots from using magic links."
+		r.Instruction += "This page helps prevent robots from using magic links. You should be redirected automatically."
 	}
 	if r.HTMLTitle == "" {
 		r.HTMLTitle = "Magic Link - Browser Check"
