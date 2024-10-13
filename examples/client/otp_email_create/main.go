@@ -30,8 +30,8 @@ func main() {
 
 	req := model.OTPEmailCreateRequest{
 		OTPCreateParams: model.OTPCreateParams{
-			CharSetAlphaLower: true,
-			CharSetAlphaUpper: true,
+			CharSetAlphaLower: false,
+			CharSetAlphaUpper: false,
 			CharSetNumeric:    true,
 			Length:            0,
 			LifespanSeconds:   0,

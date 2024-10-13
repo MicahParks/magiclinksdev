@@ -30,20 +30,20 @@ func (s *Server) HandleOTPEmailCreate(ctx context.Context, req model.ValidOTPEma
 	tData := email.OTPTemplateData{
 		Expiration:   req.OTPCreateParams.LifespanSeconds.String(),
 		Greeting:     emailParams.Greeting,
+		Meta:         meta,
+		OTP:          otpRes.OTP,
+		Subtitle:     emailParams.SubTitle,
+		Title:        emailParams.Title,
 		LogoImageURL: emailParams.LogoImageURL,
 		LogoClickURL: emailParams.LogoClickURL,
 		LogoAltText:  "logo",
-		MagicLink:    otpRes.OTP,
-		Meta:         meta,
-		Subtitle:     emailParams.SubTitle,
-		Title:        emailParams.Title,
 	}
 	e := email.Email{
 		Subject:      emailParams.Subject,
 		TemplateData: tData,
 		To:           emailParams.ToEmail,
 	}
-	err = s.EmailProvider.SendMagicLink(ctx, e)
+	err = s.EmailProvider.SendOTP(ctx, e)
 	if err != nil {
 		return model.OTPEmailCreateResponse{}, fmt.Errorf("failed to send email: %w", err)
 	}
