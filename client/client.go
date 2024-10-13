@@ -22,8 +22,8 @@ import (
 )
 
 const (
-	// SaaSBaseURL is the base URL for the SaaS offering. The SaaS offering is optional and the magiclinksdev project
-	// can be self-hosted.
+	// SaaSBaseURL is the base URL for the SaaS platform. The SaaS platform is optional and the magiclinksdev project
+	// is open-source and can be self-hosted.
 	SaaSBaseURL = "https://magiclinks.dev"
 	// SaaSIss is the iss claim for JWTs in the SaaS offering.
 	SaaSIss = SaaSBaseURL
@@ -43,7 +43,7 @@ type Options struct {
 	HTTP           *http.Client
 }
 
-// Client is a client for the magiclinksdev project.
+// Client is the official Golang API client for the magiclinksdev project.
 type Client struct {
 	apiKey  uuid.UUID
 	aud     uuid.UUID
@@ -54,9 +54,9 @@ type Client struct {
 }
 
 // New creates a new magiclinksdev client. The apiKey and aud are tied to the service account being used. The baseURL is
-// the HTTP(S) location of the magiclinksdev deployment. Only use HTTPS in production. For the SaaS offering, use the
+// the HTTP(S) location of the magiclinksdev deployment. Only use HTTPS in production. For the SaaS platform, use the
 // SaaSBaseURL constant. The iss is the issuer of the JWTs, which is in the configuration of the magiclinksdev
-// deployment. For the SaaS offering, use the SaaSIss constant. Providing an empty string for the iss will disable
+// deployment. For the SaaS platform, use the SaaSIss constant. Providing an empty string for the iss will disable
 // issuer validation.
 func New(apiKey, aud uuid.UUID, baseURL, iss string, options Options) (Client, error) {
 	u, err := url.Parse(baseURL)
@@ -96,8 +96,8 @@ func New(apiKey, aud uuid.UUID, baseURL, iss string, options Options) (Client, e
 }
 
 // LocalJWTValidate validates a JWT locally. If the claims argument is not nil, its value will be passed directly to
-// jwt.ParseWithClaims. The claims should be unmarshalled into the provided non-nil pointer after the function call. See
-// the documentation for jwt.ParseWithClaims for more information. Registered JWT claims will be validated regardless if
+// jwt.ParseWithClaims. The claims should be unmarshalled into the claims argument if it is a non-nil pointer. See the
+// documentation for jwt.ParseWithClaims for more information. Registered JWT claims will be validated regardless if
 // claims are specified or not.
 func (c Client) LocalJWTValidate(token string, claims jwt.Claims) (*jwt.Token, error) {
 	if c.keyf == nil {
@@ -201,7 +201,7 @@ func (c Client) OTPEmailCreate(ctx context.Context, req model.OTPEmailCreateRequ
 	return resp, errResp, nil
 }
 
-// Ready calls the /ready endpoint. An error is returned if the service is not ready.
+// Ready calls the /ready endpoint. An error is returned if the service is not ready to accept requests.
 func (c Client) Ready(ctx context.Context) error {
 	u, err := c.baseURL.Parse(network.PathReady)
 	if err != nil {
