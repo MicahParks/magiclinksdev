@@ -14,6 +14,7 @@ import (
 	"github.com/MicahParks/magiclinksdev/model"
 	"github.com/MicahParks/magiclinksdev/network/middleware"
 	"github.com/MicahParks/magiclinksdev/network/middleware/ctxkey"
+	"github.com/MicahParks/magiclinksdev/otp"
 	"github.com/MicahParks/magiclinksdev/storage"
 )
 
@@ -275,7 +276,11 @@ func HTTPOTPValidate(s *handle.Server) http.Handler {
 		}
 
 		response, err := s.HandleOTPValidate(ctx, validated)
-		if err != nil {
+		switch {
+		case errors.Is(err, otp.ErrOTPInvalid):
+			middleware.WriteErrorBody(ctx, http.StatusBadRequest, "Invalid OTP.", w)
+			return
+		case err != nil:
 			logger.ErrorContext(ctx, "Failed to validate OTP.",
 				mld.LogErr, err,
 			)

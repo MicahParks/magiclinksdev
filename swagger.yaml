@@ -179,8 +179,12 @@ paths:
       responses:
         200:
           description: "The OTP is valid for the given ID."
+          schema:
+            $ref: "#/definitions/OTPValidateResponse"
         400:
           description: "The OTP is invalid for the given ID."
+          schema:
+            $ref: "#/definitions/Error"
         default:
           description: "An unexpected error occurred."
           schema:
@@ -589,7 +593,8 @@ definitions:
       requestMetadata:
         $ref: "#/definitions/RequestMetadata"
 
-  OTPValidateRequest:
+  OTPValidateParams:
+    description: "Parameters to validate a One-Time Password (OTP)."
     type: "object"
     properties:
       id:
@@ -598,6 +603,15 @@ definitions:
       otp:
         description: "The user provided One-Time Password to validate."
         type: "string"
+
+  OTPValidateRequest:
+    type: "object"
+    properties:
+      otpValidateParams:
+        $ref: "#/definitions/OTPValidateParams"
+
+  OTPValidateResponse:
+    type: "object"
 
   ServiceAccountCreateRequest:
     description: "The request body for the /admin/service-account/create endpoint."
