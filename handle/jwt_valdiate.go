@@ -21,7 +21,6 @@ var (
 	ErrToken = errors.New("JWT invalid")
 )
 
-// HandleJWTValidate handles the JWT validation endpoint.
 func (s *Server) HandleJWTValidate(ctx context.Context, req model.ValidJWTValidateRequest) (model.JWTValidateResponse, error) {
 	jwtValidateParams := req.JWTValidateParams
 	sa := ctx.Value(ctxkey.ServiceAccount).(model.ServiceAccount)

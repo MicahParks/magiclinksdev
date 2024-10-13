@@ -12,7 +12,6 @@ import (
 	"github.com/MicahParks/magiclinksdev/network/middleware/ctxkey"
 )
 
-// HandleMagicLinkCreate handles the link creation endpoint.
 func (s *Server) HandleMagicLinkCreate(ctx context.Context, req model.ValidMagicLinkCreateRequest) (response model.MagicLinkCreateResponse, err error) {
 	linkParams := req.MagicLinkParams
 

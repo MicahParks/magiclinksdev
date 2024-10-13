@@ -27,7 +27,6 @@ var (
 	ErrJWTAlgNotFound = errors.New("JWT alg not found")
 )
 
-// HandleJWTCreate handles the creation of a JWT.
 func (s *Server) HandleJWTCreate(ctx context.Context, req model.ValidJWTCreateRequest) (model.JWTCreateResponse, error) {
 	jwtCreateParams := req.JWTCreateParams
 

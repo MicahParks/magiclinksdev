@@ -12,7 +12,6 @@ import (
 	"github.com/MicahParks/magiclinksdev/network/middleware/ctxkey"
 )
 
-// HandleMagicLinkEmailCreate handles the email link creation endpoint.
 func (s *Server) HandleMagicLinkEmailCreate(ctx context.Context, req model.ValidMagicLinkEmailCreateRequest) (model.MagicLinkEmailCreateResponse, error) {
 	emailParams := req.MagicLinkEmailCreateParams
 	linkParams := req.MagicLinkCreateParams
