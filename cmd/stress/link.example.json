@@ -1,12 +1,12 @@
 {
-  "linkParams": {
+  "magicLinkCreateParams": {
     "jwtCreateParams": {
-      "jwtClaims": {
+      "claims": {
         "foo": "bar"
       },
-      "jwtLifespanSeconds": 0
+      "lifespanSeconds": 0
     },
-    "linkLifespan": 0,
+    "lifespanSeconds": 0,
     "redirectQueryKey": "",
     "redirectURL": "https://jwtdebug.micahparks.com"
   }

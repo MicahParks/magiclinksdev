@@ -11,15 +11,16 @@ import (
 	"strings"
 	"time"
 
-	"github.com/MicahParks/magiclinksdev/mldtest"
 	"golang.org/x/sync/errgroup"
+
+	"github.com/MicahParks/magiclinksdev/mldtest"
 
 	mld "github.com/MicahParks/magiclinksdev"
 	"github.com/MicahParks/magiclinksdev/network"
 	"github.com/MicahParks/magiclinksdev/network/middleware"
 )
 
-//go:embed link.prod.json
+//go:embed link.example.json
 var linkJSON []byte
 
 func main() {
@@ -35,7 +36,7 @@ func main() {
 		)
 		exit(ctx, l, time.Now(), 1)
 	}
-	u, err = u.Parse("/api/v2/" + network.PathLinkCreate)
+	u, err = u.Parse("/api/v2/" + network.PathMagicLinkCreate)
 	if err != nil {
 		l.ErrorContext(ctx, "Failed to parse URL.",
 			mld.LogErr, err,
