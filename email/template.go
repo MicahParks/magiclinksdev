@@ -15,7 +15,7 @@ const (
       <i style="mso-font-width: 150%; mso-text-raise: 30px" hidden>&emsp;</i>
     <![endif]-->`
 	// MSOHead is the HTML to start MSO head.
-	MSOHead = `<!--[if mso]>
+	MSOHead = `  <!--[if mso]>
   <noscript>
     <xml>
       <o:OfficeDocumentSettings xmlns:o="urn:schemas-microsoft-com:office:office">
@@ -31,12 +31,12 @@ const (
 
 // MagicLinkHTMLTemplate is the HTML template for the magic link email.
 //
-//go:embed html.gohtml
+//go:embed magic_link_html.gohtml
 var MagicLinkHTMLTemplate string
 
 // MagicLinkTextTemplate is the text template for the magic link email.
 //
-//go:embed text.gotxt
+//go:embed magic_link_text.gotxt
 var MagicLinkTextTemplate string
 
 // MagicLinkTemplateData is the data for the magic link email template.

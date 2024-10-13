@@ -140,7 +140,7 @@ func (p postgres) TestingTruncate(ctx context.Context) error {
 
 	//language=sql
 	const query = `
-TRUNCATE TABLE mld.jwk, mld.link, mld.service_account
+TRUNCATE TABLE mld.jwk, mld.link, mld.otp, mld.service_account
 `
 	_, err := tx.Exec(ctx, query)
 	if err != nil {

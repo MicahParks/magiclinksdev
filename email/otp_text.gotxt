@@ -1,0 +1,14 @@
+{{- /*gotype: github.com/MicahParks/magiclinksdev/email.OTPTemplateData*/ -}}
+{{if .Greeting}}{{.Greeting}}{{end -}}
+
+{{.Title}}
+{{if .Subtitle}}{{.Subtitle}}{{end -}}
+
+Your One-Time Password (OTP) is:
+{{.OTP}}
+
+This OTP expires in {{.Expiration}}.
+Support will never ask for anything in this email.
+Never forward this email or share its contents with anyone.
+
+Powered by magiclinks.dev
