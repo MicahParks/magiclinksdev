@@ -61,6 +61,24 @@ func TestGenerate(t *testing.T) {
 				Length:            mld.DefaultOTPLength,
 			},
 		},
+		{
+			name: "ShortLength",
+			params: CreateParams{
+				CharSetAlphaLower: true,
+				CharSetAlphaUpper: true,
+				CharSetNumeric:    true,
+				Length:            1,
+			},
+		},
+		{
+			name: "LongLength",
+			params: CreateParams{
+				CharSetAlphaLower: true,
+				CharSetAlphaUpper: true,
+				CharSetNumeric:    true,
+				Length:            12,
+			},
+		},
 	}
 	for _, tt := range tc {
 		t.Run(tt.name, func(t *testing.T) {

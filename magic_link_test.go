@@ -29,16 +29,14 @@ type testClaims struct {
 	jwt.RegisteredClaims
 }
 
-type testCase struct {
-	name    string
-	keyfunc jwt.Keyfunc
-	reqBody model.MagicLinkCreateRequest
-}
-
 func TestMagicLink(t *testing.T) {
 	const customRedirectQueryKey = "customRedirectQueryKey"
 
-	for _, tc := range []testCase{
+	for _, tc := range []struct {
+		name    string
+		keyfunc jwt.Keyfunc
+		reqBody model.MagicLinkCreateRequest
+	}{
 		{
 			name: "Default signing key",
 			keyfunc: func(token *jwt.Token) (any, error) {
