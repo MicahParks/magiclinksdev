@@ -17,11 +17,11 @@ tags:
 paths:
   /ready:
     get:
-      summary: Check if the service is running and ready to accept requests.
+      summary: Check if the service is ready to accept requests.
       operationId: ready
       responses:
         "200":
-          description: The service is running and ready to accept requests.
+          description: The service is ready to accept requests.
           content: {}
         default:
           description: The service is not ready to accept requests.
@@ -46,7 +46,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ServiceAccountCreateResponse'
         default:
-          description: An error occurred.
+          description: An unexpected error occurred.
           content:
             application/json:
               schema:
@@ -54,7 +54,7 @@ paths:
       x-codegen-request-body-name: body
   /jwt/create:
     post:
-      summary: "Create a JWT, typically for a JWT refresh."
+      summary: "Create a JWT, typically after OTP verification or a JWT refresh."
       operationId: jwtCreate
       requestBody:
         content:
@@ -70,7 +70,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/JWTCreateResponse'
         default:
-          description: An error occurred.
+          description: An unexpected error occurred.
           content:
             application/json:
               schema:
@@ -78,7 +78,7 @@ paths:
       x-codegen-request-body-name: body
   /jwt/validate:
     post:
-      summary: Validate a JWT.
+      summary: Verify and validate a JWT.
       operationId: jwtValidate
       requestBody:
         content:
@@ -88,19 +88,19 @@ paths:
         required: true
       responses:
         "200":
-          description: The JWT was signed by an active key in the JWK Set.
+          description: The JWT is verified and validated.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/JWTValidateResponse'
         "422":
-          description: The given JWT was invalid.
+          description: The JWT failed verification and validation.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
         default:
-          description: An error occurred.
+          description: An unexpected error occurred.
           content:
             application/json:
               schema:
@@ -181,7 +181,7 @@ paths:
       x-codegen-request-body-name: body
   /otp/validate:
     post:
-      summary: Validate a One-Time Password (OTP) given its ID.
+      summary: Verify and validate a One-Time Password (OTP) given its ID.
       operationId: otpValidate
       requestBody:
         content:
@@ -191,13 +191,13 @@ paths:
         required: true
       responses:
         "200":
-          description: The OTP is valid for the given ID.
+          description: The OTP is verified and valid for the given ID.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/OTPValidateResponse'
         "400":
-          description: The OTP is invalid for the given ID.
+          description: The OTP failed verification or validation for the given ID.
           content:
             application/json:
               schema:
@@ -267,14 +267,6 @@ components:
           type: string
         admin:
           type: boolean
-    JWTCreateRequest:
-      required:
-        - jwtCreateParams
-      type: object
-      properties:
-        jwtCreateParams:
-          $ref: '#/components/schemas/JWTCreateParams'
-      description: The request body for the /jwt/create endpoint.
     JWTCreateParams:
       type: object
       properties:
@@ -296,6 +288,14 @@ components:
             \ to 5 minutes. The minimum value is 5 seconds and the maximum value is\
             \ 7905600000 seconds, which is a bit over 250 years."
       description: Parameters used to create a JWT.
+    JWTCreateRequest:
+      required:
+        - jwtCreateParams
+      type: object
+      properties:
+        jwtCreateParams:
+          $ref: '#/components/schemas/JWTCreateParams'
+      description: The request body for the /jwt/create endpoint.
     JWTCreateResults:
       type: object
       properties:
@@ -311,6 +311,13 @@ components:
         requestMetadata:
           $ref: '#/components/schemas/RequestMetadata'
       description: The response body for the /jwt/create endpoint.
+    JWTValidateParams:
+      type: object
+      properties:
+        jwt:
+          type: string
+          description: The JWT to validate.
+      description: Parameters used to validate a JWT.
     JWTValidateRequest:
       required:
         - jwtValidateParams
@@ -319,13 +326,6 @@ components:
         jwtValidateParams:
           $ref: '#/components/schemas/JWTValidateParams'
       description: The request body for the /jwt/validate endpoint.
-    JWTValidateParams:
-      type: object
-      properties:
-        jwt:
-          type: string
-          description: The JWT to validate.
-      description: Parameters used to validate a JWT.
     JWTValidateResults:
       type: object
       properties:
@@ -605,8 +605,14 @@ components:
           $ref: '#/components/schemas/OTPValidateParams'
     OTPValidateResponse:
       type: object
+    ServiceAccountCreateParams:
+      type: object
+      description: Parameters to create a service account.
     ServiceAccountCreateRequest:
       type: object
+      properties:
+        serviceAccountCreateParams:
+          $ref: '#/components/schemas/ServiceAccountCreateParams'
       description: The request body for the /admin/service-account/create endpoint.
     ServiceAccountCreateResults:
       type: object
