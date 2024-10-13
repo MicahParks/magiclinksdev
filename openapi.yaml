@@ -190,62 +190,22 @@ components:
           type: string
           description: A UUID that uniquely identifies the request.
           format: uuid
-    APIKey:
+    ServiceAccount:
       type: object
       properties:
-        apiKey:
-          type: string
-          description: The API key.
-    Audience:
-      type: object
-      properties:
-        apiKeys:
-          type: array
-          description: API keys for this audience.
-          items:
-            $ref: '#/components/schemas/APIKey'
-        aud:
-          type: string
-          description: The audience of JWTs created for this service account context.
-        serviceLogo:
-          type: string
-          description: The URL of the service account's service logo.
-        serviceName:
-          type: string
-          description: The name of the service account's service.
-        serviceURL:
-          type: string
-          description: The URL of the landing page for the service account's service.
-    ServiceAccountMeta:
-      type: object
-      properties:
-        admin:
-          type: boolean
-          description: Whether the service account is an admin.
         uuid:
           type: string
           description: The UUID of the service account.
           format: uuid
-    ServiceAccount:
-      type: object
-      properties:
-        audiences:
-          type: array
-          description: The audiences for this service account.
-          items:
-            $ref: '#/components/schemas/Audience'
-        meta:
-          $ref: '#/components/schemas/ServiceAccountMeta'
-    JWTClaims:
-      type: object
-      properties:
-        claims:
-          type: object
-          properties: {}
-          description: Any valid JSON object. Do not provide any JSON attributes mentioned
-            in RFC 7519 section 4.1 as this will cause an error. These are JWT "Registered
-            Claim Names".
-      description: Any valid JSON object.
+        apiKey:
+          type: string
+          description: The API key of the service account.
+        aud:
+          type: string
+          description: The audience of the service account.
+        admin:
+          type: boolean
+          description: Whether the service account is an admin.
     JWTCreateRequest:
       required:
         - jwtCreateArgs
@@ -263,7 +223,15 @@ components:
             on the server's configuration. The default server configuration is "EdDSA".
             The default server options are "EdDSA" and "RS256".
         jwtClaims:
-          $ref: '#/components/schemas/JWTClaims'
+          type: object
+          properties:
+            claims:
+              type: object
+              properties: {}
+              description: Any valid JSON object. Do not provide any JSON attributes
+                mentioned in RFC 7519 section 4.1 as this will cause an error. These
+                are JWT "Registered Claim Names".
+          description: The JWT claims used to create the signed JWT.
         jwtLifespanSeconds:
           type: integer
           description: "The lifespan of the JWT in seconds. The JWT's lifespan starts\
@@ -319,8 +287,6 @@ components:
           $ref: '#/components/schemas/RequestMetadata'
       description: The response body for the /jwt/validate endpoint.
     LinkCreateArgs:
-      required:
-        - redirectURL
       type: object
       properties:
         jwtCreateArgs:
@@ -334,7 +300,7 @@ components:
           type: string
           description: "The URL query key in the redirectURL to contain the signed\
             \ JWT when the magic link is used. By default, \"jwt\" is used."
-        redirectURL:
+        redirectUrl:
           type: string
           description: The URL to redirect to with the signed JWT when the link is
             used.
@@ -451,18 +417,6 @@ components:
       description: The response body from the /email-link/create endpoint.
     ServiceAccountCreateArgs:
       type: object
-      properties:
-        serviceLogo:
-          type: string
-          description: The URL of the service account's service's logo.
-          format: uri
-        serviceName:
-          type: string
-          description: The name of the service account's service.
-        serviceURL:
-          type: string
-          description: The landing page URL for the service account's service.
-          format: uri
       description: Parameters to create a service account.
     ServiceAccountCreateRequest:
       required:
@@ -481,7 +435,7 @@ components:
     ServiceAccountCreateResponse:
       type: object
       properties:
-        serviceAccountCreateResults:
+        createServiceAccountResults:
           $ref: '#/components/schemas/ServiceAccountCreateResults'
         requestMetadata:
           $ref: '#/components/schemas/RequestMetadata'
