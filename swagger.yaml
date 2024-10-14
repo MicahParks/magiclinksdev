@@ -257,9 +257,9 @@ definitions:
           description: "RFC 7519 section 4.1"
           url: "https://tools.ietf.org/html/rfc7519#section-4.1"
       lifespanSeconds:
-        description: "The lifespan of the JWT in seconds. The JWT's lifespan starts after the magic link has been
-        visited and the JWT is signed. It defaults to 5 minutes. The minimum value is 5 seconds and the maximum value is
-        7905600000 seconds, which is a bit over 250 years."
+        description: "The lifespan of the JWT in seconds. The JWT's lifespan starts after creation. For magic links,
+        after the magic link has been visited. It defaults to 5 minutes. The minimum value is 5 seconds and the maximum
+        value is 7905600000 seconds, which is a bit over 250 years."
         default: 300
         type: "integer"
 
@@ -334,9 +334,9 @@ definitions:
       jwtCreateParams:
         $ref: "#/definitions/JWTCreateParams"
       lifespanSeconds:
-        description: "The number of seconds the magic link should be active for after the request has been processed. It
-        defaults to 1 hour. The minimum value is 5 seconds and the maximum value is 7905600000 seconds, which is a bit
-        over 250 years."
+        description: "The lifespan of the magic link in seconds. The magic link's lifespan starts after it has been
+        created. It defaults to 1 hour. The minimum value is 5 seconds and the maximum value is 7905600000 seconds,
+        which is a bit over 250 years."
         type: "integer"
         default: 3600
       redirectQueryKey:
@@ -470,14 +470,14 @@ definitions:
         description: "Include a chance to use numbers in the OTP."
         type: "boolean"
       length:
-        description: "The length of the OTP. It defaults to 6. The minimum value is 1 and the maximum value is 12." # TODO Confirm the maximum value fits in the HTML email template.
+        description: "The length of the OTP. It defaults to 6. The minimum value is 1 and the maximum value is 12."
         default: 6
         type: "integer"
       lifespanSeconds:
-        description: "The lifespan of the OTP in seconds. The OTP's lifespan starts after the magic link has been
-        visited and the OTP is created. It defaults to 5 minutes. The minimum value is 5 seconds and the maximum value is
-        7905600000 seconds, which is a bit over 250 years."
-        default: 300
+        description: "The lifespan of the OTP in seconds. The OTP's lifespan starts after it has been created. It
+        defaults to 1 hour. The minimum value is 5 seconds and the maximum value is 7905600000 seconds, which is a bit
+        over 250 years."
+        default: 3600
         type: "integer"
 
   OTPCreateRequest:
