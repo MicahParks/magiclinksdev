@@ -22,7 +22,7 @@ func (s *Server) HandleOTPEmailCreate(ctx context.Context, req model.ValidOTPEma
 
 	meta := email.TemplateMetadata{
 		HTMLInstruction: fmt.Sprintf("You've been sent a magic link from %s.", emailParams.ServiceName),
-		HTMLTitle:       fmt.Sprintf("Magic link from %s", emailParams.ServiceName),
+		HTMLTitle:       fmt.Sprintf("One-Time Password from %s", emailParams.ServiceName),
 		MSOButtonStop:   email.MSOButtonStop,
 		MSOButtonStart:  email.MSOButtonStart,
 		MSOHead:         email.MSOHead,
