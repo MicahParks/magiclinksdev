@@ -22,7 +22,7 @@ func (s *Server) HandleMagicLinkEmailCreate(ctx context.Context, req model.Valid
 	}
 
 	meta := email.TemplateMetadata{
-		HTMLInstruction: fmt.Sprintf("You've been sent a magic link from %s.", emailParams.ServiceName),
+		HTMLInstruction: fmt.Sprintf("Magic link from %s.", emailParams.ServiceName),
 		HTMLTitle:       fmt.Sprintf("Magic link from %s", emailParams.ServiceName),
 		MSOButtonStop:   email.MSOButtonStop,
 		MSOButtonStart:  email.MSOButtonStart,
