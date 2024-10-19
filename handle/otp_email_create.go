@@ -21,8 +21,8 @@ func (s *Server) HandleOTPEmailCreate(ctx context.Context, req model.ValidOTPEma
 	}
 
 	meta := email.TemplateMetadata{
-		HTMLInstruction: fmt.Sprintf("One-Time Password from %s.", emailParams.ServiceName),
-		HTMLTitle:       fmt.Sprintf("One-Time Password from %s", emailParams.ServiceName),
+		HTMLInstruction: fmt.Sprintf("One-time password from %s.", emailParams.ServiceName),
+		HTMLTitle:       fmt.Sprintf("One-time password from %s", emailParams.ServiceName),
 		MSOButtonStop:   email.MSOButtonStop,
 		MSOButtonStart:  email.MSOButtonStart,
 		MSOHead:         email.MSOHead,
