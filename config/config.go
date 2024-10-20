@@ -24,7 +24,7 @@ type LogLevel string
 
 // Config is the configuration for the magiclinksdev server.
 type Config struct {
-	AdminConfig         []model.AdminCreateParams   `json:"adminConfig"`
+	AdminCreateParams   []model.AdminCreateParams   `json:"adminCreateParams"`
 	BaseURL             *jt.JSONType[*url.URL]      `json:"baseURL"`
 	Iss                 string                      `json:"iss"`
 	JWKS                JWKS                        `json:"jwks"`

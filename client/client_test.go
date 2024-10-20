@@ -324,7 +324,7 @@ func jwtCreateHelper(ctx context.Context, t *testing.T, c Client) string {
 
 func newClient(ctx context.Context, t *testing.T) Client {
 	conf := config.Config{
-		AdminConfig: []model.AdminCreateParams{
+		AdminCreateParams: []model.AdminCreateParams{
 			{
 				APIKey:                     mldtest.APIKey,
 				Aud:                        mldtest.Aud,

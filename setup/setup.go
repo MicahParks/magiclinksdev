@@ -357,7 +357,7 @@ func CreateServer(ctx context.Context, conf config.Config, options ServerOptions
 		logger.InfoContext(ctx, "Ignoring default JWK Set check.")
 	}
 
-	for _, adminConfig := range conf.AdminConfig {
+	for _, adminConfig := range conf.AdminCreateParams {
 		valid, err := adminConfig.Validate(conf.Validation)
 		if err != nil {
 			return nil, fmt.Errorf("failed to validate admin config: %w", err)
