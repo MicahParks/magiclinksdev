@@ -599,8 +599,19 @@ definitions:
       otpValidateParams:
         $ref: "#/definitions/OTPValidateParams"
 
+  OTPValidateResults:
+    type: "object"
+
   OTPValidateResponse:
     type: "object"
+    properties:
+      otpValidateResults:
+        $ref: "#/definitions/OTPValidateResults"
+      requestMetadata:
+        $ref: "#/definitions/RequestMetadata"
+    required:
+      - "otpValidateResults"
+      - "requestMetadata"
 
   ServiceAccountCreateParams:
     description: "Parameters to create a service account."

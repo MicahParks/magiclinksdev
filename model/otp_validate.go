@@ -47,4 +47,9 @@ type ValidOTPValidateRequest struct {
 	OTPValidateParams ValidOTPValidateParams
 }
 
-type OTPValidateResponse struct{}
+type OTPValidateResults struct{}
+
+type OTPValidateResponse struct {
+	OTPValidateResults OTPValidateResults `json:"otpValidateResults"`
+	RequestMetadata    RequestMetadata    `json:"requestMetadata"`
+}

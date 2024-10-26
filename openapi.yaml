@@ -603,8 +603,18 @@ components:
       properties:
         otpValidateParams:
           $ref: '#/components/schemas/OTPValidateParams'
-    OTPValidateResponse:
+    OTPValidateResults:
       type: object
+    OTPValidateResponse:
+      required:
+        - otpValidateResults
+        - requestMetadata
+      type: object
+      properties:
+        otpValidateResults:
+          $ref: '#/components/schemas/OTPValidateResults'
+        requestMetadata:
+          $ref: '#/components/schemas/RequestMetadata'
     ServiceAccountCreateParams:
       type: object
       description: Parameters to create a service account.
