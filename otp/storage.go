@@ -3,7 +3,6 @@ package otp
 import (
 	"context"
 	"errors"
-	"sync"
 	"time"
 )
 
@@ -26,9 +25,4 @@ type CreateResult struct {
 type Storage interface {
 	OTPCreate(ctx context.Context, params CreateParams) (CreateResult, error)
 	OTPValidate(ctx context.Context, id, o string) error
-}
-
-type memoryOTP struct {
-	mux   sync.Mutex
-	store map[string]CreateResult
 }
