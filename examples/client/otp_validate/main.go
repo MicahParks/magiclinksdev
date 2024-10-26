@@ -70,5 +70,4 @@ func main() {
 	}
 
 	println(string(data))
-	println("OTP is valid.")
 }
