@@ -26,6 +26,7 @@ func main() {
 		logger.Error("Failed to validate JWT. This is normal for the default example.",
 			mld.LogErr, err,
 		)
+		return
 	}
 
 	logger.Info("JWT is valid.",
