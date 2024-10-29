@@ -28,6 +28,7 @@ is:
 
 The built-in email templates are friendly to mobile and desktop screens. They also adapt to light/dark mode
 automatically. The templates are built using [maizzle](https://maizzle.com/).
+
 <span>
   <img width="400" src="https://magiclinks.dev/screenshots/magic-link-email-light-mobile-example.png" alt=""/>
   <img width="400" src="https://magiclinks.dev/screenshots/magic-link-email-dark-mobile-example.png" alt=""/>
