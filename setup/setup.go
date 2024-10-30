@@ -324,7 +324,7 @@ func CreateServer(ctx context.Context, conf config.Config, options ServerOptions
 
 	magicLinkConfig := magiclink.Config{
 		ErrorHandler: MagicLinkErrorHandler(options.MagicLinkErrorHandler),
-		JWKS: magiclink.JWKSArgs{
+		JWKS: magiclink.JWKSParams{
 			CacheRefresh: time.Second,
 			Store:        interfaces.Store,
 		},
@@ -357,15 +357,15 @@ func CreateServer(ctx context.Context, conf config.Config, options ServerOptions
 		logger.InfoContext(ctx, "Ignoring default JWK Set check.")
 	}
 
-	for _, adminConfig := range conf.AdminConfig {
-		valid, err := adminConfig.Validate(conf.Validation)
+	for _, adminCreateParams := range conf.AdminCreateParams {
+		valid, err := adminCreateParams.Validate(conf.Validation)
 		if err != nil {
 			return nil, fmt.Errorf("failed to validate admin config: %w", err)
 		}
-		_, err = interfaces.Store.ReadSA(setupCtx, valid.UUID)
+		_, err = interfaces.Store.SARead(setupCtx, valid.UUID)
 		if err != nil {
 			if errors.Is(err, storage.ErrNotFound) {
-				err = interfaces.Store.CreateAdminSA(setupCtx, valid)
+				err = interfaces.Store.SAAdminCreate(setupCtx, valid)
 				if err != nil {
 					return nil, fmt.Errorf("failed to setup admin: %w", err)
 				}
@@ -406,7 +406,7 @@ func CreateServer(ctx context.Context, conf config.Config, options ServerOptions
 
 // MagicLinkErrorHandler is a wrapper for magiclink.ErrorHandlerFunc.
 func MagicLinkErrorHandler(h magiclink.ErrorHandler) magiclink.ErrorHandler {
-	return magiclink.ErrorHandlerFunc(func(args magiclink.ErrorHandlerArgs) {
+	return magiclink.ErrorHandlerFunc(func(args magiclink.ErrorHandlerParams) {
 		ctx := args.Request.Context()
 		logger := ctx.Value(ctxkey.Logger).(*slog.Logger)
 		logger.ErrorContext(ctx, "Failed to handle magic link.",
@@ -438,9 +438,14 @@ type nopProvider struct {
 	logger *slog.Logger
 }
 
-// Send implements email.Provider.
-func (n nopProvider) Send(ctx context.Context, e email.Email) error {
-	n.logger.DebugContext(ctx, "Sending email.",
+func (n nopProvider) SendMagicLink(ctx context.Context, e email.Email) error {
+	n.logger.DebugContext(ctx, "Sending magic link email.",
+		"email", e,
+	)
+	return nil
+}
+func (n nopProvider) SendOTP(ctx context.Context, e email.Email) error {
+	n.logger.DebugContext(ctx, "Sending OTP email.",
 		"email", e,
 	)
 	return nil

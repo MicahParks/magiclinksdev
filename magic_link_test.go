@@ -29,16 +29,14 @@ type testClaims struct {
 	jwt.RegisteredClaims
 }
 
-type testCase struct {
-	name    string
-	keyfunc jwt.Keyfunc
-	reqBody model.LinkCreateRequest
-}
-
 func TestMagicLink(t *testing.T) {
 	const customRedirectQueryKey = "customRedirectQueryKey"
 
-	for _, tc := range []testCase{
+	for _, tc := range []struct {
+		name    string
+		keyfunc jwt.Keyfunc
+		reqBody model.MagicLinkCreateRequest
+	}{
 		{
 			name: "Default signing key",
 			keyfunc: func(token *jwt.Token) (any, error) {
@@ -48,9 +46,10 @@ func TestMagicLink(t *testing.T) {
 				if err != nil {
 					panic(fmt.Sprintf("failed to begin transaction: %v", err))
 				}
+				//goland:noinspection GoUnhandledErrorResult
 				defer tx.Rollback(ctx)
 				ctx = context.WithValue(ctx, ctxkey.Tx, tx)
-				defaultKey, err := server.Store.ReadDefaultSigningKey(ctx)
+				defaultKey, err := server.Store.SigningKeyDefaultRead(ctx)
 				if err != nil {
 					panic(fmt.Sprintf("failed to read default signing key: %v", err))
 				}
@@ -64,13 +63,13 @@ func TestMagicLink(t *testing.T) {
 				}
 				return ed.Public(), nil
 			},
-			reqBody: model.LinkCreateRequest{
-				LinkArgs: model.LinkCreateArgs{
-					JWTCreateArgs: model.JWTCreateArgs{
-						JWTClaims:          map[string]string{"foo": "bar"},
-						JWTLifespanSeconds: 0,
+			reqBody: model.MagicLinkCreateRequest{
+				MagicLinkCreateParams: model.MagicLinkCreateParams{
+					JWTCreateParams: model.JWTCreateParams{
+						Claims:          map[string]string{"foo": "bar"},
+						LifespanSeconds: 0,
 					},
-					LinkLifespan:     0,
+					LifespanSeconds:  0,
 					RedirectQueryKey: customRedirectQueryKey,
 					RedirectURL:      "https://github.com/MicahParks/magiclinksdev",
 				},
@@ -90,14 +89,14 @@ func TestMagicLink(t *testing.T) {
 				}
 				panic("no RSA signing key")
 			},
-			reqBody: model.LinkCreateRequest{
-				LinkArgs: model.LinkCreateArgs{
-					JWTCreateArgs: model.JWTCreateArgs{
-						JWTAlg:             jwkset.AlgRS256.String(),
-						JWTClaims:          map[string]string{"foo": "bar"},
-						JWTLifespanSeconds: 0,
+			reqBody: model.MagicLinkCreateRequest{
+				MagicLinkCreateParams: model.MagicLinkCreateParams{
+					JWTCreateParams: model.JWTCreateParams{
+						Alg:             jwkset.AlgRS256.String(),
+						Claims:          map[string]string{"foo": "bar"},
+						LifespanSeconds: 0,
 					},
-					LinkLifespan:     0,
+					LifespanSeconds:  0,
 					RedirectQueryKey: customRedirectQueryKey,
 					RedirectURL:      "https://github.com/MicahParks/magiclinksdev",
 				},
@@ -111,7 +110,7 @@ func TestMagicLink(t *testing.T) {
 			}
 
 			recorder := httptest.NewRecorder()
-			u, err := assets.conf.Server.BaseURL.Get().Parse(network.PathLinkCreate)
+			u, err := assets.conf.Server.BaseURL.Get().Parse(network.PathMagicLinkCreate)
 			if err != nil {
 				t.Fatalf("Failed to parse URL: %v", err)
 			}
@@ -127,14 +126,14 @@ func TestMagicLink(t *testing.T) {
 				t.Fatalf("Received non-JSON content type: %s", recorder.Header().Get(mld.HeaderContentType))
 			}
 
-			var linkCreateResponse model.LinkCreateResponse
+			var linkCreateResponse model.MagicLinkCreateResponse
 			err = json.Unmarshal(recorder.Body.Bytes(), &linkCreateResponse)
 			if err != nil {
 				t.Fatalf("Failed to unmarshal response body: %v", err)
 			}
 
 			recorder = httptest.NewRecorder()
-			req = httptest.NewRequest(http.MethodGet, linkCreateResponse.LinkCreateResults.MagicLink, nil)
+			req = httptest.NewRequest(http.MethodGet, linkCreateResponse.MagicLinkCreateResults.MagicLink, nil)
 			reqSent := time.Now()
 			assets.mux.ServeHTTP(recorder, req)
 
@@ -180,12 +179,12 @@ func TestMagicLink(t *testing.T) {
 			}
 
 			redirectURL.RawQuery = ""
-			if redirectURL.String() != tc.reqBody.LinkArgs.RedirectURL {
-				t.Fatalf("Expected redirect URL %q, got %q", tc.reqBody.LinkArgs.RedirectURL, redirectURL.String())
+			if redirectURL.String() != tc.reqBody.MagicLinkCreateParams.RedirectURL {
+				t.Fatalf("Expected redirect URL %q, got %q", tc.reqBody.MagicLinkCreateParams.RedirectURL, redirectURL.String())
 			}
 
 			recorder = httptest.NewRecorder()
-			req = httptest.NewRequest(http.MethodGet, linkCreateResponse.LinkCreateResults.MagicLink, nil)
+			req = httptest.NewRequest(http.MethodGet, linkCreateResponse.MagicLinkCreateResults.MagicLink, nil)
 			assets.mux.ServeHTTP(recorder, req)
 
 			if recorder.Code != http.StatusNotFound {

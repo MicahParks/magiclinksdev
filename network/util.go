@@ -9,26 +9,39 @@ import (
 )
 
 const (
-	// PathEmailLinkCreate is the path to the email link creation endpoint.
-	PathEmailLinkCreate = "email-link/create"
 	// PathJWKS is the path to the JWKS endpoint.
 	PathJWKS = "jwks.json"
-	// PathJWTCreate is the path to the JWT creation endpoint.
-	PathJWTCreate = "jwt/create"
-	// PathJWTValidate is the path to the JWT validation endpoint.
-	PathJWTValidate = "jwt/validate"
-	// PathLinkCreate is the path to the link creation endpoint.
-	PathLinkCreate = "link/create"
 	// PathReady is the path to the ready endpoint.
 	PathReady = "ready"
 	// PathServiceAccountCreate is the path to the service account creation endpoint.
 	PathServiceAccountCreate = "admin/service-account/create"
+	// PathJWTCreate is the path to the JWT creation endpoint.
+	PathJWTCreate = "jwt/create"
+	// PathJWTValidate is the path to the JWT validation endpoint.
+	PathJWTValidate = "jwt/validate"
+	// PathMagicLinkCreate is the path to the link creation endpoint.
+	PathMagicLinkCreate = "magic-link/create"
+	// PathMagicLinkEmailCreate is the path to the magic link email creation endpoint.
+	PathMagicLinkEmailCreate = "magic-link-email/create"
+	// PathOTPCreate is the path to the OTP creation endpoint.
+	PathOTPCreate = "otp/create"
+	// PathOTPValidate is the path to the OTP validation endpoint.
+	PathOTPValidate = "otp/validate"
+	// PathOTPEmailCreate is the path to the OTP email creation endpoint.
+	PathOTPEmailCreate = "otp-email/create"
 )
 
 // CreateHTTPHandlers creates the HTTP handlers for the server.
 func CreateHTTPHandlers(server *handle.Server) (*http.ServeMux, error) {
 	pathMagicLinkHandler := server.Config.RelativeRedirectURL.Get().EscapedPath()
 	options := []handle.MiddlewareOptions{
+		{
+			Handler: server.MagicLink.JWKSHandler(),
+			Path:    PathJWKS,
+			Toggle: handle.MiddlewareToggle{
+				CommitTx: true,
+			},
+		},
 		{
 			Handler: server.MagicLink.MagicLinkHandler(),
 			Path:    pathMagicLinkHandler,
@@ -37,18 +50,16 @@ func CreateHTTPHandlers(server *handle.Server) (*http.ServeMux, error) {
 			},
 		},
 		{
-			Handler: HTTPEmailLinkCreate(server),
-			Path:    PathEmailLinkCreate,
-			Toggle: handle.MiddlewareToggle{
-				Authn:     true,
-				RateLimit: true,
-			},
+			Handler: HTTPReady(server),
+			Path:    PathReady,
+			Toggle:  handle.MiddlewareToggle{},
 		},
 		{
-			Handler: server.MagicLink.JWKSHandler(),
-			Path:    PathJWKS,
+			Handler: HTTPServiceAccountCreate(server),
+			Path:    PathServiceAccountCreate,
 			Toggle: handle.MiddlewareToggle{
-				CommitTx: true,
+				Admin: true,
+				Authn: true,
 			},
 		},
 		{
@@ -68,24 +79,43 @@ func CreateHTTPHandlers(server *handle.Server) (*http.ServeMux, error) {
 			},
 		},
 		{
-			Handler: HTTPLinkCreate(server),
-			Path:    PathLinkCreate,
+			Handler: HTTPMagicLinkCreate(server),
+			Path:    PathMagicLinkCreate,
 			Toggle: handle.MiddlewareToggle{
 				Authn:     true,
 				RateLimit: true,
 			},
 		},
 		{
-			Handler: HTTPReady(server),
-			Path:    PathReady,
-			Toggle:  handle.MiddlewareToggle{},
+			Handler: HTTPMagicLinkEmailCreate(server),
+			Path:    PathMagicLinkEmailCreate,
+			Toggle: handle.MiddlewareToggle{
+				Authn:     true,
+				RateLimit: true,
+			},
 		},
 		{
-			Handler: HTTPServiceAccountCreate(server),
-			Path:    PathServiceAccountCreate,
+			Handler: HTTPOTPCreate(server),
+			Path:    PathOTPCreate,
 			Toggle: handle.MiddlewareToggle{
-				Admin: true,
-				Authn: true,
+				Authn:     true,
+				RateLimit: true,
+			},
+		},
+		{
+			Handler: HTTPOTPValidate(server),
+			Path:    PathOTPValidate,
+			Toggle: handle.MiddlewareToggle{
+				Authn:     true,
+				RateLimit: true,
+			},
+		},
+		{
+			Handler: HTTPOTPEmailCreate(server),
+			Path:    PathOTPEmailCreate,
+			Toggle: handle.MiddlewareToggle{
+				Authn:     true,
+				RateLimit: true,
 			},
 		},
 	}

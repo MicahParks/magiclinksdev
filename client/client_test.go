@@ -39,13 +39,13 @@ var (
 	_, attackerKey, _ = ed25519.GenerateKey(nil)
 	redirectPath, _   = url.Parse(mld.DefaultRelativePathRedirect)
 
-	jwtCreateArgs = model.JWTCreateArgs{
-		JWTClaims:          mldtest.TClaims,
-		JWTLifespanSeconds: 5,
+	jwtCreateParams = model.JWTCreateParams{
+		Claims:          mldtest.TClaims,
+		LifespanSeconds: 5,
 	}
-	linkArgs = model.LinkCreateArgs{
-		JWTCreateArgs:    jwtCreateArgs,
-		LinkLifespan:     5,
+	linkParams = model.MagicLinkCreateParams{
+		JWTCreateParams:  jwtCreateParams,
+		LifespanSeconds:  5,
 		RedirectQueryKey: magiclink.DefaultRedirectQueryKey,
 		RedirectURL:      "http://example.com",
 	}
@@ -102,8 +102,8 @@ func TestEmailLinkCreate(t *testing.T) {
 	ctx := createCtx(t)
 	c := newClient(ctx, t)
 
-	req := model.EmailLinkCreateRequest{
-		EmailArgs: model.EmailLinkCreateArgs{
+	req := model.MagicLinkEmailCreateRequest{
+		MagicLinkEmailCreateParams: model.MagicLinkEmailCreateParams{
 			ButtonText:   "Test button text",
 			Greeting:     "Test greeting",
 			LogoClickURL: mldtest.LogoClickURL,
@@ -115,9 +115,9 @@ func TestEmailLinkCreate(t *testing.T) {
 			ToEmail:      "customer@example.com",
 			ToName:       "Test name",
 		},
-		LinkArgs: linkArgs,
+		MagicLinkCreateParams: linkParams,
 	}
-	resp, mldErr, err := c.EmailLinkCreate(ctx, req)
+	resp, mldErr, err := c.MagicLinkEmailCreate(ctx, req)
 	if err != nil {
 		t.Fatalf("Failed to create email link: %v.", err)
 	}
@@ -126,7 +126,7 @@ func TestEmailLinkCreate(t *testing.T) {
 	}
 
 	validateMetadata(t, resp.RequestMetadata)
-	validateLinkResults(t, resp.EmailLinkCreateResults.LinkCreateResults)
+	validateLinkResults(t, resp.MagicLinkEmailCreateResults.MagicLinkCreateResults)
 }
 
 func TestJWTCreate(t *testing.T) {
@@ -179,7 +179,7 @@ func TestJWTValidate(t *testing.T) {
 	raw := jwtCreateHelper(ctx, t, c)
 
 	req := model.JWTValidateRequest{
-		JWTValidateArgs: model.JWTValidateArgs{
+		JWTValidateParams: model.JWTValidateParams{
 			JWT: raw,
 		},
 	}
@@ -217,7 +217,7 @@ func TestJWTValidateForged(t *testing.T) {
 	}
 
 	req := model.JWTValidateRequest{
-		JWTValidateArgs: model.JWTValidateArgs{
+		JWTValidateParams: model.JWTValidateParams{
 			JWT: raw,
 		},
 	}
@@ -237,10 +237,10 @@ func TestLinkCreate(t *testing.T) {
 	ctx := createCtx(t)
 	c := newClient(ctx, t)
 
-	req := model.LinkCreateRequest{
-		LinkArgs: linkArgs,
+	req := model.MagicLinkCreateRequest{
+		MagicLinkCreateParams: linkParams,
 	}
-	resp, mldErr, err := c.LinkCreate(ctx, req)
+	resp, mldErr, err := c.MagicLinkCreate(ctx, req)
 	if err != nil {
 		t.Fatalf("Failed to create magic link: %v.", err)
 	}
@@ -249,7 +249,7 @@ func TestLinkCreate(t *testing.T) {
 	}
 
 	validateMetadata(t, resp.RequestMetadata)
-	validateLinkResults(t, resp.LinkCreateResults)
+	validateLinkResults(t, resp.MagicLinkCreateResults)
 }
 
 func TestServiceAccountCreate(t *testing.T) {
@@ -257,7 +257,7 @@ func TestServiceAccountCreate(t *testing.T) {
 	c := newClient(ctx, t)
 
 	req := model.ServiceAccountCreateRequest{
-		CreateServiceAccountArgs: model.ServiceAccountCreateArgs{},
+		ServiceAccountCreateParams: model.ServiceAccountCreateParams{},
 	}
 	resp, mldErr, err := c.ServiceAccountCreate(ctx, req)
 	if err != nil {
@@ -269,16 +269,16 @@ func TestServiceAccountCreate(t *testing.T) {
 
 	validateMetadata(t, resp.RequestMetadata)
 
-	if resp.CreateServiceAccountResults.ServiceAccount.Admin {
+	if resp.ServiceAccountCreateResults.ServiceAccount.Admin {
 		t.Fatalf("Created service account should not be an admin.")
 	}
-	if resp.CreateServiceAccountResults.ServiceAccount.UUID == uuid.Nil {
+	if resp.ServiceAccountCreateResults.ServiceAccount.UUID == uuid.Nil {
 		t.Fatalf("Created service account should have non-nil UUID.")
 	}
-	if resp.CreateServiceAccountResults.ServiceAccount.Aud == uuid.Nil {
+	if resp.ServiceAccountCreateResults.ServiceAccount.Aud == uuid.Nil {
 		t.Fatalf("Created service account should have non-nil audience UUID.")
 	}
-	if resp.CreateServiceAccountResults.ServiceAccount.APIKey == uuid.Nil {
+	if resp.ServiceAccountCreateResults.ServiceAccount.APIKey == uuid.Nil {
 		t.Fatalf("Created service account should have non-nil API key.")
 	}
 }
@@ -291,7 +291,7 @@ func createCtx(t *testing.T) context.Context {
 
 func jwtCreateHelper(ctx context.Context, t *testing.T, c Client) string {
 	req := model.JWTCreateRequest{
-		JWTCreateArgs: jwtCreateArgs,
+		JWTCreateParams: jwtCreateParams,
 	}
 	resp, mldErr, err := c.JWTCreate(ctx, req)
 	if err != nil {
@@ -324,12 +324,12 @@ func jwtCreateHelper(ctx context.Context, t *testing.T, c Client) string {
 
 func newClient(ctx context.Context, t *testing.T) Client {
 	conf := config.Config{
-		AdminConfig: []model.AdminCreateArgs{
+		AdminCreateParams: []model.AdminCreateParams{
 			{
-				APIKey:                   mldtest.APIKey,
-				Aud:                      mldtest.Aud,
-				UUID:                     mldtest.SAUUID,
-				ServiceAccountCreateArgs: model.ServiceAccountCreateArgs{},
+				APIKey:                     mldtest.APIKey,
+				Aud:                        mldtest.Aud,
+				UUID:                       mldtest.SAUUID,
+				ServiceAccountCreateParams: model.ServiceAccountCreateParams{},
 			},
 		},
 		BaseURL: jt.New(baseURL),
@@ -407,7 +407,7 @@ func newClient(ctx context.Context, t *testing.T) Client {
 	return c
 }
 
-func validateLinkResults(t *testing.T, results model.LinkCreateResults) {
+func validateLinkResults(t *testing.T, results model.MagicLinkCreateResults) {
 	ml, err := url.Parse(results.MagicLink)
 	if err != nil {
 		t.Fatalf("Failed to parse magic link: %v.", err)

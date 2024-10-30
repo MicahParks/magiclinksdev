@@ -28,7 +28,6 @@ type ReCAPTCHAV3Config struct {
 	Verifier recaptcha.VerifierV3 `json:"-"`
 }
 
-// DefaultsAndValidate implements the jsontype.Config interface.
 func (r ReCAPTCHAV3Config) DefaultsAndValidate() (ReCAPTCHAV3Config, error) {
 	if r.MinScore == 0 {
 		r.MinScore = 0.5
@@ -74,8 +73,7 @@ func NewReCAPTCHAV3Redirector(config ReCAPTCHAV3Config) Redirector {
 	return r
 }
 
-// Redirect implements the Redirector interface.
-func (r ReCAPTCHAV3Redirector) Redirect(args RedirectorArgs) {
+func (r ReCAPTCHAV3Redirector) Redirect(args RedirectorParams) {
 	ctx := args.Request.Context()
 
 	token := args.Request.URL.Query().Get("token")
@@ -147,10 +145,7 @@ func (r ReCAPTCHAV3TemplateData) DefaultsAndValidate() (ReCAPTCHAV3TemplateData,
 		r.CSS = template.CSS(defaultCSS)
 	}
 	if r.Instruction == "" {
-		if r.ButtonBypass {
-			r.Instruction = "Please click the button below to continue. "
-		}
-		r.Instruction += "This page helps prevent robots from using magic links."
+		r.Instruction += "This page helps prevent robots from using magic links. You should be redirected automatically."
 	}
 	if r.HTMLTitle == "" {
 		r.HTMLTitle = "Magic Link - Browser Check"

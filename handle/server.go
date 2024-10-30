@@ -51,7 +51,6 @@ type MiddlewareHook interface {
 // MiddlewareHookFunc is a function that can be used to modify the middleware options.
 type MiddlewareHookFunc func(options MiddlewareOptions) MiddlewareOptions
 
-// Hook implements the MiddlewareHook interface.
 func (h MiddlewareHookFunc) Hook(options MiddlewareOptions) MiddlewareOptions {
 	return h(options)
 }

@@ -18,13 +18,13 @@ const DefaultJWKSCacheRefresh = 5 * time.Minute
 
 type jwksCache struct {
 	cached      json.RawMessage
-	jwks        jwkset.Storage
+	storage     jwkset.Storage
 	lastRefresh time.Time
 	refresh     time.Duration
 	mux         sync.RWMutex
 }
 
-func newJWKSCache(ctx context.Context, config JWKSArgs) (*jwksCache, error) {
+func newJWKSCache(ctx context.Context, config JWKSParams) (*jwksCache, error) {
 	store := config.Store
 	if store == nil {
 		store = jwkset.NewMemoryStorage()
@@ -67,7 +67,7 @@ func newJWKSCache(ctx context.Context, config JWKSArgs) (*jwksCache, error) {
 
 	jCache := &jwksCache{
 		cached:      initialCache,
-		jwks:        store,
+		storage:     store,
 		lastRefresh: time.Now(),
 		refresh:     cacheRefresh,
 	}
@@ -88,7 +88,7 @@ func (j *jwksCache) get(ctx context.Context) (json.RawMessage, error) {
 
 	j.mux.Lock()
 	defer j.mux.Unlock()
-	body, err := j.jwks.JSONPublic(ctx)
+	body, err := j.storage.JSONPublic(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to refresh the JWK Set: %w", err)
 	}

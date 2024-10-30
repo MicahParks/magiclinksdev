@@ -28,38 +28,27 @@ func main() {
 		os.Exit(1)
 	}
 
-	claims, err := json.Marshal(mldtest.TClaims)
-	if err != nil {
-		logger.ErrorContext(ctx, "Failed to marshal claims.",
-			mld.LogErr, err,
-		)
-		os.Exit(1)
-	}
-
-	req := model.EmailLinkCreateRequest{
-		EmailArgs: model.EmailLinkCreateArgs{
-			ButtonText:   "Log in",
+	req := model.OTPEmailCreateRequest{
+		OTPCreateParams: model.OTPCreateParams{
+			CharSetAlphaLower: false,
+			CharSetAlphaUpper: false,
+			CharSetNumeric:    true,
+			Length:            0,
+			LifespanSeconds:   0,
+		},
+		OTPEmailCreateParams: model.OTPEmailCreateParams{
 			Greeting:     "Hello John Doe,",
 			LogoClickURL: "https://magiclinks.dev",
 			LogoImageURL: "https://magiclinks.dev/typeface-gray.png",
 			ServiceName:  "magiclinks.dev",
-			Subject:      "Your login for magiclinks.dev",
-			SubTitle:     "No password required!",
-			Title:        "Please click the below button to login.",
+			Subject:      "Verify your email - magiclinks.dev",
+			SubTitle:     "Use this One-Time Password (OTP) to verify your email address.",
+			Title:        "Your OTP is below.",
 			ToEmail:      "johndoe@example.com",
 			ToName:       "John Doe",
 		},
-		LinkArgs: model.LinkCreateArgs{
-			JWTCreateArgs: model.JWTCreateArgs{
-				JWTClaims:          claims,
-				JWTLifespanSeconds: 5,
-			},
-			LinkLifespan:     60 * 60,
-			RedirectQueryKey: "",
-			RedirectURL:      "https://jwtdebug.micahparks.com",
-		},
 	}
-	resp, mldErr, err := c.EmailLinkCreate(ctx, req)
+	resp, mldErr, err := c.OTPEmailCreate(ctx, req)
 	if err != nil {
 		if mldErr.Code != 0 {
 			logger = logger.With(
@@ -68,7 +57,7 @@ func main() {
 				"requestUUID", mldErr.RequestMetadata.UUID,
 			)
 		}
-		logger.ErrorContext(ctx, "Failed to create email link.",
+		logger.ErrorContext(ctx, "Failed to create OTP.",
 			mld.LogErr, err,
 		)
 		os.Exit(1)

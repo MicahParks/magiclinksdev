@@ -6,70 +6,62 @@ import (
 	"time"
 )
 
-// JWTCreateArgs are the unvalidated arguments for creating a JWT.
-type JWTCreateArgs struct {
-	JWTAlg             string `json:"jwtAlg"`
-	JWTClaims          any    `json:"jwtClaims"`
-	JWTLifespanSeconds int    `json:"jwtLifespanSeconds"`
+type JWTCreateParams struct {
+	Alg             string `json:"alg"`
+	Claims          any    `json:"claims"`
+	LifespanSeconds int    `json:"lifespanSeconds"`
 }
 
-// Validate implements the Validatable interface.
-func (j JWTCreateArgs) Validate(config Validation) (ValidJWTCreateArgs, error) {
-	marshaled, err := json.Marshal(j.JWTClaims)
+func (j JWTCreateParams) Validate(config Validation) (ValidJWTCreateParams, error) {
+	marshaled, err := json.Marshal(j.Claims)
 	if err != nil {
-		return ValidJWTCreateArgs{}, fmt.Errorf("failed to JSON marshal claims: %w", err)
+		return ValidJWTCreateParams{}, fmt.Errorf("failed to JSON marshal claims: %w", err)
 	}
-	lifespan := time.Duration(j.JWTLifespanSeconds) * time.Second
+	lifespan := time.Duration(j.LifespanSeconds) * time.Second
 	if lifespan == 0 {
 		lifespan = 5 * time.Minute
 	} else if lifespan < 5*time.Second || lifespan > config.JWTLifespanMax.Get() {
-		return ValidJWTCreateArgs{}, fmt.Errorf("%w: JWT lifespan seconds must be between 5 seconds and %d", ErrInvalidModel, int(config.JWTLifespanMax.Get().Seconds()))
+		return ValidJWTCreateParams{}, fmt.Errorf("%w: JWT lifespan seconds must be between 5 seconds and %d", ErrInvalidModel, int(config.JWTLifespanMax.Get().Seconds()))
 	}
 	if uint(len(marshaled)) > config.JWTClaimsMaxBytes {
-		return ValidJWTCreateArgs{}, fmt.Errorf("%w: JWT claims must be less than %d bytes", ErrInvalidModel, config.JWTClaimsMaxBytes)
+		return ValidJWTCreateParams{}, fmt.Errorf("%w: JWT claims must be less than %d bytes", ErrInvalidModel, config.JWTClaimsMaxBytes)
 	}
-	valid := ValidJWTCreateArgs{
-		JWTAlg:      j.JWTAlg,
-		JWTClaims:   marshaled,
-		JWTLifespan: lifespan,
+	valid := ValidJWTCreateParams{
+		Alg:      j.Alg,
+		Claims:   marshaled,
+		Lifespan: lifespan,
 	}
 	return valid, nil
 }
 
-// ValidJWTCreateArgs are the validated arguments for creating a JWT.
-type ValidJWTCreateArgs struct {
-	JWTAlg      string
-	JWTClaims   json.RawMessage
-	JWTLifespan time.Duration
+type ValidJWTCreateParams struct {
+	Alg      string
+	Claims   json.RawMessage
+	Lifespan time.Duration
 }
 
-// JWTCreateRequest is the unvalidated request to create a JWT.
 type JWTCreateRequest struct {
-	JWTCreateArgs JWTCreateArgs `json:"jwtCreateArgs"`
+	JWTCreateParams JWTCreateParams `json:"jwtCreateParams"`
 }
 
-// Validate implements the Validatable interface.
 func (j JWTCreateRequest) Validate(config Validation) (ValidJWTCreateRequest, error) {
-	valid, err := j.JWTCreateArgs.Validate(config)
+	valid, err := j.JWTCreateParams.Validate(config)
 	if err != nil {
 		return ValidJWTCreateRequest{}, fmt.Errorf("failed to validate JWT create args: %w", err)
 	}
 	return ValidJWTCreateRequest{
-		JWTCreateArgs: valid,
+		JWTCreateParams: valid,
 	}, nil
 }
 
-// ValidJWTCreateRequest is the validated request to create a JWT.
 type ValidJWTCreateRequest struct {
-	JWTCreateArgs ValidJWTCreateArgs
+	JWTCreateParams ValidJWTCreateParams
 }
 
-// JWTCreateResults are the results of creating a JWT.
 type JWTCreateResults struct {
 	JWT string `json:"jwt"`
 }
 
-// JWTCreateResponse is the response to creating a JWT.
 type JWTCreateResponse struct {
 	JWTCreateResults JWTCreateResults `json:"jwtCreateResults"`
 	RequestMetadata  RequestMetadata  `json:"requestMetadata"`

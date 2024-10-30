@@ -25,7 +25,7 @@ func makeCases(t *testing.T) []testCase {
 	defer cancel()
 
 	noGivenJWKSStoreCase := testCase{
-		createArgs: []createArg{
+		createParams: []createParams{
 			{},
 		},
 		name: "No Given JWKS store",
@@ -51,7 +51,7 @@ func makeCases(t *testing.T) []testCase {
 	}
 
 	fourTypesOfKeys := testCase{
-		createArgs: []createArg{
+		createParams: []createParams{
 			{
 				JWTKeyID: &ecdsaKID,
 			},
@@ -65,14 +65,14 @@ func makeCases(t *testing.T) []testCase {
 				JWTKeyID: &hmacKID,
 			},
 		},
-		setupParam: setupArgs{
+		setupParam: setupParams{
 			jwksStore: jwksStoreWithAllKeys,
 		},
 		name: "Four types of keys present",
 	}
 
 	getJWKS := testCase{
-		setupParam: setupArgs{
+		setupParam: setupParams{
 			jwksGet:   true,
 			jwksStore: jwksStoreWithAllKeys,
 		},
@@ -80,7 +80,7 @@ func makeCases(t *testing.T) []testCase {
 	}
 
 	getJWKSCacheRefresh := testCase{
-		setupParam: setupArgs{
+		setupParam: setupParams{
 			jwksGet:          true,
 			jwksGetDelay:     51 * time.Millisecond,
 			jwksCacheRefresh: 50 * time.Millisecond,

@@ -13,27 +13,28 @@ import (
 
 // Storage represents the underlying storage for the MagicLink service.
 type Storage interface {
-	// CreateLink creates a secret for the given parameters and stores the pair. The secret is returned to the caller.
-	CreateLink(ctx context.Context, args CreateArgs) (secret string, err error)
-	// ReadLink finds the creation parameters for the given secret. ErrLinkNotFound is returned if the secret is not
-	// found or was deleted/expired. This will automatically expire the link.
-	ReadLink(ctx context.Context, secret string) (ReadResponse, error) // TODO Use visited and expiration.
+	// MagicLinkCreate creates a secret for the given parameters and stores the pair. The secret is returned to the
+	// caller.
+	MagicLinkCreate(ctx context.Context, params CreateParams) (secret string, err error)
+	// MagicLinkRead finds the creation parameters for the given secret. ErrLinkNotFound is returned if the secret is
+	// not found or was deleted/expired. This will automatically expire the link.
+	MagicLinkRead(ctx context.Context, secret string) (ReadResult, error)
 }
 
 var _ Storage = &memoryMagicLink{}
 
 type memoryMagicLink struct {
-	links map[string]ReadResponse
+	links map[string]ReadResult
 	mux   sync.Mutex
 }
 
 // NewMemoryStorage creates an in-memory implementation of the MagicLink Storage.
 func NewMemoryStorage() Storage {
 	return &memoryMagicLink{
-		links: map[string]ReadResponse{},
+		links: map[string]ReadResult{},
 	}
 }
-func (m *memoryMagicLink) CreateLink(_ context.Context, args CreateArgs) (secret string, err error) {
+func (m *memoryMagicLink) MagicLinkCreate(_ context.Context, args CreateParams) (secret string, err error) {
 	m.mux.Lock()
 	defer m.mux.Unlock()
 	u, err := uuid.NewRandom()
@@ -41,18 +42,18 @@ func (m *memoryMagicLink) CreateLink(_ context.Context, args CreateArgs) (secret
 		return "", fmt.Errorf("failed to generate UUID as secret: %w", err)
 	}
 	secret = u.String()
-	response := ReadResponse{
-		CreateArgs: args,
+	response := ReadResult{
+		CreateParams: args,
 	}
 	m.links[secret] = response
 	return secret, nil
 }
-func (m *memoryMagicLink) ReadLink(_ context.Context, secret string) (ReadResponse, error) {
+func (m *memoryMagicLink) MagicLinkRead(_ context.Context, secret string) (ReadResult, error) {
 	m.mux.Lock()
 	defer m.mux.Unlock()
 	now := time.Now()
 	readResp, ok := m.links[secret]
-	if !ok || readResp.Visited != nil || readResp.CreateArgs.Expires.Before(now) {
+	if !ok || readResp.Visited != nil || readResp.CreateParams.Expires.Before(now) {
 		return readResp, ErrLinkNotFound
 	}
 	readResp.Visited = mld.Ptr(now)

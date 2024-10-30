@@ -1,64 +1,59 @@
 # magiclinksdev
 
-You can find the documentation for this project on the [docs site](https://docs.magiclinks.dev). This site contains
-resources for implementing a client and self-hosting the project.
+The **magiclinksdev** project is an authentication service for magic link and One-Time Password (OTP) use cases. There
+is built-in email support through Amazon SES and SendGrid.
 
-You can find the SaaS landing page at [https://magiclinks.dev](https://magiclinks.dev). Use of the SaaS platform is not
-required, but it's very inexpensive and may be cheaper than deploying yourself.
-
-# Getting started
-
-The **magiclinksdev** project is an authentication service that uses magic links to authenticate users. A typical use
-case would involve sending a magic link to a user via email. After the user clicks the link, a new authenticated session
-is created for that user. Sometimes **magiclinksdev** is abbreviated as "mld".
-
-## About
-
-This project is a magic link authentication service. It serves use cases like:
-
+Use cases include:
 * Sign up
 * Log in
 * Password resets
 * Email verification
 * And more authentication use cases
 
-It can be used to supplement password authentication or replace it entirely.
+This project can be used to supplement password authentication or replace it entirely.
 
-A typical use case involves sending a magic link to a user via email. After the user clicks the link, a new
-authenticated session is created for that user.
+If your project has an alternate secure means of communication, you can use generate magic links and OTPs without
+sending emails. An example would be mobile push notifications.
+
+## Getting started
+
+To get started implementing a client application that uses **magiclinksdev** for authentication, the recommended path
+is:
+1. Do the [quickstart](https://docs.magiclinks.dev/self-host-quickstart)
+2. Find a [pre-built SDK](https://docs.magiclinks.dev/client-sdk) or [generate one from the formatted API specification](https://docs.magiclinks.dev/client-api-specification#generate-code)
+3. Choose the [magic link](https://docs.magiclinks.dev/client-magic-link-workflow) or [OTP](https://docs.magiclinks.dev/client-otp-workflow) workflow
+4. Review the [implementation tips](https://docs.magiclinks.dev/client-implementation-tips) for recommendations and best practices
 
 ## Screenshots
 
-The built-in email template is populated on a per-request basis. It adapts to the device's theme automatically. This
-template was built using [maizzle](https://maizzle.com/).
+The built-in email templates are friendly to mobile and desktop screens. They also adapt to light/dark mode
+automatically. The templates are built using [maizzle](https://maizzle.com/).
 
 <span>
-    <img width="400" src="https://magiclinks.dev/screenshots/mobile-light.png" alt="">
-    <img width="400" src="https://magiclinks.dev/screenshots/mobile-dark.png" alt="">
+  <img width="400" src="https://magiclinks.dev/screenshots/magic-link-email-light-mobile-example.png" alt=""/>
+  <img width="400" src="https://magiclinks.dev/screenshots/magic-link-email-dark-mobile-example.png" alt=""/>
+</span>
+<span>
+  <img width="400" src="https://magiclinks.dev/screenshots/otp-email-light-mobile-example.png" alt=""/>
+  <img width="400" src="https://magiclinks.dev/screenshots/otp-email-dark-mobile-example.png" alt=""/>
 </span>
 
-## Suggested Email Workflow
+## Suggested Magic Link Workflow
+<img width="1000" src="https://magiclinks.dev/mermaid/suggested-magic-link-workflow.png" alt=""/>
 
-<img width="1000" src="https://magiclinks.dev/mermaid/suggested-email-workflow.png" alt=""/>
-
-## Implementing a client application
-
-Client applications are programs that use the **magiclinksdev** project to authenticate their users. Check out the
-[**SDKs**](https://docs.magiclinks.dev/sdks) page to get started with an existing SDK. If you can't find an SDK for your
-language, you can use the [**Specification**](https://docs.magiclinks.dev/specification) to implement your own client by
-hand or code generation. To learn more about the client workflow, check out the
-[**Workflow**](https://docs.magiclinks.dev/workflow) page.
+## Suggested OTP Workflow
+<img width="1000" src="https://magiclinks.dev/mermaid/suggested-otp-workflow.png" alt=""/>
 
 ## Self-hosting the service
 
-The **magiclinksdev** project can be self-hosted. Check out the [**Quickstart**](https://docs.magiclinks.dev/quickstart)
-page to get started in minutes. For reference on configuring your self-hosted instance, check out the
-[**Configuration**](https://docs.magiclinks.dev/configuration).
+The **magiclinksdev** project is open-source and can be self-hosted. Check out the [**Quickstart**](https://docs.magiclinks.dev/self-host-quickstart) page
+to get started in minutes. For reference on configuring your self-hosted instance, check out the
+[**Configuration**](https://docs.magiclinks.dev/self-host-configuration).
 
 ## Source code and license
 
 The **magiclinksdev** project is [open source on GitHub](https://github.com/MicahParks/magiclinksdev) and licensed
-under [Apache License 2.0](https://github.com/MicahParks/magiclinksdev/blob/master/LICENSE).
+under [**Apache License 2.0**](https://github.com/MicahParks/magiclinksdev/blob/master/LICENSE).
 
 ## Optional SaaS platform
 

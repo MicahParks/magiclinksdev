@@ -15,7 +15,7 @@ import (
 )
 
 func main() {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	logger := slog.Default()
@@ -28,26 +28,14 @@ func main() {
 		os.Exit(1)
 	}
 
-	claims, err := json.Marshal(mldtest.TClaims)
-	if err != nil {
-		logger.ErrorContext(ctx, "Failed to marshal claims.",
-			mld.LogErr, err,
-		)
-		os.Exit(1)
-	}
-
-	req := model.LinkCreateRequest{
-		LinkArgs: model.LinkCreateArgs{
-			JWTCreateArgs: model.JWTCreateArgs{
-				JWTClaims:          claims,
-				JWTLifespanSeconds: 5,
-			},
-			LinkLifespan:     100,
-			RedirectQueryKey: "",
-			RedirectURL:      "https://jwtdebug.micahparks.com",
+	req := model.OTPCreateRequest{
+		OTPCreateParams: model.OTPCreateParams{
+			CharSetNumeric:  true,
+			Length:          0,
+			LifespanSeconds: 0,
 		},
 	}
-	resp, mldErr, err := c.LinkCreate(ctx, req)
+	resp, mldErr, err := c.OTPCreate(ctx, req)
 	if err != nil {
 		if mldErr.Code != 0 {
 			logger = logger.With(
@@ -56,7 +44,7 @@ func main() {
 				"requestUUID", mldErr.RequestMetadata.UUID,
 			)
 		}
-		logger.ErrorContext(ctx, "Failed to create link.",
+		logger.ErrorContext(ctx, "Failed to create OTP.",
 			mld.LogErr, err,
 		)
 		os.Exit(1)

@@ -54,10 +54,12 @@ func (c Config) DefaultsAndValidate() (Config, error) {
 
 // SES is an email provider that uses AWS SES.
 type SES struct {
-	from     *netMail.Address
-	htmlTmpl *template.Template
-	ses      *ses.SES
-	textTmpl *textTemplate.Template
+	from              *netMail.Address
+	magicLinkHTMLTmpl *template.Template
+	magicLinkTxtTmpl  *textTemplate.Template
+	oTPHTMLTmpl       *template.Template
+	oTPTxtTmpl        *textTemplate.Template
+	ses               *ses.SES
 }
 
 // NewProvider creates a new SES provider. It will create an AWS session using the provided configuration.
@@ -82,26 +84,36 @@ func NewProvider(conf Config) (SES, error) {
 
 // NewProviderInitialized creates a new SES provider with an initialized configuration.
 func NewProviderInitialized(conf InitializedConfig, svc *ses.SES) (SES, error) {
-	htmlTmpl := template.Must(template.New("").Parse(email.HTMLTemplate))
-	textTmpl := textTemplate.Must(textTemplate.New("").Parse(email.TextTemplate))
+	magicLinkHTMLTmpl := template.Must(template.New("").Parse(email.MagicLinkHTMLTemplate))
+	magicLinkTxtTML := textTemplate.Must(textTemplate.New("").Parse(email.MagicLinkTextTemplate))
+	otpHTMLTmpl := template.Must(template.New("").Parse(email.OTPHTMLTemplate))
+	otpTxtTmpl := textTemplate.Must(textTemplate.New("").Parse(email.OTPTextTemplate))
 	s := SES{
-		from:     conf.FromEmail,
-		htmlTmpl: htmlTmpl,
-		ses:      svc,
-		textTmpl: textTmpl,
+		from:              conf.FromEmail,
+		magicLinkHTMLTmpl: magicLinkHTMLTmpl,
+		magicLinkTxtTmpl:  magicLinkTxtTML,
+		oTPHTMLTmpl:       otpHTMLTmpl,
+		oTPTxtTmpl:        otpTxtTmpl,
+		ses:               svc,
 	}
 	return s, nil
 }
 
-// Send implements the email.Provider interface.
-func (s SES) Send(ctx context.Context, e email.Email) error {
+func (s SES) SendMagicLink(ctx context.Context, e email.Email) error {
+	return s.sendEmail(ctx, e, s.magicLinkHTMLTmpl, s.magicLinkTxtTmpl)
+}
+func (s SES) SendOTP(ctx context.Context, e email.Email) error {
+	return s.sendEmail(ctx, e, s.oTPHTMLTmpl, s.oTPTxtTmpl)
+}
+
+func (s SES) sendEmail(ctx context.Context, e email.Email, htmlTmpl *template.Template, txtTmpl *textTemplate.Template) error {
 	htmlBuf := bytes.NewBuffer(nil)
-	err := s.htmlTmpl.Execute(htmlBuf, e.TemplateData)
+	err := htmlTmpl.Execute(htmlBuf, e.TemplateData)
 	if err != nil {
 		return fmt.Errorf("failed to execute template for HTML email: %w", err)
 	}
 	textBuf := bytes.NewBuffer(nil)
-	err = s.textTmpl.Execute(textBuf, e.TemplateData)
+	err = txtTmpl.Execute(textBuf, e.TemplateData)
 	if err != nil {
 		return fmt.Errorf("failed to execute template for text email: %w", err)
 	}

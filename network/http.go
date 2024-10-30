@@ -14,6 +14,7 @@ import (
 	"github.com/MicahParks/magiclinksdev/model"
 	"github.com/MicahParks/magiclinksdev/network/middleware"
 	"github.com/MicahParks/magiclinksdev/network/middleware/ctxkey"
+	"github.com/MicahParks/magiclinksdev/otp"
 	"github.com/MicahParks/magiclinksdev/storage"
 )
 
@@ -23,28 +24,31 @@ const (
 
 // Validatable is an interface for validating a model.
 type Validatable[T any] interface {
-	Validate(s model.Validation) (T, error)
+	Validate(config model.Validation) (T, error)
 }
 
-// HTTPEmailLinkCreate creates an HTTP handler for the HandleEmailLinkCreate method.
-func HTTPEmailLinkCreate(s *handle.Server) http.Handler {
+// HTTPReady creates an HTTP handler that always returns http.StatusOK.
+func HTTPReady(_ *handle.Server) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+}
+
+// HTTPServiceAccountCreate creates an HTTP handler for the HandleServiceAccountCreate method.
+func HTTPServiceAccountCreate(s *handle.Server) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		logger := ctx.Value(ctxkey.Logger).(*slog.Logger)
 		tx := ctx.Value(ctxkey.Tx).(storage.Tx)
 
-		validated, done := unmarshalRequest[model.EmailLinkCreateRequest, model.ValidEmailLinkCreateRequest](r, s.Config.Validation, w)
+		validated, done := unmarshalRequest[model.ServiceAccountCreateRequest, model.ValidServiceAccountCreateRequest](r, s.Config.Validation, w)
 		if done {
 			return
 		}
 
-		response, err := s.HandleEmailLinkCreate(ctx, validated)
+		response, err := s.HandleServiceAccountCreate(ctx, validated)
 		if err != nil {
-			if errors.Is(err, handle.ErrRegisteredClaimProvided) {
-				middleware.WriteErrorBody(ctx, http.StatusBadRequest, responseDontRegisteredClaims, w)
-				return
-			}
-			logger.ErrorContext(ctx, "Failed to create email link.",
+			logger.ErrorContext(ctx, "Failed to create service account.",
 				mld.LogErr, err,
 			)
 			middleware.WriteErrorBody(ctx, http.StatusInternalServerError, mld.ResponseInternalServerError, w)
@@ -53,12 +57,17 @@ func HTTPEmailLinkCreate(s *handle.Server) http.Handler {
 
 		err = tx.Commit(ctx)
 		if err != nil {
-			logger.ErrorContext(ctx, "Failed to commit transaction for create email link.",
+			logger.ErrorContext(ctx, "Failed to commit transaction for create service account.",
 				mld.LogErr, err,
 			)
 			middleware.WriteErrorBody(ctx, http.StatusInternalServerError, mld.ResponseInternalServerError, w)
 			return
 		}
+
+		logger.InfoContext(ctx, "Created new service account.",
+			mld.LogRequestBody, validated,
+			mld.LogResponseBody, response,
+		)
 
 		writeResponse(ctx, http.StatusCreated, response, w)
 	})
@@ -144,19 +153,19 @@ func HTTPJWTValidate(s *handle.Server) http.Handler {
 	})
 }
 
-// HTTPLinkCreate creates an HTTP handler for the HandleLinkCreate method.
-func HTTPLinkCreate(s *handle.Server) http.Handler {
+// HTTPMagicLinkCreate creates an HTTP handler for the HandleMagicLinkCreate method.
+func HTTPMagicLinkCreate(s *handle.Server) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		logger := ctx.Value(ctxkey.Logger).(*slog.Logger)
 		tx := ctx.Value(ctxkey.Tx).(storage.Tx)
 
-		validated, done := unmarshalRequest[model.LinkCreateRequest, model.ValidLinkCreateRequest](r, s.Config.Validation, w)
+		validated, done := unmarshalRequest[model.MagicLinkCreateRequest, model.ValidMagicLinkCreateRequest](r, s.Config.Validation, w)
 		if done {
 			return
 		}
 
-		response, err := s.HandleLinkCreate(ctx, validated)
+		response, err := s.HandleMagicLinkCreate(ctx, validated)
 		if err != nil {
 			if errors.Is(err, handle.ErrRegisteredClaimProvided) {
 				middleware.WriteErrorBody(ctx, http.StatusBadRequest, responseDontRegisteredClaims, w)
@@ -182,28 +191,25 @@ func HTTPLinkCreate(s *handle.Server) http.Handler {
 	})
 }
 
-// HTTPReady creates an HTTP handler that always returns http.StatusOK.
-func HTTPReady(_ *handle.Server) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-	})
-}
-
-// HTTPServiceAccountCreate creates an HTTP handler for the HandleServiceAccountCreate method.
-func HTTPServiceAccountCreate(s *handle.Server) http.Handler {
+// HTTPMagicLinkEmailCreate creates an HTTP handler for the HandleMagicLinkEmailCreate method.
+func HTTPMagicLinkEmailCreate(s *handle.Server) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		logger := ctx.Value(ctxkey.Logger).(*slog.Logger)
 		tx := ctx.Value(ctxkey.Tx).(storage.Tx)
 
-		validated, done := unmarshalRequest[model.ServiceAccountCreateRequest, model.ValidServiceAccountCreateRequest](r, s.Config.Validation, w)
+		validated, done := unmarshalRequest[model.MagicLinkEmailCreateRequest, model.ValidMagicLinkEmailCreateRequest](r, s.Config.Validation, w)
 		if done {
 			return
 		}
 
-		response, err := s.HandleServiceAccountCreate(ctx, validated)
+		response, err := s.HandleMagicLinkEmailCreate(ctx, validated)
 		if err != nil {
-			logger.ErrorContext(ctx, "Failed to create service account.",
+			if errors.Is(err, handle.ErrRegisteredClaimProvided) {
+				middleware.WriteErrorBody(ctx, http.StatusBadRequest, responseDontRegisteredClaims, w)
+				return
+			}
+			logger.ErrorContext(ctx, "Failed to create email link.",
 				mld.LogErr, err,
 			)
 			middleware.WriteErrorBody(ctx, http.StatusInternalServerError, mld.ResponseInternalServerError, w)
@@ -212,17 +218,118 @@ func HTTPServiceAccountCreate(s *handle.Server) http.Handler {
 
 		err = tx.Commit(ctx)
 		if err != nil {
-			logger.ErrorContext(ctx, "Failed to commit transaction for create service account.",
+			logger.ErrorContext(ctx, "Failed to commit transaction for create email link.",
 				mld.LogErr, err,
 			)
 			middleware.WriteErrorBody(ctx, http.StatusInternalServerError, mld.ResponseInternalServerError, w)
 			return
 		}
 
-		logger.InfoContext(ctx, "Created new service account.",
-			mld.LogRequestBody, validated,
-			mld.LogResponseBody, response,
-		)
+		writeResponse(ctx, http.StatusCreated, response, w)
+	})
+}
+
+// HTTPOTPCreate creates an HTTP handler for the HandleOTPCreate method.
+func HTTPOTPCreate(s *handle.Server) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		logger := ctx.Value(ctxkey.Logger).(*slog.Logger)
+		tx := ctx.Value(ctxkey.Tx).(storage.Tx)
+
+		validated, done := unmarshalRequest[model.OTPCreateRequest, model.ValidOTPCreateRequest](r, s.Config.Validation, w)
+		if done {
+			return
+		}
+
+		response, err := s.HandleOTPCreate(ctx, validated)
+		if err != nil {
+			logger.ErrorContext(ctx, "Failed to create OTP.",
+				mld.LogErr, err,
+			)
+			middleware.WriteErrorBody(ctx, http.StatusInternalServerError, mld.ResponseInternalServerError, w)
+			return
+		}
+
+		err = tx.Commit(ctx)
+		if err != nil {
+			logger.ErrorContext(ctx, "Failed to commit transaction for create OTP.",
+				mld.LogErr, err,
+			)
+			middleware.WriteErrorBody(ctx, http.StatusInternalServerError, mld.ResponseInternalServerError, w)
+			return
+		}
+
+		writeResponse(ctx, http.StatusCreated, response, w)
+	})
+}
+
+// HTTPOTPValidate creates an HTTP handler for the HandleOTPValidate method.
+func HTTPOTPValidate(s *handle.Server) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		logger := ctx.Value(ctxkey.Logger).(*slog.Logger)
+		tx := ctx.Value(ctxkey.Tx).(storage.Tx)
+
+		validated, done := unmarshalRequest[model.OTPValidateRequest, model.ValidOTPValidateRequest](r, s.Config.Validation, w)
+		if done {
+			return
+		}
+
+		response, err := s.HandleOTPValidate(ctx, validated)
+		switch {
+		case errors.Is(err, otp.ErrOTPInvalid):
+			middleware.WriteErrorBody(ctx, http.StatusBadRequest, "Invalid OTP.", w)
+			return
+		case err != nil:
+			logger.ErrorContext(ctx, "Failed to validate OTP.",
+				mld.LogErr, err,
+			)
+			middleware.WriteErrorBody(ctx, http.StatusInternalServerError, mld.ResponseInternalServerError, w)
+			return
+		}
+
+		err = tx.Commit(ctx)
+		if err != nil {
+			logger.ErrorContext(ctx, "Failed to commit transaction for validate OTP.",
+				mld.LogErr, err,
+			)
+			middleware.WriteErrorBody(ctx, http.StatusInternalServerError, mld.ResponseInternalServerError, w)
+			return
+		}
+
+		writeResponse(ctx, http.StatusOK, response, w)
+	})
+}
+
+// HTTPOTPEmailCreate creates an HTTP handler for the HandleOTPEmailCreate method.
+func HTTPOTPEmailCreate(s *handle.Server) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		logger := ctx.Value(ctxkey.Logger).(*slog.Logger)
+		tx := ctx.Value(ctxkey.Tx).(storage.Tx)
+
+		validated, done := unmarshalRequest[model.OTPEmailCreateRequest, model.ValidOTPEmailCreateRequest](r, s.Config.Validation, w)
+		if done {
+			return
+		}
+
+		response, err := s.HandleOTPEmailCreate(ctx, validated)
+		if err != nil {
+			logger.ErrorContext(ctx, "Failed to create OTP email.",
+				mld.LogErr, err,
+			)
+			middleware.WriteErrorBody(ctx, http.StatusInternalServerError, mld.ResponseInternalServerError, w)
+			return
+		}
+
+		err = tx.Commit(ctx)
+		if err != nil {
+			logger.ErrorContext(ctx, "Failed to commit transaction for create OTP email.",
+				mld.LogErr, err,
+			)
+			middleware.WriteErrorBody(ctx, http.StatusInternalServerError, mld.ResponseInternalServerError, w)
+			return
+		}
 
 		writeResponse(ctx, http.StatusCreated, response, w)
 	})

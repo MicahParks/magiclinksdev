@@ -11,6 +11,7 @@ import (
 
 	"github.com/MicahParks/magiclinksdev/magiclink"
 	"github.com/MicahParks/magiclinksdev/model"
+	"github.com/MicahParks/magiclinksdev/otp"
 	"github.com/MicahParks/magiclinksdev/storage"
 )
 
@@ -37,7 +38,7 @@ var _ storage.Storage = &testStorage{}
 
 type testStorage struct {
 	jwk jwkset.JWK
-	sa  map[uuid.UUID]model.ServiceAccount // TODO Need mutex?
+	sa  map[uuid.UUID]model.ServiceAccount
 }
 
 func (t *testStorage) toMemory(ctx context.Context) (jwkset.Storage, error) {
@@ -79,10 +80,10 @@ func (t *testStorage) Close(_ context.Context) error {
 func (t *testStorage) TestingTruncate(_ context.Context) error {
 	return nil
 }
-func (t *testStorage) CreateAdminSA(_ context.Context, _ model.ValidAdminCreateArgs) error {
+func (t *testStorage) SAAdminCreate(_ context.Context, _ model.ValidAdminCreateParams) error {
 	return nil
 }
-func (t *testStorage) CreateSA(_ context.Context, _ model.ValidServiceAccountCreateArgs) (model.ServiceAccount, error) {
+func (t *testStorage) SACreate(_ context.Context, _ model.ValidServiceAccountCreateParams) (model.ServiceAccount, error) {
 	u := uuid.New()
 	apiKey := uuid.New()
 	aud := uuid.New()
@@ -95,14 +96,14 @@ func (t *testStorage) CreateSA(_ context.Context, _ model.ValidServiceAccountCre
 	t.sa[u] = sa
 	return sa, nil
 }
-func (t *testStorage) ReadSA(_ context.Context, u uuid.UUID) (model.ServiceAccount, error) {
+func (t *testStorage) SARead(_ context.Context, u uuid.UUID) (model.ServiceAccount, error) {
 	sa, ok := t.sa[u]
 	if !ok {
 		return model.ServiceAccount{}, storage.ErrNotFound
 	}
 	return sa, nil
 }
-func (t *testStorage) ReadSAFromAPIKey(_ context.Context, apiKey uuid.UUID) (model.ServiceAccount, error) {
+func (t *testStorage) SAReadFromAPIKey(_ context.Context, apiKey uuid.UUID) (model.ServiceAccount, error) {
 	for _, sa := range t.sa {
 		if sa.APIKey == apiKey {
 			return sa, nil
@@ -110,13 +111,13 @@ func (t *testStorage) ReadSAFromAPIKey(_ context.Context, apiKey uuid.UUID) (mod
 	}
 	return model.ServiceAccount{}, fmt.Errorf("no service account found with API key %w", storage.ErrNotFound)
 }
-func (t *testStorage) ReadSigningKey(_ context.Context, _ storage.ReadSigningKeyOptions) (meta jwkset.JWK, err error) {
+func (t *testStorage) SigningKeyRead(_ context.Context, _ storage.ReadSigningKeyOptions) (meta jwkset.JWK, err error) {
 	return t.jwk, nil
 }
-func (t *testStorage) ReadDefaultSigningKey(_ context.Context) (jwk jwkset.JWK, err error) {
+func (t *testStorage) SigningKeyDefaultRead(_ context.Context) (jwk jwkset.JWK, err error) {
 	return t.jwk, nil
 }
-func (t *testStorage) UpdateDefaultSigningKey(_ context.Context, _ string) error {
+func (t *testStorage) SigningKeyDefaultUpdate(_ context.Context, _ string) error {
 	return nil
 }
 func (t *testStorage) KeyDelete(_ context.Context, _ string) (ok bool, err error) {
@@ -173,58 +174,15 @@ func (t *testStorage) MarshalWithOptions(ctx context.Context, marshalOptions jwk
 	}
 	return m.MarshalWithOptions(ctx, marshalOptions, validationOptions)
 }
-func (t *testStorage) CreateLink(_ context.Context, _ magiclink.CreateArgs) (secret string, err error) {
+func (t *testStorage) MagicLinkCreate(_ context.Context, _ magiclink.CreateParams) (secret string, err error) {
 	return uuid.New().String(), nil
 }
-func (t *testStorage) ReadLink(_ context.Context, _ string) (magiclink.ReadResponse, error) {
-	return magiclink.ReadResponse{}, nil
+func (t *testStorage) MagicLinkRead(_ context.Context, _ string) (magiclink.ReadResult, error) {
+	return magiclink.ReadResult{}, nil
 }
-
-// ErrorStorage is a storage.Storage implementation that always returns an error.
-type ErrorStorage struct{}
-
-func (e ErrorStorage) Begin(_ context.Context) (storage.Tx, error) {
-	return nil, ErrMLDTest
+func (t *testStorage) OTPCreate(_ context.Context, _ otp.CreateParams) (otp.CreateResult, error) {
+	return otp.CreateResult{}, nil
 }
-func (e ErrorStorage) Close(_ context.Context) error {
-	return ErrMLDTest
-}
-func (e ErrorStorage) TestingTruncate(_ context.Context) error {
-	return ErrMLDTest
-}
-func (e ErrorStorage) CreateAdminSA(_ context.Context, _ model.ValidAdminCreateArgs) error {
-	return ErrMLDTest
-}
-func (e ErrorStorage) CreateSA(_ context.Context, _ model.ValidServiceAccountCreateArgs) (model.ServiceAccount, error) {
-	return model.ServiceAccount{}, ErrMLDTest
-}
-func (e ErrorStorage) ReadSA(_ context.Context, _ uuid.UUID) (model.ServiceAccount, error) {
-	return model.ServiceAccount{}, ErrMLDTest
-}
-func (e ErrorStorage) ReadSAFromAPIKey(_ context.Context, _ uuid.UUID) (model.ServiceAccount, error) {
-	return model.ServiceAccount{}, ErrMLDTest
-}
-func (e ErrorStorage) ReadSigningKey(_ context.Context, _ storage.ReadSigningKeyOptions) (meta jwkset.JWK, err error) {
-	return jwkset.JWK{}, ErrMLDTest
-}
-func (e ErrorStorage) UpdateDefaultSigningKey(_ context.Context, _ string) error {
-	return ErrMLDTest
-}
-func (e ErrorStorage) DeleteKey(_ context.Context, _ string) (ok bool, err error) {
-	return true, ErrMLDTest
-}
-func (e ErrorStorage) ReadKey(_ context.Context, _ string) (jwkset.JWK, error) {
-	return jwkset.JWK{}, ErrMLDTest
-}
-func (e ErrorStorage) SnapshotKeys(_ context.Context) ([]jwkset.JWK, error) {
-	return nil, ErrMLDTest
-}
-func (e ErrorStorage) WriteKey(_ context.Context, _ jwkset.JWK) error {
-	return ErrMLDTest
-}
-func (e ErrorStorage) CreateLink(_ context.Context, _ magiclink.CreateArgs) (secret string, err error) {
-	return "", ErrMLDTest
-}
-func (e ErrorStorage) ReadLink(_ context.Context, _ string) (magiclink.ReadResponse, error) {
-	return magiclink.ReadResponse{}, ErrMLDTest
+func (t *testStorage) OTPValidate(_ context.Context, _, _ string) error {
+	return nil
 }

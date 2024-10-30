@@ -21,12 +21,11 @@ var (
 	ErrToken = errors.New("JWT invalid")
 )
 
-// HandleJWTValidate handles the JWT validation endpoint.
 func (s *Server) HandleJWTValidate(ctx context.Context, req model.ValidJWTValidateRequest) (model.JWTValidateResponse, error) {
-	jwtValidateArgs := req.JWTValidateArgs
+	jwtValidateParams := req.JWTValidateParams
 	sa := ctx.Value(ctxkey.ServiceAccount).(model.ServiceAccount)
 
-	token, err := jwt.Parse(jwtValidateArgs.JWT, func(token *jwt.Token) (any, error) {
+	token, err := jwt.Parse(jwtValidateParams.JWT, func(token *jwt.Token) (any, error) {
 		jwksBytes, err := s.JWKS.JSONPublic(ctx) // Change to JSONPrivate if HMAC support is added.
 		if err != nil {
 			return nil, fmt.Errorf("failed to get JWKS JSON: %w", err)

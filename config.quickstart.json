@@ -1,14 +1,14 @@
 {
   "server": {
-    "adminConfig": [
+    "adminCreateParams": [
       {
         "apiKey": "40084740-0bc3-455d-b298-e23a31561580",
         "aud": "ad9e9d84-92ea-4f07-bac9-5d898d59c83b",
         "uuid": "1e079d6d-a8b9-4065-aa8d-86906accd211",
-        "serviceAccountCreateArgs": {}
+        "serviceAccountCreateParams": {}
       }
     ],
-    "baseURL": "http://localhost:8080/api/v1/",
+    "baseURL": "http://localhost:8080/api/v2/",
     "iss": "http://localhost:8080"
   },
   "storage": {

@@ -177,6 +177,7 @@ func NewMigrator(pool *pgxpool.Pool, options MigratorOptions) (Migrator, error) 
 
 	migrations := []migration{
 		algMigration{},
+		otpMigration{},
 	}
 
 	m := migrator{

@@ -9,6 +9,7 @@ import (
 
 	"github.com/MicahParks/magiclinksdev/magiclink"
 	"github.com/MicahParks/magiclinksdev/model"
+	"github.com/MicahParks/magiclinksdev/otp"
 )
 
 var (
@@ -24,16 +25,17 @@ type Storage interface {
 	Close(ctx context.Context) error
 	TestingTruncate(ctx context.Context) error
 
-	CreateAdminSA(ctx context.Context, args model.ValidAdminCreateArgs) error
-	CreateSA(ctx context.Context, args model.ValidServiceAccountCreateArgs) (model.ServiceAccount, error)
-	ReadSA(ctx context.Context, u uuid.UUID) (model.ServiceAccount, error)
-	ReadSAFromAPIKey(ctx context.Context, apiKey uuid.UUID) (model.ServiceAccount, error)
-	ReadSigningKey(ctx context.Context, options ReadSigningKeyOptions) (jwk jwkset.JWK, err error)
-	ReadDefaultSigningKey(ctx context.Context) (jwk jwkset.JWK, err error)
-	UpdateDefaultSigningKey(ctx context.Context, keyID string) error
+	SAAdminCreate(ctx context.Context, args model.ValidAdminCreateParams) error
+	SACreate(ctx context.Context, args model.ValidServiceAccountCreateParams) (model.ServiceAccount, error)
+	SARead(ctx context.Context, u uuid.UUID) (model.ServiceAccount, error)
+	SAReadFromAPIKey(ctx context.Context, apiKey uuid.UUID) (model.ServiceAccount, error)
+	SigningKeyRead(ctx context.Context, options ReadSigningKeyOptions) (jwk jwkset.JWK, err error)
+	SigningKeyDefaultRead(ctx context.Context) (jwk jwkset.JWK, err error)
+	SigningKeyDefaultUpdate(ctx context.Context, keyID string) error
 
 	jwkset.Storage
 	magiclink.Storage
+	otp.Storage
 }
 
 // Tx is the interface for a transaction.

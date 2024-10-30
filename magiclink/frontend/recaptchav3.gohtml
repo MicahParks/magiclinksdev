@@ -9,26 +9,41 @@
 </head>
 <body class="h-full">
 <main class="min-h-full flex flex-col bg-white px-6 pt-24 sm:pt-32 lg:px-8">
-  <div class="text-center">
-    <p class="text-base font-semibold text-indigo-600">
+  <div class="text-center max-w-2xl mx-auto">
+    <p id="subtitle" class="text-base font-semibold text-indigo-600">
         {{.Code}}
     </p>
-    <h1 class="mt-4 text-3xl font-bold tracking-tight text-gray-900 sm:text-5xl">
+    <h1 id="title" class="mt-4 text-3xl font-bold tracking-tight text-gray-900 sm:text-5xl">
         {{.Title}}
     </h1>
-    <p class="mt-6 text-base leading-7 text-gray-600">
+    <p id="instruction" class="mt-6 text-base leading-7 text-gray-600">
         {{.Instruction}}
     </p>
-    <p class="mt-2 text-xs leading-7 text-gray-600">
-      If the page does not redirect, the magic link may have expired.
-    </p>
+    <div id="invalid" class="hidden">
+      <p class="mt-6 text-base leading-7 text-gray-600">
+        Please request another magic link.
+        <br/>
+        This magic link is invalid for one of the below reasons:
+      </p>
+      <ul class="mt-6 text-sm leading-7 text-gray-600 list-disc text-left max-w-fit mx-auto">
+        <li>The magic link has expired.</li>
+        <li>The magic link never existed.</li>
+        <li>The magic link has already been used.</li>
+        <li>Your web browser failed an automated check.</li>
+      </ul>
+    </div>
       {{- if .ButtonBypass -}}
-        <form class="mt-10 flex items-center justify-center gap-x-6" action="{{.FormAction}}" method="post">
-          <button type="submit"
-                  class="rounded-md bg-indigo-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
-              {{.ButtonText}}
-          </button>
-        </form>
+        <div id="button-bypass">
+          <p class="mt-2 text-xs leading-7 text-gray-600">
+            Alternatively, try the button below.
+          </p>
+          <form class="mt-10 flex items-center justify-center gap-x-6" action="{{.FormAction}}" method="post">
+            <button type="submit"
+                    class="rounded-md bg-indigo-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+                {{.ButtonText}}
+            </button>
+          </form>
+        </div>
       {{- end -}}
   </div>
   <footer class="mt-auto">
@@ -44,8 +59,18 @@
     grecaptcha.execute('{{.SiteKey}}', {action: 'submit'}).then(function (token) {
       let xmlHttp = new XMLHttpRequest();
       xmlHttp.onreadystatechange = function () {
-        if (xmlHttp.readyState === 4 && xmlHttp.status === 200) {
-          window.location.replace(xmlHttp.responseText);
+        if (xmlHttp.readyState === 4) {
+          if (xmlHttp.status === 200) {
+            window.location.replace(xmlHttp.responseText);
+          } else {
+            document.getElementById('subtitle').innerText = 'INVALID';
+            document.getElementById('title').innerText = 'Invalid magic link';
+            document.getElementById('instruction').classList.add('hidden');
+            document.getElementById('invalid').classList.remove('hidden');
+              {{- if .ButtonBypass -}}
+            document.getElementById('button-bypass').classList.add('hidden');
+              {{- end -}}
+          }
         }
       };
       let u = new URL(window.location.href);

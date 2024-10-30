@@ -1,5 +1,6 @@
 .env
 .idea
+config.json
 config.local.json
 delme.*
 *.prod.yml

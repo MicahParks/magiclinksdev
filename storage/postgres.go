@@ -23,8 +23,8 @@ import (
 	"github.com/MicahParks/magiclinksdev"
 	"github.com/MicahParks/magiclinksdev/magiclink"
 	"github.com/MicahParks/magiclinksdev/model"
-
 	"github.com/MicahParks/magiclinksdev/network/middleware/ctxkey"
+	"github.com/MicahParks/magiclinksdev/otp"
 )
 
 const (
@@ -140,7 +140,7 @@ func (p postgres) TestingTruncate(ctx context.Context) error {
 
 	//language=sql
 	const query = `
-TRUNCATE TABLE mld.jwk, mld.link, mld.service_account
+TRUNCATE TABLE mld.jwk, mld.link, mld.otp, mld.service_account
 `
 	_, err := tx.Exec(ctx, query)
 	if err != nil {
@@ -150,7 +150,7 @@ TRUNCATE TABLE mld.jwk, mld.link, mld.service_account
 	return nil
 }
 
-func (p postgres) CreateAdminSA(ctx context.Context, args model.ValidAdminCreateArgs) error {
+func (p postgres) SAAdminCreate(ctx context.Context, args model.ValidAdminCreateParams) error {
 	tx := ctx.Value(ctxkey.Tx).(*Transaction).Tx
 
 	_, err := tx.Exec(ctx, createServiceAccountQuery, args.UUID, args.APIKey, args.Aud, true)
@@ -160,7 +160,7 @@ func (p postgres) CreateAdminSA(ctx context.Context, args model.ValidAdminCreate
 
 	return nil
 }
-func (p postgres) CreateSA(ctx context.Context, _ model.ValidServiceAccountCreateArgs) (model.ServiceAccount, error) {
+func (p postgres) SACreate(ctx context.Context, _ model.ValidServiceAccountCreateParams) (model.ServiceAccount, error) {
 	tx := ctx.Value(ctxkey.Tx).(*Transaction).Tx
 
 	apiKey, err := uuid.NewRandom()
@@ -190,7 +190,7 @@ func (p postgres) CreateSA(ctx context.Context, _ model.ValidServiceAccountCreat
 
 	return sa, nil
 }
-func (p postgres) ReadSA(ctx context.Context, u uuid.UUID) (model.ServiceAccount, error) {
+func (p postgres) SARead(ctx context.Context, u uuid.UUID) (model.ServiceAccount, error) {
 	tx := ctx.Value(ctxkey.Tx).(*Transaction).Tx
 
 	//language=sql
@@ -212,7 +212,7 @@ WHERE uuid = $1
 
 	return sa, nil
 }
-func (p postgres) ReadSAFromAPIKey(ctx context.Context, apiKey uuid.UUID) (model.ServiceAccount, error) {
+func (p postgres) SAReadFromAPIKey(ctx context.Context, apiKey uuid.UUID) (model.ServiceAccount, error) {
 	tx := ctx.Value(ctxkey.Tx).(*Transaction).Tx
 
 	//language=sql
@@ -234,7 +234,7 @@ WHERE api_key = $1
 
 	return sa, nil
 }
-func (p postgres) ReadSigningKey(ctx context.Context, options ReadSigningKeyOptions) (jwk jwkset.JWK, err error) {
+func (p postgres) SigningKeyRead(ctx context.Context, options ReadSigningKeyOptions) (jwk jwkset.JWK, err error) {
 	tx := ctx.Value(ctxkey.Tx).(*Transaction).Tx
 
 	//language=sql
@@ -272,7 +272,7 @@ ORDER BY created DESC
 
 	return jwk, nil
 }
-func (p postgres) ReadDefaultSigningKey(ctx context.Context) (jwk jwkset.JWK, err error) {
+func (p postgres) SigningKeyDefaultRead(ctx context.Context) (jwk jwkset.JWK, err error) {
 	tx := ctx.Value(ctxkey.Tx).(*Transaction).Tx
 
 	//language=sql
@@ -297,7 +297,7 @@ WHERE signing_default = TRUE
 
 	return jwk, nil
 }
-func (p postgres) UpdateDefaultSigningKey(ctx context.Context, keyID string) error {
+func (p postgres) SigningKeyDefaultUpdate(ctx context.Context, keyID string) error {
 	tx := ctx.Value(ctxkey.Tx).(*Transaction).Tx
 
 	//language=sql
@@ -318,7 +318,7 @@ WHERE key_id = $1
   Magic link storage.
 */
 
-func (p postgres) CreateLink(ctx context.Context, args magiclink.CreateArgs) (secret string, err error) {
+func (p postgres) MagicLinkCreate(ctx context.Context, args magiclink.CreateParams) (secret string, err error) {
 	tx := ctx.Value(ctxkey.Tx).(*Transaction).Tx
 	sa := ctx.Value(ctxkey.ServiceAccount).(model.ServiceAccount)
 
@@ -347,9 +347,9 @@ VALUES ($2, $3, $4, $5, $6, $7, $8, (SELECT id FROM sa))
 
 	return s.String(), nil
 }
-func (p postgres) ReadLink(ctx context.Context, secret string) (magiclink.ReadResponse, error) {
+func (p postgres) MagicLinkRead(ctx context.Context, secret string) (magiclink.ReadResult, error) {
 	tx := ctx.Value(ctxkey.Tx).(*Transaction).Tx
-	var response magiclink.ReadResponse
+	var response magiclink.ReadResult
 
 	u, err := uuid.Parse(secret)
 	if err != nil {
@@ -366,7 +366,7 @@ WHERE older.id = updated.id
 RETURNING updated.expires, updated.jwt_claims, updated.jwt_key_id, updated.jwt_signing_method, updated.redirect_query_key, updated.redirect_url, older.visited
 `
 	claims := make([]byte, 0)
-	var args magiclink.CreateArgs
+	var args magiclink.CreateParams
 	var visited *time.Time
 	var redirectURL string
 	err = tx.QueryRow(ctx, query, u.String()).Scan(&args.Expires, &claims, &args.JWTKeyID, &args.JWTSigningMethod, &args.RedirectQueryKey, &redirectURL, &visited)
@@ -395,9 +395,71 @@ RETURNING updated.expires, updated.jwt_claims, updated.jwt_key_id, updated.jwt_s
 		return response, fmt.Errorf("failed to parse redirect URL from Postgres: %w", err)
 	}
 
-	response.CreateArgs = args
+	response.CreateParams = args
 	response.Visited = visited
 	return response, nil
+}
+
+/*
+OTP Storage
+*/
+
+func (p postgres) OTPCreate(ctx context.Context, params otp.CreateParams) (otp.CreateResult, error) {
+	tx := ctx.Value(ctxkey.Tx).(*Transaction).Tx
+	sa := ctx.Value(ctxkey.ServiceAccount).(model.ServiceAccount)
+
+	o, err := otp.Generate(params)
+	if err != nil {
+		return otp.CreateResult{}, fmt.Errorf("failed to generate OTP: %w", err)
+	}
+
+	publicID := uuid.New()
+
+	//language=sql
+	const query = `
+WITH sa AS (SELECT id FROM mld.service_account WHERE uuid = $1)
+INSERT INTO mld.otp (sa_id, expires, id_public, otp) VALUES ((SELECT id FROM sa), $2, $3, $4)
+`
+	_, err = tx.Exec(ctx, query, sa.UUID, params.Expires, publicID, o)
+	if err != nil {
+		return otp.CreateResult{}, fmt.Errorf("failed to write OTP to Postgres: %w", err)
+	}
+
+	results := otp.CreateResult{
+		CreateParams: params,
+		ID:           publicID.String(),
+		OTP:          o,
+	}
+
+	return results, nil
+}
+func (p postgres) OTPValidate(ctx context.Context, id, o string) error {
+	tx := ctx.Value(ctxkey.Tx).(*Transaction).Tx
+
+	u, err := uuid.Parse(id)
+	if err != nil {
+		return fmt.Errorf("failed to parse UUID: %w", otp.ErrOTPInvalid)
+	}
+
+	//language=sql
+	const query = `
+UPDATE mld.otp updated
+SET used = CURRENT_TIMESTAMP
+WHERE updated.id_public = $1
+  AND updated.otp = $2
+  AND updated.expires > CURRENT_TIMESTAMP
+  AND updated.used IS NULL
+`
+	result, err := tx.Exec(ctx, query, u, o)
+	if err != nil {
+		return fmt.Errorf("failed to query database: %w", err)
+	}
+
+	if result.RowsAffected() < 1 {
+		return fmt.Errorf("no rows were updated: %w", otp.ErrOTPInvalid)
+	}
+
+	return nil
 }
 
 /*
@@ -448,6 +510,7 @@ func (p postgres) KeyReadAll(ctx context.Context) ([]jwkset.JWK, error) {
 	const query = `
 SELECT assets, signing_default
 FROM mld.jwk
+ORDER BY signing_default DESC
 `
 	rows, err := tx.Query(ctx, query)
 	if err != nil {

@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"flag"
 	"log/slog"
 	"os"
 	"time"
@@ -14,10 +15,22 @@ import (
 )
 
 func main() {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	logger := slog.Default()
+
+	var (
+		id  string
+		otp string
+	)
+	flag.StringVar(&id, "id", "", "The ID of the OTP to validate.")
+	flag.StringVar(&otp, "otp", "", "The OTP to validate.")
+	flag.Parse()
+	if id == "" || otp == "" {
+		flag.Usage()
+		os.Exit(1)
+	}
 
 	c, err := client.New(mldtest.APIKey, mldtest.Aud, mldtest.BaseURL, mldtest.Iss, client.Options{})
 	if err != nil {
@@ -27,10 +40,13 @@ func main() {
 		os.Exit(1)
 	}
 
-	req := model.ServiceAccountCreateRequest{
-		CreateServiceAccountArgs: model.ServiceAccountCreateArgs{},
+	req := model.OTPValidateRequest{
+		OTPValidateParams: model.OTPValidateParams{
+			ID:  id,
+			OTP: otp,
+		},
 	}
-	resp, mldErr, err := c.ServiceAccountCreate(ctx, req)
+	resp, mldErr, err := c.OTPValidate(ctx, req)
 	if err != nil {
 		if mldErr.Code != 0 {
 			logger = logger.With(
@@ -39,14 +55,8 @@ func main() {
 				"requestUUID", mldErr.RequestMetadata.UUID,
 			)
 		}
-		logger.ErrorContext(ctx, "Failed to create service account.",
+		logger.ErrorContext(ctx, "Failed to validate OTP.",
 			mld.LogErr, err,
-		)
-		os.Exit(1)
-	}
-	if mldErr.Code != 0 {
-		logger.ErrorContext(ctx, "Failed to create service account.",
-			"mldErr", mldErr,
 		)
 		os.Exit(1)
 	}

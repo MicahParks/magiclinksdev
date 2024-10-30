@@ -10,7 +10,7 @@ import (
 
 const (
 	// BaseURL is the test base URL for the service.
-	BaseURL = "http://localhost:8080/api/v1/"
+	BaseURL = "http://localhost:8080/api/v2/"
 	// Iss is the test issuer for the service.
 	Iss = BaseURL
 	// LogoImageURL is the test service logo for the service.

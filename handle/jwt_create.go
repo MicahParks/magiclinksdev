@@ -27,19 +27,18 @@ var (
 	ErrJWTAlgNotFound = errors.New("JWT alg not found")
 )
 
-// HandleJWTCreate handles the creation of a JWT.
 func (s *Server) HandleJWTCreate(ctx context.Context, req model.ValidJWTCreateRequest) (model.JWTCreateResponse, error) {
-	jwtCreateArgs := req.JWTCreateArgs
+	jwtCreateParams := req.JWTCreateParams
 
-	edited, err := s.addRegisteredClaims(ctx, jwtCreateArgs)
+	edited, err := s.addRegisteredClaims(ctx, jwtCreateParams)
 	if err != nil {
 		return model.JWTCreateResponse{}, fmt.Errorf("failed to add registered claims to JWT claims: %w", err)
 	}
 
 	options := storage.ReadSigningKeyOptions{
-		JWTAlg: jwtCreateArgs.JWTAlg,
+		JWTAlg: jwtCreateParams.Alg,
 	}
-	jwk, err := s.Store.ReadSigningKey(ctx, options)
+	jwk, err := s.Store.SigningKeyRead(ctx, options)
 	if err != nil {
 		if errors.Is(err, storage.ErrNotFound) {
 			return model.JWTCreateResponse{}, fmt.Errorf("could not fing signing key with specified JWT alg: %w", ErrJWTAlgNotFound)
@@ -70,13 +69,13 @@ func (s *Server) HandleJWTCreate(ctx context.Context, req model.ValidJWTCreateRe
 	return response, nil
 }
 
-func (s *Server) addRegisteredClaims(ctx context.Context, args model.ValidJWTCreateArgs) (json.RawMessage, error) {
+func (s *Server) addRegisteredClaims(ctx context.Context, args model.ValidJWTCreateParams) (json.RawMessage, error) {
 	sa, ok := ctx.Value(ctxkey.ServiceAccount).(model.ServiceAccount)
 	if !ok {
 		return nil, fmt.Errorf("%w: service account context not found", ctxkey.ErrCtxKey)
 	}
 
-	valid := json.Valid(args.JWTClaims)
+	valid := json.Valid(args.Claims)
 	if !valid {
 		return nil, fmt.Errorf("%w: invalid JSON for JWT claims", model.ErrInvalidModel)
 	}
@@ -91,7 +90,7 @@ func (s *Server) addRegisteredClaims(ctx context.Context, args model.ValidJWTCre
 		Issuer:    s.Config.Iss,
 		Subject:   "", // Don't set.
 		Audience:  jwt.ClaimStrings{sa.Aud.String()},
-		ExpiresAt: jwt.NewNumericDate(n.Add(args.JWTLifespan)),
+		ExpiresAt: jwt.NewNumericDate(n.Add(args.Lifespan)),
 		NotBefore: now,
 		IssuedAt:  now,
 		ID:        u.String(),
@@ -113,8 +112,8 @@ func (s *Server) addRegisteredClaims(ctx context.Context, args model.ValidJWTCre
 		magiclinksdev.AttrJti,
 	}
 
-	edited := make(json.RawMessage, len(args.JWTClaims))
-	copy(edited, args.JWTClaims)
+	edited := make(json.RawMessage, len(args.Claims))
+	copy(edited, args.Claims)
 	for _, attr := range rfc5119 {
 		if gjson.GetBytes(edited, attr).Exists() {
 			return nil, fmt.Errorf("%w: %s", ErrRegisteredClaimProvided, attr)
@@ -136,12 +135,12 @@ func (s *Server) addRegisteredClaims(ctx context.Context, args model.ValidJWTCre
 	return edited, nil
 }
 
-func (s *Server) createLinkArgs(ctx context.Context, args model.ValidLinkCreateArgs) (magiclink.CreateArgs, error) {
-	var createArgs magiclink.CreateArgs
+func (s *Server) createLinkParams(ctx context.Context, args model.ValidMagicLinkCreateParams) (magiclink.CreateParams, error) {
+	var createParams magiclink.CreateParams
 
-	edited, err := s.addRegisteredClaims(ctx, args.JWTCreateArgs)
+	edited, err := s.addRegisteredClaims(ctx, args.JWTCreateParams)
 	if err != nil {
-		return createArgs, fmt.Errorf("failed to add registered claims to JWT claims: %w", err)
+		return createParams, fmt.Errorf("failed to add registered claims to JWT claims: %w", err)
 	}
 
 	claims := magiclinksdev.SigningBytesClaims{
@@ -149,24 +148,24 @@ func (s *Server) createLinkArgs(ctx context.Context, args model.ValidLinkCreateA
 	}
 
 	options := storage.ReadSigningKeyOptions{
-		JWTAlg: args.JWTCreateArgs.JWTAlg,
+		JWTAlg: args.JWTCreateParams.Alg,
 	}
-	jwk, err := s.Store.ReadSigningKey(ctx, options)
+	jwk, err := s.Store.SigningKeyRead(ctx, options)
 	if err != nil {
 		if errors.Is(err, storage.ErrNotFound) {
-			return createArgs, fmt.Errorf("could not fing signing key with specified JWT alg: %w", ErrJWTAlgNotFound)
+			return createParams, fmt.Errorf("could not fing signing key with specified JWT alg: %w", ErrJWTAlgNotFound)
 		}
-		return createArgs, fmt.Errorf("failed to get JWT signing key: %w", err)
+		return createParams, fmt.Errorf("failed to get JWT signing key: %w", err)
 	}
 
 	kID := jwk.Marshal().KID
-	createArgs = magiclink.CreateArgs{
-		Expires:          time.Now().Add(args.LinkLifespan),
+	createParams = magiclink.CreateParams{
+		Expires:          time.Now().Add(args.Lifespan),
 		JWTClaims:        claims,
 		JWTKeyID:         &kID,
 		RedirectQueryKey: args.RedirectQueryKey,
 		RedirectURL:      args.RedirectURL,
 	}
 
-	return createArgs, nil
+	return createParams, nil
 }
