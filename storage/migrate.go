@@ -77,16 +77,16 @@ func (m migrator) Migrate(ctx context.Context) error {
 	migrationsApplied := 0
 	for _, mig := range m.migrations {
 		meta := mig.metadata()
-		options.Logger = options.Logger.With(
+		l := options.Logger.With(
 			logDescription, meta.Description,
 			logFile, meta.Filename,
 			logVersion, meta.SemVer,
 		)
 
-		options.Logger.InfoContext(ctx, "Performing migration.")
+		l.InfoContext(ctx, "Performing migration.")
 		applied, err := mig.migrate(ctx, m.setup, tx, options)
 		if err != nil {
-			options.Logger.InfoContext(ctx, "Failed to apply migration.",
+			l.InfoContext(ctx, "Failed to apply migration.",
 				mld.LogErr, err,
 			)
 			return fmt.Errorf("failed to apply migration %q: %w", meta.SemVer, err)
@@ -114,11 +114,7 @@ WHERE id
 			}
 			migrationsApplied++
 		}
-		options.Logger.InfoContext(ctx, msg,
-			logDescription, meta.Description,
-			logFile, meta.Filename,
-			logVersion, meta.SemVer,
-		)
+		l.InfoContext(ctx, msg)
 	}
 
 	err = tx.Commit(ctx)
