@@ -6,8 +6,8 @@ toolchain go1.23.2
 
 require (
 	github.com/MicahParks/jsontype v0.6.1
-	github.com/MicahParks/jwkset v0.5.20
-	github.com/MicahParks/keyfunc/v3 v3.3.5
+	github.com/MicahParks/jwkset v0.7.0
+	github.com/MicahParks/keyfunc/v3 v3.3.8
 	github.com/MicahParks/recaptcha v0.0.5
 	github.com/aws/aws-sdk-go v1.55.5
 	github.com/golang-jwt/jwt/v5 v5.2.1
@@ -17,7 +17,7 @@ require (
 	github.com/tidwall/gjson v1.18.0
 	github.com/tidwall/sjson v1.2.5
 	golang.org/x/mod v0.21.0
-	golang.org/x/time v0.7.0
+	golang.org/x/time v0.9.0
 )
 
 require (
