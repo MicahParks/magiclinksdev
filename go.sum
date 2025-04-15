@@ -1,9 +1,9 @@
 github.com/MicahParks/jsontype v0.6.1 h1:yFiDEOgSCDT+Es8k17PYZkvpqbZJ9GxJH2ioeVGvgt0=
 github.com/MicahParks/jsontype v0.6.1/go.mod h1:PVeg4g8eHt4QDlhe56X1sWzRuHiVlCg4m0vgkpEso/Y=
-github.com/MicahParks/jwkset v0.7.0 h1:CXWuiYBk5NuTl+N/3UI3UcYNH79yWuKAZWZkc/y+7Ok=
-github.com/MicahParks/jwkset v0.7.0/go.mod h1:fVrj6TmG1aKlJEeceAz7JsXGTXEn72zP1px3us53JrA=
-github.com/MicahParks/keyfunc/v3 v3.3.8 h1:e/LZSz1hIcuHVf/Rzy3a4NkPQd+WG2IZM/cTeFKqTsk=
-github.com/MicahParks/keyfunc/v3 v3.3.8/go.mod h1:xDAde0iTn/PMsJg8F6c1AjMheTT3IXPqCCNulk24eww=
+github.com/MicahParks/jwkset v0.8.0 h1:jHtclI38Gibmu17XMI6+6/UB59srp58pQVxePHRK5o8=
+github.com/MicahParks/jwkset v0.8.0/go.mod h1:fVrj6TmG1aKlJEeceAz7JsXGTXEn72zP1px3us53JrA=
+github.com/MicahParks/keyfunc/v3 v3.3.11 h1:eA6wNltwdSRX2gtpTwZseBCC9nGeBkI9KxHtTyZbDbo=
+github.com/MicahParks/keyfunc/v3 v3.3.11/go.mod h1:y6Ed3dMgNKTcpxbaQHD8mmrYDUZWJAxteddA6OQj+ag=
 github.com/MicahParks/recaptcha v0.0.5 h1:RvKq7E1BZJtz5ubSkBun20jXxIsMWt2oZ0ppTJOzX1A=
 github.com/MicahParks/recaptcha v0.0.5/go.mod h1:aFv3iZDDs6Pbi6tRpUm8gofaTUnDxOQ27x5KsK0CZwE=
 github.com/aws/aws-sdk-go v1.55.5 h1:KKUZBfBoyqy5d3swXyiC7Q76ic40rYcbqH7qjh59kzU=
@@ -11,8 +11,8 @@ github.com/aws/aws-sdk-go v1.55.5/go.mod h1:eRwEWoyTWFMVYVQzKMNHWP5/RV4xIUGMQfXQ
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
-github.com/golang-jwt/jwt/v5 v5.2.1 h1:OuVbFODueb089Lh128TAcimifWaLhJwVflnrgM17wHk=
-github.com/golang-jwt/jwt/v5 v5.2.1/go.mod h1:pqrtFR0X4osieyHYxtmOUWsAWrfe1Q5UVIyoH402zdk=
+github.com/golang-jwt/jwt/v5 v5.2.2 h1:Rl4B7itRWVtYIHFrSNd7vhTiz9UpLdi6gZhZ3wEeDy8=
+github.com/golang-jwt/jwt/v5 v5.2.2/go.mod h1:pqrtFR0X4osieyHYxtmOUWsAWrfe1Q5UVIyoH402zdk=
 github.com/google/uuid v1.6.0 h1:NIvaJDMOsjHA8n1jAhLSgzrAzy1Hgr+hNrb57e+94F0=
 github.com/google/uuid v1.6.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
 github.com/jackc/pgpassfile v1.0.0 h1:/6Hmqy13Ss2zCq62VdNG8tM1wchn8zjSGOBJ6icpsIM=

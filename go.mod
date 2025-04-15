@@ -6,11 +6,11 @@ toolchain go1.23.2
 
 require (
 	github.com/MicahParks/jsontype v0.6.1
-	github.com/MicahParks/jwkset v0.7.0
-	github.com/MicahParks/keyfunc/v3 v3.3.8
+	github.com/MicahParks/jwkset v0.8.0
+	github.com/MicahParks/keyfunc/v3 v3.3.11
 	github.com/MicahParks/recaptcha v0.0.5
 	github.com/aws/aws-sdk-go v1.55.5
-	github.com/golang-jwt/jwt/v5 v5.2.1
+	github.com/golang-jwt/jwt/v5 v5.2.2
 	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.7.1
 	github.com/sendgrid/sendgrid-go v3.16.0+incompatible
