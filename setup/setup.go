@@ -224,7 +224,7 @@ func CreateNopProviderServer(ctx context.Context, conf NopConfig, options Server
 
 // CreateMultiProviderServer creates a new magiclinksdev server with multiple email providers.
 func CreateMultiProviderServer(ctx context.Context, conf MultiConfig, options ServerOptions) (*handle.Server, error) {
-	sesProvider, err := ses.NewProvider(conf.SES)
+	sesProvider, err := ses.NewProvider(ctx, conf.SES)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create email provider: %w", err)
 	}
@@ -254,7 +254,7 @@ func CreateMultiProviderServer(ctx context.Context, conf MultiConfig, options Se
 
 // CreateSESProvider creates a new magiclinksdev server with a SES email provider.
 func CreateSESProvider(ctx context.Context, conf SESConfig, options ServerOptions) (*handle.Server, error) {
-	provider, err := ses.NewProvider(conf.SES)
+	provider, err := ses.NewProvider(ctx, conf.SES)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create email provider: %w", err)
 	}

@@ -3,19 +3,20 @@ package ses
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"html/template"
 	netMail "net/mail"
 	textTemplate "text/template"
 
 	jt "github.com/MicahParks/jsontype"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/awserr"
-	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/ses"
-
+	mld "github.com/MicahParks/magiclinksdev"
 	"github.com/MicahParks/magiclinksdev/email"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/credentials"
+	"github.com/aws/aws-sdk-go-v2/service/sesv2"
+	"github.com/aws/aws-sdk-go-v2/service/sesv2/types"
 )
 
 const (
@@ -59,19 +60,21 @@ type SES struct {
 	magicLinkTxtTmpl  *textTemplate.Template
 	oTPHTMLTmpl       *template.Template
 	oTPTxtTmpl        *textTemplate.Template
-	ses               *ses.SES
+	ses               *sesv2.Client
 }
 
 // NewProvider creates a new SES provider. It will create an AWS session using the provided configuration.
-func NewProvider(conf Config) (SES, error) {
-	sess, err := session.NewSession(&aws.Config{
-		Credentials: credentials.NewStaticCredentials(conf.AccessKeyID, conf.SecretKey, ""),
-		Region:      aws.String(conf.AWSRegion),
+func NewProvider(ctx context.Context, conf Config) (SES, error) {
+	appCreds := aws.NewCredentialsCache(credentials.NewStaticCredentialsProvider(conf.AccessKeyID, conf.SecretKey, ""))
+	cfg, err := config.LoadDefaultConfig(ctx, func(o *config.LoadOptions) error {
+		o.Credentials = appCreds
+		o.Region = conf.AWSRegion
+		return nil
 	})
 	if err != nil {
-		return SES{}, fmt.Errorf("failed to create AWS session: %w", err)
+		return SES{}, fmt.Errorf("failed to load default AWS config: %w", err)
 	}
-	svc := ses.New(sess)
+	svc := sesv2.NewFromConfig(cfg)
 	requiredConf := InitializedConfig{
 		FromEmail: conf.FromEmail.Get(),
 	}
@@ -83,7 +86,7 @@ func NewProvider(conf Config) (SES, error) {
 }
 
 // NewProviderInitialized creates a new SES provider with an initialized configuration.
-func NewProviderInitialized(conf InitializedConfig, svc *ses.SES) (SES, error) {
+func NewProviderInitialized(conf InitializedConfig, svc *sesv2.Client) (SES, error) {
 	magicLinkHTMLTmpl := template.Must(template.New("").Parse(email.MagicLinkHTMLTemplate))
 	magicLinkTxtTML := textTemplate.Must(textTemplate.New("").Parse(email.MagicLinkTextTemplate))
 	otpHTMLTmpl := template.Must(template.New("").Parse(email.OTPHTMLTemplate))
@@ -118,45 +121,42 @@ func (s SES) sendEmail(ctx context.Context, e email.Email, htmlTmpl *template.Te
 		return fmt.Errorf("failed to execute template for text email: %w", err)
 	}
 
-	input := &ses.SendEmailInput{
-		Destination: &ses.Destination{
-			ToAddresses: []*string{
-				aws.String(e.To.String()),
+	input := &sesv2.SendEmailInput{
+		Destination: &types.Destination{
+			ToAddresses: []string{
+				e.To.String(),
 			},
 		},
-		Message: &ses.Message{
-			Body: &ses.Body{
-				Html: &ses.Content{
-					Charset: aws.String(charSet),
-					Data:    aws.String(htmlBuf.String()),
+		Content: &types.EmailContent{
+			Simple: &types.Message{
+				Body: &types.Body{
+					Html: &types.Content{
+						Charset: aws.String(charSet),
+						Data:    aws.String(htmlBuf.String()),
+					},
+					Text: &types.Content{
+						Charset: aws.String(charSet),
+						Data:    aws.String(textBuf.String()),
+					},
 				},
-				Text: &ses.Content{
+				Subject: &types.Content{
 					Charset: aws.String(charSet),
-					Data:    aws.String(textBuf.String()),
+					Data:    aws.String(e.Subject),
 				},
-			},
-			Subject: &ses.Content{
-				Charset: aws.String(charSet),
-				Data:    aws.String(e.Subject),
 			},
 		},
-		Source: aws.String(s.from.String()),
+		FromEmailAddress: mld.Ptr(s.from.String()),
 	}
 
-	_, err = s.ses.SendEmailWithContext(ctx, input)
+	_, err = s.ses.SendEmail(ctx, input)
 	if err != nil {
-		aerr, ok := err.(awserr.Error)
-		if ok {
-			switch aerr.Code() {
-			case ses.ErrCodeMessageRejected:
-				return fmt.Errorf("failed to send email due to AWS message rejected error: %w", err)
-			case ses.ErrCodeMailFromDomainNotVerifiedException:
-				return fmt.Errorf("failed to send email due to AWS sending from unverfied domain error: %w", err)
-			case ses.ErrCodeConfigurationSetDoesNotExistException:
-				return fmt.Errorf("failed to send email due to AWS configuration does not exist error: %w", err)
-			default:
-				return fmt.Errorf("failed to send email due to AWS error: %w", err)
-			}
+		var mr *types.MessageRejected
+		var dnve *types.MailFromDomainNotVerifiedException
+		switch {
+		case errors.As(err, &mr):
+			return fmt.Errorf("failed to send email due to AWS message rejected error: %w", err)
+		case errors.As(err, &dnve):
+			return fmt.Errorf("failed to send email due to AWS sending from unverfied domain error: %w", err)
 		}
 		return fmt.Errorf("failed to send email via AWS SES: %w", err)
 	}
